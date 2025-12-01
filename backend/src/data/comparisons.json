@@ -1,0 +1,38 @@
+[
+  {
+    "id": "comp-1",
+    "name": "Creta vs Seltos",
+    "models": ["creta", "seltos"],
+    "views": 125000
+  },
+  {
+    "id": "comp-2",
+    "name": "Swift vs Baleno",
+    "models": ["swift"],
+    "views": 98000
+  },
+  {
+    "id": "comp-3",
+    "name": "Nexon vs Venue",
+    "models": ["nexon"],
+    "views": 87000
+  },
+  {
+    "id": "comp-4",
+    "name": "Scorpio-N vs XUV700",
+    "models": ["scorpio-n"],
+    "views": 76000
+  },
+  {
+    "id": "comp-5",
+    "name": "City vs Verna",
+    "models": ["city"],
+    "views": 65000
+  },
+  {
+    "id": "comp-6",
+    "name": "Brezza vs Venue",
+    "models": [],
+    "views": 54000
+  }
+]

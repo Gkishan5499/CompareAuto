@@ -1,0 +1,152 @@
+[
+  {
+    "state": "delhi",
+    "stateName": "Delhi",
+    "discom": "bses-rajdhani",
+    "discomName": "BSES Rajdhani",
+    "slab": "0-200",
+    "ratePerUnit": 4.50,
+    "fixedPerDay": 0.40,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "delhi",
+    "stateName": "Delhi",
+    "discom": "bses-rajdhani",
+    "discomName": "BSES Rajdhani",
+    "slab": "201-400",
+    "ratePerUnit": 6.00,
+    "fixedPerDay": 0.40,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "delhi",
+    "stateName": "Delhi",
+    "discom": "bses-rajdhani",
+    "discomName": "BSES Rajdhani",
+    "slab": "401-800",
+    "ratePerUnit": 7.50,
+    "fixedPerDay": 0.40,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "delhi",
+    "stateName": "Delhi",
+    "discom": "bses-rajdhani",
+    "discomName": "BSES Rajdhani",
+    "slab": "800+",
+    "ratePerUnit": 8.50,
+    "fixedPerDay": 0.40,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "maharashtra",
+    "stateName": "Maharashtra",
+    "discom": "msedcl",
+    "discomName": "MSEDCL",
+    "slab": "0-100",
+    "ratePerUnit": 3.16,
+    "fixedPerDay": 0.30,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "maharashtra",
+    "stateName": "Maharashtra",
+    "discom": "msedcl",
+    "discomName": "MSEDCL",
+    "slab": "101-300",
+    "ratePerUnit": 7.51,
+    "fixedPerDay": 0.30,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "maharashtra",
+    "stateName": "Maharashtra",
+    "discom": "msedcl",
+    "discomName": "MSEDCL",
+    "slab": "300+",
+    "ratePerUnit": 9.56,
+    "fixedPerDay": 0.30,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "karnataka",
+    "stateName": "Karnataka",
+    "discom": "bescom",
+    "discomName": "BESCOM",
+    "slab": "0-50",
+    "ratePerUnit": 4.15,
+    "fixedPerDay": 0.50,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "karnataka",
+    "stateName": "Karnataka",
+    "discom": "bescom",
+    "discomName": "BESCOM",
+    "slab": "51-100",
+    "ratePerUnit": 5.75,
+    "fixedPerDay": 0.50,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "karnataka",
+    "stateName": "Karnataka",
+    "discom": "bescom",
+    "discomName": "BESCOM",
+    "slab": "101-200",
+    "ratePerUnit": 7.45,
+    "fixedPerDay": 0.50,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "karnataka",
+    "stateName": "Karnataka",
+    "discom": "bescom",
+    "discomName": "BESCOM",
+    "slab": "200+",
+    "ratePerUnit": 8.75,
+    "fixedPerDay": 0.50,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "tamil-nadu",
+    "stateName": "Tamil Nadu",
+    "discom": "tangedco",
+    "discomName": "TANGEDCO",
+    "slab": "0-100",
+    "ratePerUnit": 0.00,
+    "fixedPerDay": 0.20,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "tamil-nadu",
+    "stateName": "Tamil Nadu",
+    "discom": "tangedco",
+    "discomName": "TANGEDCO",
+    "slab": "101-200",
+    "ratePerUnit": 2.25,
+    "fixedPerDay": 0.20,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "tamil-nadu",
+    "stateName": "Tamil Nadu",
+    "discom": "tangedco",
+    "discomName": "TANGEDCO",
+    "slab": "201-500",
+    "ratePerUnit": 4.50,
+    "fixedPerDay": 0.20,
+    "updated": "2025-11-09"
+  },
+  {
+    "state": "tamil-nadu",
+    "stateName": "Tamil Nadu",
+    "discom": "tangedco",
+    "discomName": "TANGEDCO",
+    "slab": "500+",
+    "ratePerUnit": 6.75,
+    "fixedPerDay": 0.20,
+    "updated": "2025-11-09"
+  }
+]

@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const variant_controller_1 = require("../controllers/variant.controller");
+const router = (0, express_1.Router)();
+router.get("/", variant_controller_1.getAllVariants);
+router.get("/:id", variant_controller_1.getVariantById);
+router.get("/model/:modelId", variant_controller_1.getVariantsByModel);
+router.post("/bulk", variant_controller_1.bulkCreateVariants);
+router.post("/", variant_controller_1.createVariant);
+router.put("/:id", variant_controller_1.updateVariant);
+router.delete("/:id", variant_controller_1.deleteVariant);
+exports.default = router;

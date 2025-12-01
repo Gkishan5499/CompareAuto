@@ -1,0 +1,53 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "migrate:brands": "ts-node src/scripts/import-brands.ts",
+    "migrate:models": "ts-node src/scripts/import-models.ts",
+    "migrate:variants": "ts-node src/scripts/import-variants.ts",
+    "migrate:dealers": "ts-node src/scripts/import-dealers.ts",
+    "migrate:used-cars": "ts-node src/scripts/import-usedCars.ts",
+    "migrate:upcoming-cars": "ts-node src/scripts/import-upcomingCars.ts",
+    "migrate:reviews": "ts-node src/scripts/import-reviews.ts",
+    "migrate:articles": "ts-node src/scripts/import-articles.ts",
+    "migrate:fuel": "ts-node src/scripts/import-fuelPrices.ts",
+    "migrate:electricity": "ts-node src/scripts/import-electricityRates.ts",
+    "migrate:feature-flags": "ts-node src/scripts/import-featureFlags.ts",
+    "migrate:media": "ts-node src/scripts/import-mediaMap.ts",
+    "migrate:comparisons": "ts-node src/scripts/import-comparisons.ts",
+    "create-admin": "ts-node src/scripts/create-admin.ts",
+    "migrate:images": "ts-node src/scripts/migrate-images.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.8.0",
+    "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.0.0",
+    "mongoose": "^8.20.0",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mongoose": "^5.11.96",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.10.1",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

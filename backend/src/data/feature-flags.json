@@ -1,0 +1,11 @@
+{
+  "enableDealers": true,
+  "enableBodyTypes": true,
+  "enableGuides": false,
+  "enableAIPersona": true,
+  "enableUsedCars": true,
+  "enableNews": true,
+  "enableComparisons": true,
+  "enableTools": true,
+  "enableAdSlots": true
+}

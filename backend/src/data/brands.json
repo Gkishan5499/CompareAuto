@@ -1,0 +1,322 @@
+[
+  {
+    "id": "maruti",
+    "name": "Maruti",
+    "logo": "/public/brands/maruti.png",
+    "country": "India",
+    "modelCount": 97,
+    "slug": "maruti"
+  },
+  {
+    "id": "nexa",
+    "name": "Nexa",
+    "logo": "/public/brands/nexa.png",
+    "country": "India",
+    "modelCount": 110,
+    "slug": "nexa"
+  },
+  {
+    "id": "hyundai",
+    "name": "Hyundai",
+    "logo": "/public/brands/hyundai.png",
+    "country": "South Korea",
+    "modelCount": 284,
+    "slug": "hyundai"
+  },
+  {
+    "id": "honda",
+    "name": "Honda",
+    "logo": "/public/brands/honda.png",
+    "country": "Japan",
+    "modelCount": 26,
+    "slug": "honda"
+  },
+  {
+    "id": "tata-motors",
+    "name": "Tata Motors",
+    "logo": "/public/brands/tata-motors.png",
+    "country": "India",
+    "modelCount": 298,
+    "slug": "tata-motors"
+  },
+  {
+    "id": "mahindra",
+    "name": "Mahindra",
+    "logo": "/public/brands/mahindra.png",
+    "country": "India",
+    "modelCount": 202,
+    "slug": "mahindra"
+  },
+  {
+    "id": "toyota",
+    "name": "Toyota",
+    "logo": "/public/brands/toyota.png",
+    "country": "Japan",
+    "modelCount": 83,
+    "slug": "toyota"
+  },
+  {
+    "id": "kia",
+    "name": "KIA",
+    "logo": "/public/brands/kia.png",
+    "country": "South Korea",
+    "modelCount": 86,
+    "slug": "kia"
+  },
+  {
+    "id": "mg-motors",
+    "name": "MG Motors",
+    "logo": "/public/brands/mg-motors.png",
+    "country": "United Kingdom",
+    "modelCount": 80,
+    "slug": "mg-motors"
+  },
+  {
+    "id": "skoda",
+    "name": "Skoda",
+    "logo": "/public/brands/skoda.png",
+    "country": "Czech Republic",
+    "modelCount": 35,
+    "slug": "skoda"
+  },
+  {
+    "id": "volkswagen",
+    "name": "Volkswagen",
+    "logo": "/public/brands/volkswagen.png",
+    "country": "Germany",
+    "modelCount": 28,
+    "slug": "volkswagen"
+  },
+  {
+    "id": "renault",
+    "name": "Renault",
+    "logo": "/public/brands/renault.png",
+    "country": "France",
+    "modelCount": 33,
+    "slug": "renault"
+  },
+  {
+    "id": "nissan",
+    "name": "Nissan",
+    "logo": "/public/brands/nissan.png",
+    "country": "Japan",
+    "modelCount": 29,
+    "slug": "nissan"
+  },
+  {
+    "id": "jeep",
+    "name": "Jeep",
+    "logo": "/public/brands/jeep.png",
+    "country": "USA",
+    "modelCount": 24,
+    "slug": "jeep"
+  },
+  {
+    "id": "citroen",
+    "name": "Citroen",
+    "logo": "/public/brands/citroen.png",
+    "country": "France",
+    "modelCount": 52,
+    "slug": "citroen"
+  },
+  {
+    "id": "byd",
+    "name": "BYD",
+    "logo": "/public/brands/byd.png",
+    "country": "China",
+    "modelCount": 12,
+    "slug": "byd"
+  },
+  {
+    "id": "isuzu",
+    "name": "Isuzu",
+    "logo": "/public/brands/isuzu.png",
+    "country": "Japan",
+    "modelCount": 14,
+    "slug": "isuzu"
+  },
+  {
+    "id": "vinfast",
+    "name": "Vinfast",
+    "logo": "/public/brands/vinfast.png",
+    "country": "Vietnam",
+    "modelCount": 8,
+    "slug": "vinfast"
+  },
+  {
+    "id": "mercedes-benz",
+    "name": "Mercedes Benz",
+    "logo": "/public/brands/mercedes-benz.png",
+    "country": "Germany",
+    "modelCount": 58,
+    "slug": "mercedes-benz"
+  },
+  {
+    "id": "bmw",
+    "name": "BMW",
+    "logo": "/public/brands/bmw.png",
+    "country": "Germany",
+    "modelCount": 38,
+    "slug": "bmw"
+  },
+  {
+    "id": "audi",
+    "name": "Audi",
+    "logo": "/public/brands/audi.png",
+    "country": "Germany",
+    "modelCount": 29,
+    "slug": "audi"
+  },
+  {
+    "id": "volvo",
+    "name": "Volvo",
+    "logo": "/public/brands/volvo.png",
+    "country": "Sweden",
+    "modelCount": 5,
+    "slug": "volvo"
+  },
+  {
+    "id": "lexus",
+    "name": "Lexus",
+    "logo": "/public/brands/lexus.png",
+    "country": "Japan",
+    "modelCount": 14,
+    "slug": "lexus"
+  },
+  {
+    "id": "jaguar",
+    "name": "Jaguar",
+    "logo": "/public/brands/jaguar.png",
+    "country": "United Kingdom",
+    "modelCount": 2,
+    "slug": "jaguar"
+  },
+  {
+    "id": "range-rover",
+    "name": "Range Rover",
+    "logo": "/public/brands/range-rover.png",
+    "country": "United Kingdom",
+    "modelCount": 34,
+    "slug": "range-rover"
+  },
+  {
+    "id": "porsche",
+    "name": "Porsche",
+    "logo": "/public/brands/porsche.png",
+    "country": "Germany",
+    "modelCount": 16,
+    "slug": "porsche"
+  },
+  {
+    "id": "ferrari",
+    "name": "Ferrari",
+    "logo": "/public/brands/ferrari.png",
+    "country": "Italy",
+    "modelCount": 4,
+    "slug": "ferrari"
+  },
+  {
+    "id": "lamborghini",
+    "name": "Lamborghini",
+    "logo": "/public/brands/lamborghini.png",
+    "country": "Italy",
+    "modelCount": 9,
+    "slug": "lamborghini"
+  },
+  {
+    "id": "maserati",
+    "name": "Maserati",
+    "logo": "/public/brands/maserati.png",
+    "country": "Italy",
+    "modelCount": 22,
+    "slug": "maserati"
+  },
+  {
+    "id": "rolls-royce",
+    "name": "Rolls Royce",
+    "logo": "/public/brands/rolls-royce.png",
+    "country": "United Kingdom",
+    "modelCount": 8,
+    "slug": "rolls-royce"
+  },
+  {
+    "id": "bentley",
+    "name": "Bentley",
+    "logo": "/public/brands/bentley.png",
+    "country": "United Kingdom",
+    "modelCount": 29,
+    "slug": "bentley"
+  },
+  {
+    "id": "mini",
+    "name": "MINI",
+    "logo": "/public/brands/mini.png",
+    "country": "United Kingdom",
+    "modelCount": 9,
+    "slug": "mini"
+  },
+  {
+    "id": "aston-martin",
+    "name": "Aston Martin",
+    "logo": "/public/brands/aston-martin.png",
+    "country": "United Kingdom",
+    "modelCount": 5,
+    "slug": "aston-martin"
+  },
+  {
+    "id": "tesla",
+    "name": "Tesla",
+    "logo": "/public/brands/tesla.png",
+    "country": "USA",
+    "modelCount": 4,
+    "slug": "tesla"
+  },
+  {
+    "id": "bajaj",
+    "name": "Bajaj",
+    "logo": "/public/brands/bajaj.png",
+    "country": "India",
+    "modelCount": 1,
+    "slug": "bajaj"
+  },
+  {
+    "id": "storm-motors",
+    "name": "Storm Motors",
+    "logo": "/public/brands/storm-motors.png",
+    "country": "India",
+    "modelCount": 1,
+    "slug": "storm-motors"
+  },
+  {
+    "id": "mclaren",
+    "name": "McLaren",
+    "logo": "/public/brands/mclaren.png",
+    "country": "United Kingdom",
+    "modelCount": 2,
+    "slug": "mclaren"
+  },
+  {
+    "id": "pmv-electric",
+    "name": "PMV Electric",
+    "logo": "/public/brands/pmv-electric.png",
+    "country": "India",
+    "modelCount": 1,
+    "slug": "pmv-electric"
+  },
+  {
+    "id": "lotus",
+    "name": "Lotus",
+    "logo": "/public/brands/lotus.png",
+    "country": "United Kingdom",
+    "modelCount": 5,
+    "slug": "lotus"
+  },
+  {
+    "id": "haima",
+    "name": "Haima",
+    "logo": "/public/brands/haima.png",
+    "country": "China",
+    "modelCount": 0,
+    "slug": "haima"
+  }
+]

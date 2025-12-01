@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "path": "/about",
+      "title": "About CompareAuto.in",
+      "sections": [
+        {
+          "type": "Hero",
+          "props": {
+            "title": "About CompareAuto.in",
+            "subtitle": "India's most comprehensive car comparison platform"
+          }
+        },
+        {
+          "type": "RichText",
+          "props": {
+            "md": "## Our Mission\n\nCompareAuto.in is dedicated to helping Indian car buyers make informed decisions by providing detailed, variant-wise comparisons across all major automotive brands.\n\n## What We Offer\n\n- **Variant-level Comparisons**: Compare cars down to individual variants\n- **Real-time Pricing**: Get accurate ex-showroom and on-road prices for your city\n- **Expert Reviews**: Read professional reviews and owner feedback\n- **Tools & Calculators**: EMI calculator, fuel cost estimator, and more\n\n## Why Choose Us\n\nWith over 500+ models and 50+ brands in our database, we're your one-stop destination for all car research needs."
+          }
+        }
+      ],
+      "seo": {
+        "title": "About CompareAuto.in – India's Variant-wise Car Comparison Platform",
+        "description": "Learn about CompareAuto.in, India's most comprehensive car comparison platform with 500+ models, variant-wise pricing, and expert reviews.",
+        "keywords": ["about compareauto", "car comparison india", "automotive platform"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "punch",
+    "name": "Punch",
+    "brandId": "tata-motors",
+    "brandName": "Tata Motors",
+    "slug": "punch",
+    "image": "/public/cars/placeholder.png",
+    "bodyType": "micro-suv",
+    "fuelTypes": ["Petrol", "CNG"],
+    "priceRange": {"min": 599990, "max": 770290},
+    "variantCount": 3,
+    "rating": 4.2,
+    "reviews": 0,
+    "status": "on_sale"
+  },
+  {
+    "id": "nexon",
+    "name": "Nexon",
+    "brandId": "tata-motors",
+    "brandName": "Tata Motors",
+    "slug": "nexon",
+    "image": "/public/cars/placeholder.png",
+    "bodyType": "mini-suv",
+    "fuelTypes": ["Petrol", "CNG"],
+    "priceRange": {"min": 731890, "max": 914890},
+    "variantCount": 3,
+    "rating": 4.3,
+    "reviews": 0,
+    "status": "on_sale"
+  },
+  {
+    "id": "creta",
+    "name": "Creta",
+    "brandId": "hyundai",
+    "brandName": "Hyundai",
+    "slug": "creta",
+    "image": "/public/cars/placeholder.png",
+    "bodyType": "suv",
+    "fuelTypes": ["Petrol"],
+    "priceRange": {"min": 1072589, "max": 1494036},
+    "variantCount": 3,
+    "rating": 4.4,
+    "reviews": 0,
+    "status": "on_sale"
+  },
+  {
+    "id": "venue",
+    "name": "Venue",
+    "brandId": "hyundai",
+    "brandName": "Hyundai",
+    "slug": "venue",
+    "image": "/public/cars/placeholder.png",
+    "bodyType": "mini-suv",
+    "fuelTypes": ["Petrol"],
+    "priceRange": {"min": 726381, "max": 1022202},
+    "variantCount": 3,
+    "rating": 4.1,
+    "reviews": 0,
+    "status": "on_sale"
+  }
+]

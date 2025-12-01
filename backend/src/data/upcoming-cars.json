@@ -1,0 +1,86 @@
+[
+  {
+    "id": "thar-5-door",
+    "name": "Thar 5-Door",
+    "brandId": "mahindra",
+    "brandName": "Mahindra",
+    "slug": "thar-5-door",
+    "image": "/public/cars/thar-5-door.png",
+    "bodyType": "SUV",
+    "fuelTypes": ["Petrol", "Diesel"],
+    "status": "upcoming",
+    "expectedPriceMin": 1500000,
+    "expectedPriceMax": 2200000,
+    "expectedLaunch": "2025-08-15",
+    "launchWindow": "August 2025",
+    "variantCount": 8,
+    "rating": 0,
+    "reviews": 0,
+    "keyFeatures": [
+      "5-door convenience with classic Thar styling",
+      "4x4 capability with terrain modes",
+      "Petrol and Diesel engine options",
+      "Enhanced safety features"
+    ],
+    "media": {
+      "hero": "/public/cars/thar-5-door.png",
+      "gallery": []
+    }
+  },
+  {
+    "id": "ev6-gt",
+    "name": "EV6 GT",
+    "brandId": "kia",
+    "brandName": "Kia",
+    "slug": "ev6-gt",
+    "image": "/public/cars/ev6-gt.png",
+    "bodyType": "SUV",
+    "fuelTypes": ["EV"],
+    "status": "upcoming",
+    "expectedPriceMin": 6000000,
+    "expectedPriceMax": 6500000,
+    "expectedLaunch": "2025-09-01",
+    "launchWindow": "Q3 2025",
+    "variantCount": 2,
+    "rating": 0,
+    "reviews": 0,
+    "keyFeatures": [
+      "577 HP dual-motor setup",
+      "0-100 km/h in 3.5 seconds",
+      "500+ km range",
+      "Advanced driver assistance systems"
+    ],
+    "media": {
+      "hero": "/public/cars/ev6-gt.png",
+      "gallery": []
+    }
+  },
+  {
+    "id": "fortuner-facelift",
+    "name": "Fortuner Facelift",
+    "brandId": "toyota",
+    "brandName": "Toyota",
+    "slug": "fortuner-facelift",
+    "image": "/public/cars/fortuner-facelift.png",
+    "bodyType": "SUV",
+    "fuelTypes": ["Diesel", "Hybrid"],
+    "status": "upcoming",
+    "expectedPriceMin": 3500000,
+    "expectedPriceMax": 5000000,
+    "expectedLaunch": "2025-07-01",
+    "launchWindow": "July 2025",
+    "variantCount": 6,
+    "rating": 0,
+    "reviews": 0,
+    "keyFeatures": [
+      "Refreshed front and rear design",
+      "Hybrid powertrain option",
+      "Advanced safety suite",
+      "Premium interior updates"
+    ],
+    "media": {
+      "hero": "/public/cars/fortuner-facelift.png",
+      "gallery": []
+    }
+  }
+]

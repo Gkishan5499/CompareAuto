@@ -1,0 +1,37 @@
+{
+  "maruti-suzuki/swift": {
+    "hero": "cars/maruti-suzuki/swift/hero.png",
+    "gallery": [
+      "cars/maruti-suzuki/swift/gallery/front.png",
+      "cars/maruti-suzuki/swift/gallery/side.png",
+      "cars/maruti-suzuki/swift/gallery/rear.png",
+      "cars/maruti-suzuki/swift/gallery/interior.png"
+    ],
+    "colors": {
+      "red": "cars/maruti-suzuki/swift/colors/red.png",
+      "white": "cars/maruti-suzuki/swift/colors/white.png",
+      "blue": "cars/maruti-suzuki/swift/colors/blue.png"
+    },
+    "360": "cars/maruti-suzuki/swift/360-viewer/",
+    "videos": [
+      {
+        "title": "Walk Around",
+        "url": "https://youtube.com/watch?v=..."
+      }
+    ]
+  },
+  "_template": {
+    "hero": "cars/{brand-slug}/{model-slug}/hero.png",
+    "gallery": [
+      "cars/{brand-slug}/{model-slug}/gallery/front.png",
+      "cars/{brand-slug}/{model-slug}/gallery/side.png",
+      "cars/{brand-slug}/{model-slug}/gallery/rear.png",
+      "cars/{brand-slug}/{model-slug}/gallery/interior.png"
+    ],
+    "colors": {
+      "{color-name}": "cars/{brand-slug}/{model-slug}/colors/{color-name}.png"
+    },
+    "360": "cars/{brand-slug}/{model-slug}/360-viewer/",
+    "videos": []
+  }
+}

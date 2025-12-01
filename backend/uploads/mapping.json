@@ -1,0 +1,268 @@
+{
+  "/brands/honda.png": {
+    "localPath": "/brands/honda.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352942/site-migration/brands/honda.png",
+    "public_id": "site-migration/brands/honda",
+    "uploadedAt": "2025-11-28T18:02:23.162Z",
+    "size": 31566
+  },
+  "brands/honda.png": {
+    "localPath": "/brands/honda.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352942/site-migration/brands/honda.png",
+    "public_id": "site-migration/brands/honda",
+    "uploadedAt": "2025-11-28T18:02:23.162Z",
+    "size": 31566
+  },
+  "/brands/hyundai.png": {
+    "localPath": "/brands/hyundai.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352943/site-migration/brands/hyundai.png",
+    "public_id": "site-migration/brands/hyundai",
+    "uploadedAt": "2025-11-28T18:02:24.111Z",
+    "size": 23186
+  },
+  "brands/hyundai.png": {
+    "localPath": "/brands/hyundai.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352943/site-migration/brands/hyundai.png",
+    "public_id": "site-migration/brands/hyundai",
+    "uploadedAt": "2025-11-28T18:02:24.111Z",
+    "size": 23186
+  },
+  "/brands/kia.png": {
+    "localPath": "/brands/kia.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352944/site-migration/brands/kia.png",
+    "public_id": "site-migration/brands/kia",
+    "uploadedAt": "2025-11-28T18:02:25.084Z",
+    "size": 6081
+  },
+  "brands/kia.png": {
+    "localPath": "/brands/kia.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352944/site-migration/brands/kia.png",
+    "public_id": "site-migration/brands/kia",
+    "uploadedAt": "2025-11-28T18:02:25.084Z",
+    "size": 6081
+  },
+  "/brands/mahindra.png": {
+    "localPath": "/brands/mahindra.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352945/site-migration/brands/mahindra.png",
+    "public_id": "site-migration/brands/mahindra",
+    "uploadedAt": "2025-11-28T18:02:27.573Z",
+    "size": 18244
+  },
+  "brands/mahindra.png": {
+    "localPath": "/brands/mahindra.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352945/site-migration/brands/mahindra.png",
+    "public_id": "site-migration/brands/mahindra",
+    "uploadedAt": "2025-11-28T18:02:27.573Z",
+    "size": 18244
+  },
+  "/brands/maruti-suzuki.png": {
+    "localPath": "/brands/maruti-suzuki.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352947/site-migration/brands/maruti-suzuki.png",
+    "public_id": "site-migration/brands/maruti-suzuki",
+    "uploadedAt": "2025-11-28T18:02:28.939Z",
+    "size": 20344
+  },
+  "brands/maruti-suzuki.png": {
+    "localPath": "/brands/maruti-suzuki.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352947/site-migration/brands/maruti-suzuki.png",
+    "public_id": "site-migration/brands/maruti-suzuki",
+    "uploadedAt": "2025-11-28T18:02:28.939Z",
+    "size": 20344
+  },
+  "/brands/mg.png": {
+    "localPath": "/brands/mg.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352949/site-migration/brands/mg.png",
+    "public_id": "site-migration/brands/mg",
+    "uploadedAt": "2025-11-28T18:02:30.542Z",
+    "size": 6248
+  },
+  "brands/mg.png": {
+    "localPath": "/brands/mg.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352949/site-migration/brands/mg.png",
+    "public_id": "site-migration/brands/mg",
+    "uploadedAt": "2025-11-28T18:02:30.542Z",
+    "size": 6248
+  },
+  "/brands/tata-motors.png": {
+    "localPath": "/brands/tata-motors.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352950/site-migration/brands/tata-motors.png",
+    "public_id": "site-migration/brands/tata-motors",
+    "uploadedAt": "2025-11-28T18:02:31.828Z",
+    "size": 13426
+  },
+  "brands/tata-motors.png": {
+    "localPath": "/brands/tata-motors.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352950/site-migration/brands/tata-motors.png",
+    "public_id": "site-migration/brands/tata-motors",
+    "uploadedAt": "2025-11-28T18:02:31.828Z",
+    "size": 13426
+  },
+  "/brands/toyota.png": {
+    "localPath": "/brands/toyota.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352952/site-migration/brands/toyota.png",
+    "public_id": "site-migration/brands/toyota",
+    "uploadedAt": "2025-11-28T18:02:33.111Z",
+    "size": 45063
+  },
+  "brands/toyota.png": {
+    "localPath": "/brands/toyota.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352952/site-migration/brands/toyota.png",
+    "public_id": "site-migration/brands/toyota",
+    "uploadedAt": "2025-11-28T18:02:33.111Z",
+    "size": 45063
+  },
+  "/hero/amaze_hero.png": {
+    "localPath": "/hero/amaze_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352953/site-migration/hero/amaze_hero.png",
+    "public_id": "site-migration/hero/amaze_hero",
+    "uploadedAt": "2025-11-28T18:02:34.559Z",
+    "size": 246029
+  },
+  "hero/amaze_hero.png": {
+    "localPath": "/hero/amaze_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352953/site-migration/hero/amaze_hero.png",
+    "public_id": "site-migration/hero/amaze_hero",
+    "uploadedAt": "2025-11-28T18:02:34.559Z",
+    "size": 246029
+  },
+  "/hero/astor_hero.png": {
+    "localPath": "/hero/astor_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352954/site-migration/hero/astor_hero.png",
+    "public_id": "site-migration/hero/astor_hero",
+    "uploadedAt": "2025-11-28T18:02:35.820Z",
+    "size": 156413
+  },
+  "hero/astor_hero.png": {
+    "localPath": "/hero/astor_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352954/site-migration/hero/astor_hero.png",
+    "public_id": "site-migration/hero/astor_hero",
+    "uploadedAt": "2025-11-28T18:02:35.820Z",
+    "size": 156413
+  },
+  "/hero/baleno_hero.png": {
+    "localPath": "/hero/baleno_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352956/site-migration/hero/baleno_hero.png",
+    "public_id": "site-migration/hero/baleno_hero",
+    "uploadedAt": "2025-11-28T18:02:37.025Z",
+    "size": 111718
+  },
+  "hero/baleno_hero.png": {
+    "localPath": "/hero/baleno_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352956/site-migration/hero/baleno_hero.png",
+    "public_id": "site-migration/hero/baleno_hero",
+    "uploadedAt": "2025-11-28T18:02:37.025Z",
+    "size": 111718
+  },
+  "/hero/carens_hero.png": {
+    "localPath": "/hero/carens_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352957/site-migration/hero/carens_hero.png",
+    "public_id": "site-migration/hero/carens_hero",
+    "uploadedAt": "2025-11-28T18:02:38.092Z",
+    "size": 193578
+  },
+  "hero/carens_hero.png": {
+    "localPath": "/hero/carens_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352957/site-migration/hero/carens_hero.png",
+    "public_id": "site-migration/hero/carens_hero",
+    "uploadedAt": "2025-11-28T18:02:38.092Z",
+    "size": 193578
+  },
+  "/hero/fortuner_hero.png": {
+    "localPath": "/hero/fortuner_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352958/site-migration/hero/fortuner_hero.png",
+    "public_id": "site-migration/hero/fortuner_hero",
+    "uploadedAt": "2025-11-28T18:02:39.293Z",
+    "size": 120764
+  },
+  "hero/fortuner_hero.png": {
+    "localPath": "/hero/fortuner_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352958/site-migration/hero/fortuner_hero.png",
+    "public_id": "site-migration/hero/fortuner_hero",
+    "uploadedAt": "2025-11-28T18:02:39.293Z",
+    "size": 120764
+  },
+  "/hero/nexon_hero.png": {
+    "localPath": "/hero/nexon_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352960/site-migration/hero/nexon_hero.png",
+    "public_id": "site-migration/hero/nexon_hero",
+    "uploadedAt": "2025-11-28T18:02:41.150Z",
+    "size": 113688
+  },
+  "hero/nexon_hero.png": {
+    "localPath": "/hero/nexon_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352960/site-migration/hero/nexon_hero.png",
+    "public_id": "site-migration/hero/nexon_hero",
+    "uploadedAt": "2025-11-28T18:02:41.150Z",
+    "size": 113688
+  },
+  "/hero/seltos_hero.png": {
+    "localPath": "/hero/seltos_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352961/site-migration/hero/seltos_hero.png",
+    "public_id": "site-migration/hero/seltos_hero",
+    "uploadedAt": "2025-11-28T18:02:42.207Z",
+    "size": 103946
+  },
+  "hero/seltos_hero.png": {
+    "localPath": "/hero/seltos_hero.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352961/site-migration/hero/seltos_hero.png",
+    "public_id": "site-migration/hero/seltos_hero",
+    "uploadedAt": "2025-11-28T18:02:42.207Z",
+    "size": 103946
+  },
+  "/ads/billboard_970x250.png": {
+    "localPath": "/ads/billboard_970x250.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352962/site-migration/ads/billboard_970x250.png",
+    "public_id": "site-migration/ads/billboard_970x250",
+    "uploadedAt": "2025-11-28T18:02:43.241Z",
+    "size": 1513
+  },
+  "ads/billboard_970x250.png": {
+    "localPath": "/ads/billboard_970x250.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352962/site-migration/ads/billboard_970x250.png",
+    "public_id": "site-migration/ads/billboard_970x250",
+    "uploadedAt": "2025-11-28T18:02:43.241Z",
+    "size": 1513
+  },
+  "/ads/leaderboard_970x90.png": {
+    "localPath": "/ads/leaderboard_970x90.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352963/site-migration/ads/leaderboard_970x90.png",
+    "public_id": "site-migration/ads/leaderboard_970x90",
+    "uploadedAt": "2025-11-28T18:02:44.420Z",
+    "size": 713
+  },
+  "ads/leaderboard_970x90.png": {
+    "localPath": "/ads/leaderboard_970x90.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352963/site-migration/ads/leaderboard_970x90.png",
+    "public_id": "site-migration/ads/leaderboard_970x90",
+    "uploadedAt": "2025-11-28T18:02:44.420Z",
+    "size": 713
+  },
+  "/ads/leaderboard_mobile_320x100.png": {
+    "localPath": "/ads/leaderboard_mobile_320x100.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352964/site-migration/ads/leaderboard_mobile_320x100.png",
+    "public_id": "site-migration/ads/leaderboard_mobile_320x100",
+    "uploadedAt": "2025-11-28T18:02:45.550Z",
+    "size": 542
+  },
+  "ads/leaderboard_mobile_320x100.png": {
+    "localPath": "/ads/leaderboard_mobile_320x100.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352964/site-migration/ads/leaderboard_mobile_320x100.png",
+    "public_id": "site-migration/ads/leaderboard_mobile_320x100",
+    "uploadedAt": "2025-11-28T18:02:45.550Z",
+    "size": 542
+  },
+  "/ads/sidebar_300x250.png": {
+    "localPath": "/ads/sidebar_300x250.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352965/site-migration/ads/sidebar_300x250.png",
+    "public_id": "site-migration/ads/sidebar_300x250",
+    "uploadedAt": "2025-11-28T18:02:47.188Z",
+    "size": 936
+  },
+  "ads/sidebar_300x250.png": {
+    "localPath": "/ads/sidebar_300x250.png",
+    "cloudUrl": "https://res.cloudinary.com/dobqohbuy/image/upload/v1764352965/site-migration/ads/sidebar_300x250.png",
+    "public_id": "site-migration/ads/sidebar_300x250",
+    "uploadedAt": "2025-11-28T18:02:47.188Z",
+    "size": 936
+  }
+}

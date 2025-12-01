@@ -1,0 +1,147 @@
+[
+  {
+    "id": "DLR0001",
+    "name": "ABC Hyundai Delhi",
+    "brands": ["Hyundai"],
+    "categories": ["Sales", "Service", "Spares"],
+    "dealerCode": "HYD-DEL-001",
+    "address": {
+      "line1": "12, Main Road, Connaught Place",
+      "line2": "Near Rajiv Chowk Metro",
+      "city": "New Delhi",
+      "state": "Delhi",
+      "pincode": "110001"
+    },
+    "phones": ["+91-9876543210", "+91-11-45678900"],
+    "email": "contact@abchyundai.in",
+    "website": "https://abchyundai.in",
+    "hours": {
+      "mon_sat": "10:00–19:00",
+      "sun": "Closed"
+    },
+    "location": {
+      "lat": 28.6139,
+      "lng": 77.209
+    },
+    "rating": 4.3,
+    "verified": true,
+    "updated": "2025-11-09",
+    "images": []
+  },
+  {
+    "id": "DLR0002",
+    "name": "XYZ Maruti Mumbai",
+    "brands": ["Maruti"],
+    "categories": ["Sales", "Service"],
+    "dealerCode": "MAR-MUM-101",
+    "address": {
+      "line1": "Shop 45, Linking Road",
+      "line2": "Bandra West",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "pincode": "400050"
+    },
+    "phones": ["+91-9988776655", "+91-22-26543210"],
+    "email": "info@xyzmaruti.com",
+    "website": "https://xyzmaruti.com",
+    "hours": {
+      "mon_sat": "09:00–20:00",
+      "sun": "10:00–18:00"
+    },
+    "location": {
+      "lat": 19.0596,
+      "lng": 72.8295
+    },
+    "rating": 4.5,
+    "verified": true,
+    "updated": "2025-11-08",
+    "images": []
+  },
+  {
+    "id": "DLR0003",
+    "name": "Prime Tata Motors Bangalore",
+    "brands": ["Tata Motors"],
+    "categories": ["Sales", "Service", "Spares"],
+    "dealerCode": "TAT-BLR-202",
+    "address": {
+      "line1": "88, MG Road",
+      "line2": "Near Trinity Metro",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "pincode": "560001"
+    },
+    "phones": ["+91-9123456789", "+91-80-41234567"],
+    "email": "sales@primetata.in",
+    "website": "https://primetata.in",
+    "hours": {
+      "mon_sat": "09:30–19:30",
+      "sun": "Closed"
+    },
+    "location": {
+      "lat": 12.9716,
+      "lng": 77.5946
+    },
+    "rating": 4.2,
+    "verified": true,
+    "updated": "2025-11-07",
+    "images": []
+  },
+  {
+    "id": "DLR0004",
+    "name": "Royal Honda Chennai",
+    "brands": ["Honda"],
+    "categories": ["Sales", "Service"],
+    "dealerCode": "HON-CHE-303",
+    "address": {
+      "line1": "No. 123, Mount Road",
+      "line2": "Thousand Lights",
+      "city": "Chennai",
+      "state": "Tamil Nadu",
+      "pincode": "600006"
+    },
+    "phones": ["+91-9845612378", "+91-44-28123456"],
+    "email": "enquiry@royalhonda.com",
+    "website": "https://royalhonda.com",
+    "hours": {
+      "mon_sat": "10:00–19:00",
+      "sun": "10:00–17:00"
+    },
+    "location": {
+      "lat": 13.0827,
+      "lng": 80.2707
+    },
+    "rating": 4.4,
+    "verified": true,
+    "updated": "2025-11-06",
+    "images": []
+  },
+  {
+    "id": "DLR0005",
+    "name": "Elite Mahindra Pune",
+    "brands": ["Mahindra"],
+    "categories": ["Sales", "Service", "Spares"],
+    "dealerCode": "MAH-PUN-404",
+    "address": {
+      "line1": "Plot 567, FC Road",
+      "line2": "Shivajinagar",
+      "city": "Pune",
+      "state": "Maharashtra",
+      "pincode": "411005"
+    },
+    "phones": ["+91-9765432198", "+91-20-25678901"],
+    "email": "contact@elitemahindra.co.in",
+    "website": "https://elitemahindra.co.in",
+    "hours": {
+      "mon_sat": "09:00–19:00",
+      "sun": "Closed"
+    },
+    "location": {
+      "lat": 18.5204,
+      "lng": 73.8567
+    },
+    "rating": 4.1,
+    "verified": true,
+    "updated": "2025-11-05",
+    "images": []
+  }
+]

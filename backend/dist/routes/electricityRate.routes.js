@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const electricityRate_controller_1 = require("../controllers/electricityRate.controller");
+const router = (0, express_1.Router)();
+router.get("/", electricityRate_controller_1.getAllElectricityRates);
+router.get("/:state", electricityRate_controller_1.getElectricityRatesByState);
+router.post("/", electricityRate_controller_1.createElectricityRate);
+router.put("/:id", electricityRate_controller_1.updateElectricityRate);
+router.delete("/:id", electricityRate_controller_1.deleteElectricityRate);
+exports.default = router;

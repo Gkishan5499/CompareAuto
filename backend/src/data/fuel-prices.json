@@ -1,0 +1,82 @@
+[
+  {
+    "city": "delhi-ncr",
+    "cityName": "Delhi NCR",
+    "petrol": 96.72,
+    "diesel": 89.62,
+    "cng": 75.61,
+    "updated": "2025-11-09"
+  },
+  {
+    "city": "mumbai",
+    "cityName": "Mumbai",
+    "petrol": 106.31,
+    "diesel": 94.27,
+    "cng": 86.00,
+    "updated": "2025-11-09"
+  },
+  {
+    "city": "bangalore",
+    "cityName": "Bangalore",
+    "petrol": 101.94,
+    "diesel": 87.89,
+    "cng": null,
+    "updated": "2025-11-09"
+  },
+  {
+    "city": "hyderabad",
+    "cityName": "Hyderabad",
+    "petrol": 109.66,
+    "diesel": 97.82,
+    "cng": null,
+    "updated": "2025-11-09"
+  },
+  {
+    "city": "chennai",
+    "cityName": "Chennai",
+    "petrol": 102.63,
+    "diesel": 94.24,
+    "cng": null,
+    "updated": "2025-11-09"
+  },
+  {
+    "city": "pune",
+    "cityName": "Pune",
+    "petrol": 104.65,
+    "diesel": 93.39,
+    "cng": 85.50,
+    "updated": "2025-11-09"
+  },
+  {
+    "city": "kolkata",
+    "cityName": "Kolkata",
+    "petrol": 106.03,
+    "diesel": 92.76,
+    "cng": 84.40,
+    "updated": "2025-11-09"
+  },
+  {
+    "city": "ahmedabad",
+    "cityName": "Ahmedabad",
+    "petrol": 96.58,
+    "diesel": 93.25,
+    "cng": 68.87,
+    "updated": "2025-11-09"
+  },
+  {
+    "city": "jaipur",
+    "cityName": "Jaipur",
+    "petrol": 107.59,
+    "diesel": 92.37,
+    "cng": null,
+    "updated": "2025-11-09"
+  },
+  {
+    "city": "chandigarh",
+    "cityName": "Chandigarh",
+    "petrol": 96.20,
+    "diesel": 84.26,
+    "cng": 76.00,
+    "updated": "2025-11-09"
+  }
+]
