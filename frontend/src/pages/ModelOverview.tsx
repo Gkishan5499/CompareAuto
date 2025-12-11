@@ -11,16 +11,24 @@ import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import VariantTable from "@/components/model/VariantTable";
 import ColorSwatches from "@/components/model/ColorSwatches";
 import { PriceBreakupModal } from "@/components/model/PriceBreakupModal";
+import { PriceBreakupComponent } from "@/components/variant/PriceBreakupComponent";
+import { calculatePriceBreakdown, calculatePriceBreakdownWithConfig, getStateFromCity } from "@/lib/priceCalculations";
 import PhotoGallery from "@/components/model/PhotoGallery";
 import VideoEmbed from "@/components/model/VideoEmbed";
 import Viewer360 from "@/components/model/Viewer360";
 import { LeadsStrip } from "@/components/leads/LeadsStrip";
-import { getModel, getVariants, getModels } from "@/lib/data";
-import { useModel, useVariants } from "@/lib/api-hooks";
-import { specsApi } from "@/lib/api";
+import { useModel, useVariants, useModels } from "@/lib/api-hooks";
+import { specsApi, citiesApi } from "@/lib/api";
 import { updateMetaTags, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { formatINR, parseINRToRupees } from "@/lib/guards";
 import { useCity } from "@/contexts/CityContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Calculator, Plus, ChevronRight, Star, 
   Fuel, Gauge, Settings, ShieldCheck, 
@@ -45,26 +53,24 @@ const ModelOverview = () => {
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState("White");
+  const [selectedCity, setSelectedCity] = useState<string>(city || "Delhi NCR");
   const [activeTab, setActiveTab] = useState<"overview" | "variants" | "specs" | "colors" | "photos" | "faq">("overview");
   const [specs, setSpecs] = useState<any | null>(null);
+  const [cities, setCities] = useState<Array<{ id: string; name: string; state: string; slug: string }>>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
 
-  const fallbackModel = brand && modelSlug ? getModel(brand, modelSlug) : undefined;
-  const fallbackVariants = fallbackModel ? getVariants(fallbackModel.id) : [];
-
-  const { data: apiModel, isLoading: modelLoading } = useModel(brand || "", modelSlug || "");
-  const modelData = apiModel || fallbackModel;
-
-  const { data: apiVariants, isLoading: variantsLoading } = useVariants(apiModel?.id || fallbackModel?.id || "");
-  const variants = apiVariants || fallbackVariants;
+  // Backend API only - No fallback data
+  const { data: modelData, isLoading: modelLoading } = useModel(brand || "", modelSlug || "");
+  const { data: variants, isLoading: variantsLoading } = useVariants(modelData?.id || "");
+  const { data: allModels = [] } = useModels();
   const loading = modelLoading || variantsLoading;
 
   const brandLogo = getBrandLogo(modelData?.brandName);
   const brandInitial = getBrandInitial(modelData?.brandName);
 
   // Competitors logic
-  const allModels = getModels();
   const competitors = allModels
-    .filter((m) => m.bodyType === modelData?.bodyType && m.brandId !== modelData?.brandId)
+    .filter((m: any) => m.bodyType === modelData?.bodyType && m.brandId !== modelData?.brandId)
     .slice(0, 4);
 
   // Media data
@@ -77,11 +83,11 @@ const ModelOverview = () => {
   };
 
   const carImage = mediaData.hero || modelData?.image || DEFAULT_OG_IMAGE;
-  const colors = variants[0]?.colors || ["White", "Black", "Silver", "Red", "Blue"];
+  const colors = variants?.[0]?.colors || ["White", "Black", "Silver", "Red", "Blue"];
 
   // Price Logic
   const { minPrice, maxPrice } = useMemo(() => {
-    if (!modelData) return { minPrice: 0, maxPrice: 0 };
+    if (!modelData || !variants) return { minPrice: 0, maxPrice: 0 };
     
     // Calculate range from variants
     const prices = variants
@@ -116,8 +122,25 @@ const ModelOverview = () => {
     });
   }, [modelData, brand, modelSlug]);
 
+  // Fetch cities from backend
   useEffect(() => {
-    if (variants.length > 0) {
+    const fetchCities = async () => {
+      try {
+        setLoadingCities(true);
+        const allCities = await citiesApi.getAll();
+        setCities(allCities);
+      } catch (error) {
+        console.error("Failed to fetch cities:", error);
+        // Keep cities empty, will fallback to showing text input or default cities
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, []);
+
+  useEffect(() => {
+    if (variants && variants.length > 0) {
       specsApi.getByVariant(variants[0].id).then(setSpecs).catch(() => setSpecs(null));
     }
   }, [variants]);
@@ -127,8 +150,15 @@ const ModelOverview = () => {
     setPriceModalOpen(true);
   };
 
+  // Get ex-showroom price for selected variant or first variant
+  const selectedVariant = variants?.find(v => v.id === selectedVariantId) || variants?.[0];
+  const selectedVariantPrice = selectedVariant ? parseINRToRupees(selectedVariant.price) : null;
+  
+  // Use selected variant price for display
+  const displayPrice = selectedVariantPrice || minPrice;
+
   const handleAddToCompare = () => {
-    if (variants[0]) {
+    if (variants && variants[0]) {
       const compareList = JSON.parse(localStorage.getItem("compareList") || "[]");
       if (!compareList.includes(variants[0].id) && compareList.length < 3) {
         compareList.push(variants[0].id);
@@ -138,13 +168,72 @@ const ModelOverview = () => {
     }
   };
 
+    // City-wise pricing calculation - calculate both min and max on-road prices
+    const [minPriceBreakdown, setMinPriceBreakdown] = useState<any | null>(null);
+    const [maxPriceBreakdown, setMaxPriceBreakdown] = useState<any | null>(null);
+    const selectedState = getStateFromCity(selectedCity);
+
+    useEffect(() => {
+        let cancelled = false;
+        const compute = async () => {
+            if (minPrice <= 0 && maxPrice <= 0) {
+                setMinPriceBreakdown(null);
+                setMaxPriceBreakdown(null);
+                return;
+            }
+
+            try {
+                // Calculate min price (base variant) on-road price
+                if (minPrice > 0) {
+                    const resp = await fetch(`/api/pricing/calc`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ exShowroomPrice: minPrice, state: selectedState }),
+                    });
+                    if (resp.ok) {
+                        const json = await resp.json();
+                        if (!cancelled) setMinPriceBreakdown(json.breakdown);
+                    } else {
+                        if (!cancelled) setMinPriceBreakdown(calculatePriceBreakdown(minPrice, selectedCity));
+                    }
+                }
+
+                // Calculate max price (top variant) on-road price if different from min
+                if (maxPrice > 0 && maxPrice !== minPrice) {
+                    const resp2 = await fetch(`/api/pricing/calc`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ exShowroomPrice: maxPrice, state: selectedState }),
+                    });
+                    if (resp2.ok) {
+                        const json2 = await resp2.json();
+                        if (!cancelled) setMaxPriceBreakdown(json2.breakdown);
+                    } else {
+                        if (!cancelled) setMaxPriceBreakdown(calculatePriceBreakdown(maxPrice, selectedCity));
+                    }
+                } else {
+                    if (!cancelled) setMaxPriceBreakdown(null);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setMinPriceBreakdown(minPrice > 0 ? calculatePriceBreakdown(minPrice, selectedCity) : null);
+                    setMaxPriceBreakdown(maxPrice > 0 && maxPrice !== minPrice ? calculatePriceBreakdown(maxPrice, selectedCity) : null);
+                }
+            }
+        };
+
+        compute();
+        return () => { cancelled = true; };
+    }, [minPrice, maxPrice, selectedCity, selectedState]);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!modelData || !brand || !modelSlug) return <div>Not Found</div>;
 
   const hasPrice = minPrice > 0;
+  // Show ex-showroom price range in compact format
   const priceLabel = minPrice === maxPrice || !maxPrice
       ? formatINR(minPrice || maxPrice, true)
-      : `${formatINR(minPrice, true)} - ${formatINR(maxPrice, true)}`;
+      : `Rs. ${(minPrice / 100000).toFixed(2)} - ${(maxPrice / 100000).toFixed(2)} Lakh`;
 
   const primaryMileage = variants.length > 0
       ? Math.max(...variants.map((v) => (typeof v.mileage === "number" ? v.mileage : 0)))
@@ -202,7 +291,7 @@ const ModelOverview = () => {
                         <div className="p-4 flex flex-col items-center justify-center text-center gap-1">
                              <Fuel className="w-5 h-5 text-blue-500" />
                              <span className="text-xs text-muted-foreground">Fuel Type</span>
-                             <span className="font-semibold text-sm">{variants[0]?.fuelType || "Petrol/Diesel"}</span>
+                             <span className="font-semibold text-sm">{variants?.[0]?.fuelType || "Petrol/Diesel"}</span>
                         </div>
                         <div className="p-4 flex flex-col items-center justify-center text-center gap-1">
                              <Settings className="w-5 h-5 text-slate-500" />
@@ -337,7 +426,7 @@ const ModelOverview = () => {
                                 <CardContent className="p-0">
                                     <Table>
                                         <TableBody>
-                                            <TableRow><TableCell className="font-medium">Displacement</TableCell><TableCell className="text-right">{specs?.engine?.engine_cc || variants[0]?.engine} cc</TableCell></TableRow>
+                                            <TableRow><TableCell className="font-medium">Displacement</TableCell><TableCell className="text-right">{specs?.engine?.engine_cc || variants?.[0]?.engine} cc</TableCell></TableRow>
                                             <TableRow><TableCell className="font-medium">Power</TableCell><TableCell className="text-right">{specs?.engine?.power || "115 BHP"}</TableCell></TableRow>
                                             <TableRow><TableCell className="font-medium">Torque</TableCell><TableCell className="text-right">{specs?.engine?.torque || "144 Nm"}</TableCell></TableRow>
                                         </TableBody>
@@ -415,20 +504,65 @@ const ModelOverview = () => {
                             <Badge variant="outline">{modelData.bodyType}</Badge>
                             <span className="text-sm text-muted-foreground">{variants.length} Variants</span>
                          </div>
-                         <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-                             <div className="flex items-center justify-between mb-1">
-                                 <span className="text-xs text-muted-foreground font-medium uppercase">Ex-Showroom</span>
-                                 {city && <div className="flex items-center text-xs text-muted-foreground"><MapPin className="w-3 h-3 mr-1" /> {city}</div>}
+
+                         {/* City Selector */}
+                         <div className="mt-4 space-y-2 mb-4">
+                           <label className="text-xs text-muted-foreground font-medium uppercase">Select City</label>
+                           <Select value={selectedCity} onValueChange={setSelectedCity}>
+                             <SelectTrigger className="w-full">
+                               <SelectValue placeholder="Select your city" />
+                             </SelectTrigger>
+                             <SelectContent className="max-h-[300px]">
+                               {loadingCities ? (
+                                 <div className="p-4 text-center text-sm text-muted-foreground">
+                                   Loading cities...
+                                 </div>
+                               ) : cities.length > 0 ? (
+                                 cities.map((city) => (
+                                   <SelectItem key={city.id} value={city.name}>
+                                     {city.name} ({city.state})
+                                   </SelectItem>
+                                 ))
+                               ) : (
+                                 <div className="p-4 text-center text-sm text-muted-foreground">
+                                   No cities available
+                                 </div>
+                               )}
+                             </SelectContent>
+                           </Select>
+                         </div>
+
+                         <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-100 dark:border-slate-800 space-y-3">
+                             {/* Ex-Showroom Price */}
+                             <div>
+                                 <span className="text-xs text-muted-foreground font-medium uppercase">Ex-Showroom Price</span>
+                                 <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                                    {hasPrice ? priceLabel : "Price TBA"}
+                                 </div>
                              </div>
-                             <div className="text-2xl font-bold text-primary">
-                                {hasPrice ? priceLabel : "Price TBA"}
-                             </div>
+
+                             {/* On-Road Price */}
+                             {minPriceBreakdown && (
+                               <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                                 <span className="text-xs text-muted-foreground font-medium uppercase">On-Road Price ({selectedCity})</span>
+                                 <div className="text-2xl font-extrabold text-primary mt-1">
+                                    {minPrice === maxPrice || !maxPrice || !maxPriceBreakdown
+                                      ? formatINR(minPriceBreakdown.onRoadPrice, true)
+                                      : `Rs. ${(minPriceBreakdown.onRoadPrice / 100000).toFixed(2)} - ${(maxPriceBreakdown.onRoadPrice / 100000).toFixed(2)} Lakh`
+                                    }
+                                 </div>
+                                 <p className="text-xs text-muted-foreground mt-2">
+                                   Includes GST, RTO, Insurance & Taxes
+                                 </p>
+                               </div>
+                             )}
                          </div>
                     </CardHeader>
                     <CardContent className="space-y-3 pt-0">
-                         <Button size="lg" className="w-full font-semibold shadow-lg shadow-primary/20" onClick={() => handleCheckPrice(variants[0]?.id)}>
+                         <Button size="lg" className="w-full font-semibold shadow-lg shadow-primary/20" onClick={() => handleCheckPrice(variants?.[0]?.id)}>
                             <Calculator className="w-4 h-4 mr-2" /> Check On-Road Price
                          </Button>
+                         {minPriceBreakdown && <PriceBreakupComponent breakdown={minPriceBreakdown} city={selectedCity} />}
                          <div className="grid grid-cols-2 gap-3">
                             <Button variant="outline" onClick={handleAddToCompare}>
                                 <Plus className="w-4 h-4 mr-2" /> Compare
@@ -532,10 +666,11 @@ const ModelOverview = () => {
       <PriceBreakupModal
         open={priceModalOpen}
         onOpenChange={setPriceModalOpen}
-        variantId={selectedVariantId || variants[0]?.id || null}
-        city={city}
+        variantId={selectedVariantId || variants?.[0]?.id || null}
+        city={selectedCity}
         brandName={modelData.brandName}
         modelName={modelData.name}
+        exShowroomPrice={selectedVariantPrice || undefined}
       />
     </div>
   );

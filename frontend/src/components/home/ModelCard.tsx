@@ -5,8 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Model } from "@/lib/data";
 import { toast } from "sonner";
-import { memo } from "react";
+import { memo, useState, useEffect } from "react";
 import { getBrandLogo, getBrandInitial } from "@/lib/brandLogos";
+import { useCity } from "@/contexts/CityContext";
+import { getStateFromCity } from "@/lib/priceCalculations";
+import { variantsApi } from "@/lib/api";
+import { parseINRToRupees } from "@/lib/guards";
 
 interface ModelCardProps {
   model: Model;
@@ -16,6 +20,98 @@ const ModelCard = memo(({ model }: ModelCardProps) => {
   const brandSlug = model.brandName.toLowerCase().replace(/\s+/g, "-");
   const brandLogo = getBrandLogo(model.brandName);
   const brandInitial = getBrandInitial(model.brandName);
+  const { city } = useCity();
+  const [onRoadPriceRange, setOnRoadPriceRange] = useState<{ min: number; max: number } | null>(null);
+  const [variantPriceRange, setVariantPriceRange] = useState<{ min: number; max: number } | null>(null);
+
+  // Fetch variant prices from backend
+  useEffect(() => {
+    const fetchVariantPrices = async () => {
+      try {
+        const variants = await variantsApi.getByModel(model.id);
+        
+        if (variants && variants.length > 0) {
+          const prices = variants
+            .map((v: any) => parseINRToRupees(v?.price))
+            .filter((p) => p && p > 0) as number[];
+          
+          if (prices.length > 0) {
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            setVariantPriceRange({ min, max });
+          } else {
+            setVariantPriceRange(null);
+          }
+        } else {
+          setVariantPriceRange(null);
+        }
+      } catch (error) {
+        // Fallback to model price range
+        if (model.priceRange) {
+          setVariantPriceRange(model.priceRange);
+        }
+      }
+    };
+
+    fetchVariantPrices();
+  }, [model]);
+
+  // Calculate on-road price range based on actual variant prices
+  useEffect(() => {
+    const calculateOnRoadRange = async () => {
+      if (model.status === "upcoming") {
+        setOnRoadPriceRange(null);
+        return;
+      }
+
+      const minExShowroom = variantPriceRange?.min || model.priceRange?.min || 0;
+      const maxExShowroom = variantPriceRange?.max || model.priceRange?.max || 0;
+
+      if (minExShowroom === 0) {
+        setOnRoadPriceRange(null);
+        return;
+      }
+
+      try {
+        const state = getStateFromCity(city);
+
+        // Calculate min on-road price
+        const minResp = await fetch(`/api/pricing/calc`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ exShowroomPrice: minExShowroom, state }),
+        });
+
+        let minOnRoad = minExShowroom;
+        if (minResp.ok) {
+          const minData = await minResp.json();
+          minOnRoad = minData.breakdown.onRoadPrice;
+        }
+
+        // Calculate max on-road price if different from min
+        let maxOnRoad = minOnRoad;
+        if (maxExShowroom > 0 && maxExShowroom !== minExShowroom) {
+          const maxResp = await fetch(`/api/pricing/calc`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ exShowroomPrice: maxExShowroom, state }),
+          });
+
+          if (maxResp.ok) {
+            const maxData = await maxResp.json();
+            maxOnRoad = maxData.breakdown.onRoadPrice;
+          }
+        }
+
+        setOnRoadPriceRange({ min: minOnRoad, max: maxOnRoad });
+      } catch (error) {
+        // Fallback: use ex-showroom prices
+        setOnRoadPriceRange(null);
+      }
+    };
+
+    calculateOnRoadRange();
+  }, [model, city, variantPriceRange]);
 
   const handleAddToCompare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -120,16 +216,45 @@ const ModelCard = memo(({ model }: ModelCardProps) => {
           </div>
 
           <div className="mt-auto space-y-3 pt-2 border-t">
-            <div className="flex items-baseline gap-1 flex-wrap">
-              <span className="text-xl md:text-2xl font-bold text-primary">
-                {model.status === "upcoming" 
-                  ? `₹${((model.expectedPriceMin || 0) / 100000).toFixed(2)}L`
-                  : `₹${((model.priceRange?.min || 0) / 100000).toFixed(2)}L`
-                }
-              </span>
-              <span className="text-xs md:text-sm text-muted-foreground">
-                {model.status === "upcoming" ? "expected" : "onwards"}
-              </span>
+            <div className="flex flex-col gap-1">
+              {model.status === "upcoming" ? (
+                <>
+                  <span className="text-xl md:text-2xl font-bold text-primary">
+                    Rs. {((model.expectedPriceMin || 0) / 100000).toFixed(2)} Lakh
+                  </span>
+                  <span className="text-xs md:text-sm text-muted-foreground font-medium">
+                    Expected
+                  </span>
+                </>
+              ) : onRoadPriceRange ? (
+                <>
+                  <div className="flex items-baseline gap-1 flex-wrap">
+                    <span className="text-xl md:text-2xl font-bold text-primary">
+                      {onRoadPriceRange.min === onRoadPriceRange.max
+                        ? `Rs. ${(onRoadPriceRange.min / 100000).toFixed(2)} Lakh`
+                        : `Rs. ${(onRoadPriceRange.min / 100000).toFixed(2)} - ${(onRoadPriceRange.max / 100000).toFixed(2)} Lakh`
+                      }
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    On-Road Price in {city}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-1 flex-wrap">
+                    <span className="text-xl md:text-2xl font-bold text-primary">
+                      Rs. {((model.priceRange?.min || 0) / 100000).toFixed(2)} Lakh
+                    </span>
+                    <span className="text-xs md:text-sm text-muted-foreground font-medium">
+                      Onwards
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Ex-Showroom Price
+                  </span>
+                </>
+              )}
             </div>
 
             <div className="flex gap-2">

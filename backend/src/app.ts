@@ -18,12 +18,16 @@ import cityRoutes from "./routes/city.routes";
 import searchRoutes from "./routes/search.routes";
 import filterRoutes from "./routes/filter.routes";
 import popularRoutes from "./routes/popular.routes";
+import stateTaxConfigRoutes from "./routes/stateTaxConfig.routes";
+import pricingAdminRoutes from "./routes/pricing.admin.routes";
+import pricingRoutes from "./routes/pricing.routes";
 import path from "path";
 import authRoutes from "./routes/auth.routes";
 import uploadRoutes from "./routes/upload.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import specsRoutes from "./routes/specs.routes";
 import specsCsvRoutes from "./routes/specsCSV.routes";
+import heroCarouselRoutes from "./routes/heroCarousel.routes";
 
 
 
@@ -73,6 +77,10 @@ app.use("/api/uploads", uploadRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 // register specs csv upload route (admin-only)
 app.use("/api/specs-csv", specsCsvRoutes);
+// Admin pricing and tax management
+app.use("/api/admin/pricing", pricingAdminRoutes);
+// Public pricing helpers
+app.use("/api/pricing", pricingRoutes);
 
 app.use("/api/brands", brandRoutes);
 app.use("/api/articles", articleRoutes);
@@ -91,7 +99,9 @@ app.use("/api/cities", cityRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/filters", filterRoutes);
 app.use("/api/popular", popularRoutes);
+app.use("/api/state-tax-config", stateTaxConfigRoutes);
 app.use("/api/specs", specsRoutes);
+app.use("/api/hero-carousel", heroCarouselRoutes);
 
 
 // Serve static images

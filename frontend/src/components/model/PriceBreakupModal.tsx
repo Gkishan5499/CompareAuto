@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getOnRoadPrice } from "@/lib/api";
-import { Loader2 } from "lucide-react";
+import { calculatePriceBreakdown, PriceBreakdown, getStateFromCity } from "@/lib/priceCalculations";
+import { formatINR } from "@/lib/guards";
+import { MapPin, Loader2 } from "lucide-react";
 
 interface PriceBreakupModalProps {
   open: boolean;
@@ -13,14 +15,7 @@ interface PriceBreakupModalProps {
   city: string;
   brandName?: string;
   modelName?: string;
-}
-
-interface PriceBreakup {
-  exShowroom: number;
-  rto: number;
-  insurance: number;
-  others: number;
-  onRoad: number;
+  exShowroomPrice?: number;
 }
 
 export const PriceBreakupModal = ({
@@ -30,49 +25,93 @@ export const PriceBreakupModal = ({
   city,
   brandName,
   modelName,
+  exShowroomPrice,
 }: PriceBreakupModalProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [priceData, setPriceData] = useState<PriceBreakup | null>(null);
+  const [priceData, setPriceData] = useState<PriceBreakdown | null>(null);
+  const state = getStateFromCity(city);
 
   useEffect(() => {
-    if (open && variantId) {
-      fetchPriceBreakup();
+    if (open && exShowroomPrice && variantId) {
+      calculatePrice();
     }
-  }, [open, variantId, city]);
-
-  const fetchPriceBreakup = async () => {
-    if (!variantId) return;
+  }, [open, exShowroomPrice, city, variantId]);
+  
+  const calculatePrice = async () => {
+    if (!exShowroomPrice) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      const data = await getOnRoadPrice(variantId, city);
-      setPriceData(data);
+      // Try to fetch from backend with admin-configured taxes
+      if (variantId) {
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        const resp = await fetch(
+          `/api/pricing/variant/${variantId}/price?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}&_t=${timestamp}`,
+          {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          }
+        );
+        if (resp.ok) {
+          const json = await resp.json();
+          console.log('Modal: Fetched price from backend:', json.breakdown, 'State:', state, 'City:', city);
+          setPriceData(json.breakdown);
+          setLoading(false);
+          return;
+        } else {
+          console.warn('Modal: Backend pricing API failed:', resp.status);
+        }
+      }
+      
+      // Fallback to local calculation if backend fails
+      const breakdown = calculatePriceBreakdown(exShowroomPrice, city);
+      console.log('Modal: Using fallback calculation:', breakdown);
+      setPriceData(breakdown);
     } catch (err) {
-      setError("Failed to fetch price details. Please try again.");
-      console.error("Price fetch error:", err);
+      console.warn('Modal: Error fetching backend pricing:', err);
+      // Fallback to local calculation on error
+      try {
+        const breakdown = calculatePriceBreakdown(exShowroomPrice, city);
+        setPriceData(breakdown);
+      } catch (fallbackErr) {
+        setError("Failed to calculate price details. Please try again.");
+        console.error("Price calculation error:", fallbackErr);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleRetry = () => {
-    fetchPriceBreakup();
+    calculatePrice();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] z-[1100]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto z-[1100]">
         <DialogHeader>
           <DialogTitle>
-            On-Road Price Breakup
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-primary" />
+              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                On-Road Price Breakdown
+              </span>
+            </div>
             {brandName && modelName && (
-              <span className="block text-sm font-normal text-muted-foreground mt-1">
+              <span className="block text-base font-semibold text-foreground mt-2">
                 {brandName} {modelName}
               </span>
             )}
+            <span className="block text-sm font-normal text-muted-foreground mt-1">
+              {city}, {state}
+            </span>
           </DialogTitle>
         </DialogHeader>
 
@@ -95,59 +134,177 @@ export const PriceBreakupModal = ({
           )}
 
           {!loading && !error && priceData && (
-            <Table>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium">Ex-Showroom Price</TableCell>
-                  <TableCell className="text-right">
-                    ₹{(priceData.exShowroom / 100000).toFixed(2)} Lakh
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">RTO & Registration</TableCell>
-                  <TableCell className="text-right">
-                    ₹{(priceData.rto / 100000).toFixed(2)} Lakh
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Insurance</TableCell>
-                  <TableCell className="text-right">
-                    ₹{(priceData.insurance / 100000).toFixed(2)} Lakh
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Other Charges</TableCell>
-                  <TableCell className="text-right">
-                    ₹{(priceData.others / 100000).toFixed(2)} Lakh
-                  </TableCell>
-                </TableRow>
-                <TableRow className="border-t-2">
-                  <TableCell className="font-bold text-lg">Total On-Road Price</TableCell>
-                  <TableCell className="text-right font-bold text-lg text-primary">
-                    ₹{(priceData.onRoad / 100000).toFixed(2)} Lakh
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            <div className="space-y-6">
+              {/* Main Price Card - CarWale Style */}
+              <div className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/20 rounded-xl p-6">
+                <div className="space-y-4">
+                  {/* Ex-Showroom Price */}
+                  <div className="flex justify-between items-center pb-3 border-b border-primary/20">
+                    <span className="text-sm font-medium text-muted-foreground">Ex-Showroom Price</span>
+                    <span className="text-2xl font-bold">{formatINR(priceData.exShowroomPrice, true)}</span>
+                  </div>
+
+                  {/* Individual Registration */}
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <span className="text-sm font-medium text-muted-foreground">Individual Registration</span>
+                    <span className="text-xl font-semibold text-orange-600">{formatINR(priceData.rto, true)}</span>
+                  </div>
+
+                  {/* Insurance */}
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <span className="text-sm font-medium text-muted-foreground">Insurance</span>
+                    <span className="text-xl font-semibold text-orange-600">{formatINR(priceData.insurance, true)}</span>
+                  </div>
+
+                  {/* Other Charges */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700">
+                      <span className="text-sm font-medium text-muted-foreground">Other Charges</span>
+                      <span className="text-xl font-semibold text-orange-600">{formatINR(priceData.otherCharges, true)}</span>
+                    </div>
+                    <div className="pl-4 space-y-2 text-sm">
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                          TCS (1%)
+                        </span>
+                        <span className="font-medium">Rs. {priceData.tcs.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                          FASTag
+                        </span>
+                        <span className="font-medium">Rs. {priceData.fastag.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* On-Road Price - Prominent */}
+                  <div className="flex justify-between items-center pt-4 border-t-2 border-primary">
+                    <span className="text-lg font-bold">On Road Price</span>
+                    <span className="text-3xl font-bold text-primary">{formatINR(priceData.onRoadPrice, true)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed Breakdown Table */}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-slate-50 dark:bg-slate-900 px-4 py-3 border-b">
+                  <h4 className="font-semibold text-sm">Detailed Breakdown</h4>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Component</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right w-24">% of Base</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow className="font-medium">
+                      <TableCell>Ex-Showroom Price</TableCell>
+                      <TableCell className="text-right">{formatINR(priceData.exShowroomPrice)}</TableCell>
+                      <TableCell className="text-right">100%</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="text-muted-foreground">Individual Registration (RTO)</TableCell>
+                      <TableCell className="text-right text-orange-600">{formatINR(priceData.rto)}</TableCell>
+                      <TableCell className="text-right">
+                        {((priceData.rto / priceData.exShowroomPrice) * 100).toFixed(1)}%
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="text-muted-foreground">Insurance (Comprehensive)</TableCell>
+                      <TableCell className="text-right text-orange-600">{formatINR(priceData.insurance)}</TableCell>
+                      <TableCell className="text-right">
+                        {((priceData.insurance / priceData.exShowroomPrice) * 100).toFixed(1)}%
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="text-muted-foreground">Other Charges</TableCell>
+                      <TableCell className="text-right text-orange-600">{formatINR(priceData.otherCharges)}</TableCell>
+                      <TableCell className="text-right">
+                        {((priceData.otherCharges / priceData.exShowroomPrice) * 100).toFixed(2)}%
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className="text-xs">
+                      <TableCell className="pl-8 text-muted-foreground/70">TCS (1%)</TableCell>
+                      <TableCell className="text-right">Rs. {priceData.tcs.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        {((priceData.tcs / priceData.exShowroomPrice) * 100).toFixed(2)}%
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className="text-xs">
+                      <TableCell className="pl-8 text-muted-foreground/70">FASTag</TableCell>
+                      <TableCell className="text-right">Rs. {priceData.fastag.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">-</TableCell>
+                    </TableRow>
+                    <TableRow className="border-t-2 bg-primary/5 font-bold">
+                      <TableCell>On-Road Price</TableCell>
+                      <TableCell className="text-right text-primary text-lg">{formatINR(priceData.onRoadPrice)}</TableCell>
+                      <TableCell className="text-right">
+                        {((priceData.onRoadPrice / priceData.exShowroomPrice - 1) * 100).toFixed(1)}%
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Summary Box */}
+              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-2">
+                <h4 className="font-semibold text-sm flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Price Summary for {city}
+                </h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Ex-Showroom</p>
+                    <p className="font-bold text-lg">{formatINR(priceData.exShowroomPrice, true)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">On-Road Total</p>
+                    <p className="font-bold text-lg text-primary">{formatINR(priceData.onRoadPrice, true)}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground text-xs">
+                      State: <span className="font-semibold">{state}</span> | 
+                      Additional Charges: <span className="font-semibold">{formatINR(priceData.otherCharges)}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
-          {!loading && !error && !priceData && variantId && (
+          {!loading && !error && !priceData && exShowroomPrice && (
             <Alert>
-              <AlertDescription>No price data available for this variant.</AlertDescription>
+              <AlertDescription>No price data available. Please try again.</AlertDescription>
             </Alert>
           )}
 
-          {!variantId && (
+          {!exShowroomPrice && (
             <Alert>
-              <AlertDescription>Please select a variant to view price breakup.</AlertDescription>
+              <AlertDescription>Unable to fetch price details for this variant.</AlertDescription>
             </Alert>
           )}
 
-          <p className="text-xs text-muted-foreground text-center">
-            * Prices are indicative and subject to change. Please contact your nearest dealer for exact pricing.
-          </p>
+          <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-xs text-muted-foreground space-y-2">
+            <p className="font-semibold text-foreground flex items-center gap-2">
+              <span className="text-yellow-600">ℹ️</span> Important Information
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>On-Road price calculated for <strong>{city}, {state}</strong></li>
+              <li>Individual Registration includes RTO, road tax, and registration fees</li>
+              <li>TCS (Tax Collected at Source) applies to vehicles above Rs. 10 lakh</li>
+              <li>Insurance covers comprehensive own damage + third-party liability</li>
+              <li>Actual prices may vary based on dealer offers, exchange value, and finance schemes</li>
+            </ul>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
+
+export default PriceBreakupModal;

@@ -7,6 +7,7 @@ const VariantSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
     slug: { type: String, required: true },
     price: { type: Number, required: true },
+    exShowroomPrice: { type: Number }, // Explicit ex-showroom price
     fuelType: { type: String, required: true },
     transmission: { type: String, required: true },
     engine: { type: String },

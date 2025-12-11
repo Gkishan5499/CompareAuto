@@ -24,6 +24,9 @@ const city_routes_1 = __importDefault(require("./routes/city.routes"));
 const search_routes_1 = __importDefault(require("./routes/search.routes"));
 const filter_routes_1 = __importDefault(require("./routes/filter.routes"));
 const popular_routes_1 = __importDefault(require("./routes/popular.routes"));
+const stateTaxConfig_routes_1 = __importDefault(require("./routes/stateTaxConfig.routes"));
+const pricing_admin_routes_1 = __importDefault(require("./routes/pricing.admin.routes"));
+const pricing_routes_1 = __importDefault(require("./routes/pricing.routes"));
 const path_1 = __importDefault(require("path"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const upload_routes_1 = __importDefault(require("./routes/upload.routes"));
@@ -62,6 +65,10 @@ app.use("/api/uploads", upload_routes_1.default);
 app.use("/api/dashboard", dashboard_routes_1.default);
 // register specs csv upload route (admin-only)
 app.use("/api/specs-csv", specsCSV_routes_1.default);
+// Admin pricing and tax management
+app.use("/api/admin/pricing", pricing_admin_routes_1.default);
+// Public pricing helpers
+app.use("/api/pricing", pricing_routes_1.default);
 app.use("/api/brands", brand_routes_1.default);
 app.use("/api/articles", article_routes_1.default);
 app.use("/api/comparisons", comparison_routes_1.default);
@@ -79,6 +86,7 @@ app.use("/api/cities", city_routes_1.default);
 app.use("/api/search", search_routes_1.default);
 app.use("/api/filters", filter_routes_1.default);
 app.use("/api/popular", popular_routes_1.default);
+app.use("/api/state-tax-config", stateTaxConfig_routes_1.default);
 app.use("/api/specs", specs_routes_1.default);
 // Serve static images
 app.use("/public", express_1.default.static(path_1.default.join(__dirname, "..", "public")));

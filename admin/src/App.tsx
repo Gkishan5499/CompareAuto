@@ -28,6 +28,8 @@ import SpecList from "./pages/Specs/SpecList";
 import SpecForm from "./pages/Specs/SpecForm";
 import SpecCSVImport from "./pages/Specs/SpecCSVImport";
 import Settings from "./pages/Settings/Settings";
+import PricingManagement from "./pages/Pricing/PricingManagement";
+import HeroCarouselManager from "./pages/HeroCarousel/HeroCarouselManager";
 
 const queryClient = new QueryClient();
 
@@ -288,6 +290,30 @@ export default function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <VariantCSVImport />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Pricing & Tax Management Route */}
+          <Route
+            path="/pricing"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <PricingManagement />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Hero Carousel Management Route */}
+          <Route
+            path="/hero-carousel"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <HeroCarouselManager />
                 </DashboardLayout>
               </ProtectedRoute>
             }

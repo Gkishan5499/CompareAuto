@@ -1,14 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Car, Zap, Users, ShieldCheck, Sparkles, ArrowRight, ChevronRight } from "lucide-react";
+import { Search, MapPin, ChevronDown, DollarSign, Zap, Cog, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   Carousel,
   CarouselContent,
@@ -17,245 +11,516 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useBrands } from "@/lib/api-hooks";
+import { searchApi, citiesApi } from "@/lib/api";
+import { useCity } from "@/contexts/CityContext";
 import { cn } from "@/lib/utils";
 
-// Images
+// Fallback images
 import carfirst from "@/assets/hero/car1.jpg";
 import carsecond from "@/assets/hero/car2.jpg";
 import carthird from "@/assets/hero/car3.jpg";
 import carfourth from "@/assets/hero/car4.jpg";
 
-const BODY_TYPES = ["Hatchback", "Sedan", "SUV", "MUV", "Luxury", "Convertible"];
-
-const PRICE_RANGES = [
-  { label: "Under ₹5 Lakh", value: "0-500000" },
-  { label: "₹5 - ₹10 Lakh", value: "500000-1000000" },
-  { label: "₹10 - ₹20 Lakh", value: "1000000-2000000" },
-  { label: "Above ₹20 Lakh", value: "2000000-99999999" },
-];
-
-const HERO_IMAGES = [
+const FALLBACK_IMAGES = [
   carfirst,
   carsecond,
   carthird,
   carfourth,
 ];
 
+// Filter options
+const BUDGET_OPTIONS = ["Under 5L", "5L - 10L", "10L - 15L", "15L - 25L", "25L - 50L", "Above 50L"];
+const BODY_TYPE_OPTIONS = ["Sedan", "SUV", "Hatchback", "MUV", "Coupe", "Convertible"];
+const FUEL_TYPE_OPTIONS = ["Petrol", "Diesel", "CNG", "Hybrid", "Electric"];
+const TRANSMISSION_OPTIONS = ["Manual", "Automatic"];
+
 const HeroSearch = () => {
   const navigate = useNavigate();
-  const { data: brands = [], isLoading: brandsLoading } = useBrands();
+  const { data: brands = [] } = useBrands();
+  const { city, setCity } = useCity();
   const [api, setApi] = useState<CarouselApi>();
+  const [heroImages, setHeroImages] = useState<any[]>([]);
+  const searchRef = useRef<HTMLDivElement>(null);
   
   const [activeTab, setActiveTab] = useState<"new" | "used">("new");
-  const [selectedBrand, setSelectedBrand] = useState<string>("");
-  const [selectedBodyType, setSelectedBodyType] = useState<string>("");
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [cities, setCities] = useState<any[]>([]);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  
+  // Filter states
+  const [selectedFilters, setSelectedFilters] = useState({
+    budget: "",
+    bodyType: "",
+    fuelType: "",
+    transmission: ""
+  });
+  const [showFilters, setShowFilters] = useState({
+    budget: false,
+    bodyType: false,
+    fuelType: false,
+    transmission: false
+  });
 
-  const handleSearch = () => {
-    if (selectedBrand && selectedBrand !== "all") {
-      const brand = brands.find((b: any) => b.id === selectedBrand);
-      if (brand) navigate(`/${brand.slug}`);
-    } else if (selectedBodyType && selectedBodyType !== "all") {
-      navigate(`/brands?bodyType=${selectedBodyType.toLowerCase()}`);
-    } else if (selectedPriceRange && selectedPriceRange !== "all") {
-      const [min, max] = selectedPriceRange.split("-");
-      navigate(`/brands?priceMin=${min}&priceMax=${max || "99999999"}`);
+  // Fetch hero carousel images from backend
+  useEffect(() => {
+    const fetchHeroImages = async () => {
+      try {
+        const response = await fetch("/api/hero-carousel/active");
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            console.log("✅ Hero images loaded from backend:", data.length, "images");
+            setHeroImages(data);
+          } else {
+            console.warn("⚠️ No active hero images from backend, using fallback");
+            setHeroImages(FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` })));
+          }
+        } else {
+          console.warn("⚠️ Failed to fetch hero images (status: " + response.status + "), using fallback");
+          setHeroImages(FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` })));
+        }
+      } catch (error) {
+        console.error("❌ Error fetching hero images:", error);
+        setHeroImages(FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` })));
+      }
+    };
+
+    fetchHeroImages();
+  }, []);
+
+  // Fetch cities for dropdown
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const citiesData = await citiesApi.getAll();
+        setCities(citiesData);
+      } catch (error) {
+        console.error("Failed to fetch cities:", error);
+      }
+    };
+    fetchCities();
+  }, []);
+
+  // Fetch search suggestions
+  useEffect(() => {
+    if (searchQuery.length > 1) {
+      const fetchSuggestions = async () => {
+        try {
+          const results = await searchApi.getSuggestions(searchQuery);
+          setSuggestions(results);
+          setShowSuggestions(true);
+        } catch (error) {
+          console.error("Failed to fetch suggestions:", error);
+        }
+      };
+      const debounceTimer = setTimeout(fetchSuggestions, 300);
+      return () => clearTimeout(debounceTimer);
     } else {
-      navigate("/brands");
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
+  }, [searchQuery]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+        setShowCityDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSearch = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    handleSearchWithFilters(e);
   };
 
+  const handleSuggestionClick = (suggestion: any) => {
+    if (suggestion.type === "brand") {
+      navigate(`/brands/${suggestion.slug}`);
+    } else if (suggestion.type === "model") {
+      navigate(`/brands/${suggestion.brandSlug}/${suggestion.slug}`);
+    }
+    setShowSuggestions(false);
+    setSearchQuery("");
+  };
+
+  const handleCitySelect = (selectedCity: string) => {
+    setCity(selectedCity);
+    setShowCityDropdown(false);
+  };
+
+  const handleFilterSelect = (filterType: string, value: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterType]: prev[filterType as keyof typeof prev] === value ? "" : value
+    }));
+  };
+
+  const toggleFilterDropdown = (filterType: string) => {
+    setShowFilters(prev => ({
+      ...prev,
+      [filterType]: !prev[filterType as keyof typeof prev]
+    }));
+  };
+
+  const buildSearchQueryWithFilters = () => {
+    const params = new URLSearchParams();
+    
+    if (searchQuery) params.append("search", searchQuery);
+    params.append("city", city);
+    
+    if (selectedFilters.budget) params.append("priceRange", selectedFilters.budget);
+    if (selectedFilters.bodyType) params.append("bodyType", selectedFilters.bodyType);
+    if (selectedFilters.fuelType) params.append("fuelType", selectedFilters.fuelType);
+    if (selectedFilters.transmission) params.append("transmission", selectedFilters.transmission);
+    
+    return params.toString();
+  };
+
+  const handleSearchWithFilters = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    const queryString = buildSearchQueryWithFilters();
+    if (activeTab === "new") {
+      navigate(`/models?${queryString}`);
+    } else {
+      navigate(`/used-cars?${queryString}`);
+    }
+    setShowSuggestions(false);
+  };
+
+  const displayImages = heroImages.length > 0 ? heroImages : FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` }));
+
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-black">
+    <section className="relative w-full bg-white pb-20">
       
       {/* ----------------------------------------------------------------------- */}
-      {/* 1. FULL SCREEN BACKGROUND CAROUSEL */}
+      {/* 1. HERO BANNER AREA (Image Only - Clean Modern Design) */}
       {/* ----------------------------------------------------------------------- */}
-      <div className="absolute inset-0 z-0">
+      <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
+        
+        {/* Background Carousel */}
         <Carousel
           setApi={setApi}
           opts={{ loop: true, align: "start", duration: 60 }}
           plugins={[Autoplay({ delay: 6000, stopOnInteraction: false })]}
-          className="w-full h-full"
+          className="w-full h-full absolute inset-0 z-0"
         >
           <CarouselContent className="h-full ml-0">
-            {HERO_IMAGES.map((image, index) => (
-              <CarouselItem key={index} className="pl-0 h-full w-full">
+            {displayImages.map((item, index) => (
+              <CarouselItem key={item.id || index} className="pl-0 h-full w-full">
                 <div className="w-full h-full relative">
                   <img
-                    src={image}
-                    alt={`Hero Background ${index + 1}`}
-                    className="w-full h-full object-cover object-center animate-slow-zoom" 
-                    style={{ animation: 'zoomIn 20s infinite alternate' }} 
+                    src={item.imageUrl}
+                    alt={item.title || `Hero Background ${index + 1}`}
+                    className="w-full h-full object-cover object-center"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      console.warn("⚠️ Image failed to load:", item.imageUrl);
+                      // Use fallback image only if image fails
+                      target.src = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+                    }}
                   />
-                  {/* Dark Overlay for Readability */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/30" />
                 </div>
               </CarouselItem>
             ))}
           </CarouselContent>
         </Carousel>
+
+        {/* REMOVED PROMOTIONAL TEXT OVERLAY - Clean banner only */}
       </div>
 
       {/* ----------------------------------------------------------------------- */}
-      {/* 2. MAIN CONTENT */}
+      {/* 2. SEARCH WIDGET (Overlapping Bottom) */}
       {/* ----------------------------------------------------------------------- */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center">
-        <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center mt-16 sm:mt-0">
-          
-          {/* --- LEFT: SEARCH CARD (GLASSMORPHISM) --- */}
-          <div className="lg:col-span-5 order-2 lg:order-1 animate-in fade-in slide-in-from-left-8 duration-700">
-            <div className="bg-white/10 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 p-6 sm:p-8 relative overflow-hidden">
-              
-              {/* Decorative Shine */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-50" />
-
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 flex items-center gap-2 drop-shadow-md">
-                Find your <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">Perfect Car</span>
-              </h2>
-
-              {/* Tabs */}
-              <div className="flex p-1.5 bg-black/40 rounded-xl mb-6 w-fit border border-white/10 backdrop-blur-sm">
-                <button 
-                  onClick={() => setActiveTab("new")}
-                  className={cn(
-                    "px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300",
-                    activeTab === "new" 
-                      ? "bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-lg" 
-                      : "text-slate-300 hover:text-white hover:bg-white/5"
-                  )}
-                >
-                  New Car
-                </button>
-                <button 
-                  onClick={() => setActiveTab("used")}
-                  className={cn(
-                    "px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300",
-                    activeTab === "used" 
-                      ? "bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-lg" 
-                      : "text-slate-300 hover:text-white hover:bg-white/5"
-                  )}
-                >
-                  Used Car
-                </button>
-              </div>
-
-              {/* Form Fields */}
-              <div className="space-y-5">
-                {/* Brand Select */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Select Brand</label>
-                  <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-                    <SelectTrigger className="h-12 bg-white/90 border-transparent focus:ring-2 focus:ring-orange-500 rounded-xl font-semibold text-slate-800">
-                      <SelectValue placeholder="All Brands" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Brands</SelectItem>
-                      {!brandsLoading && brands.map((brand: any) => (
-                        <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Body Type */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Body Type</label>
-                    <Select value={selectedBodyType} onValueChange={setSelectedBodyType}>
-                      <SelectTrigger className="h-12 bg-white/90 border-transparent focus:ring-2 focus:ring-orange-500 rounded-xl font-semibold text-slate-800">
-                        <SelectValue placeholder="Any" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Any Type</SelectItem>
-                        {BODY_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Budget */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-300 uppercase tracking-widest ml-1">Budget</label>
-                    <Select value={selectedPriceRange} onValueChange={setSelectedPriceRange}>
-                      <SelectTrigger className="h-12 bg-white/90 border-transparent focus:ring-2 focus:ring-orange-500 rounded-xl font-semibold text-slate-800">
-                        <SelectValue placeholder="Any" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Any Budget</SelectItem>
-                        {PRICE_RANGES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <Button 
-                  size="lg" 
-                  className="w-full h-14 text-lg font-bold shadow-xl shadow-orange-600/30 mt-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 transition-all active:scale-[0.98] border border-orange-400/20"
-                  onClick={handleSearch}
-                >
-                  <Search className="mr-2 h-5 w-5" />
-                  Search Cars
-                </Button>
-                
-                <div className="text-center pt-2">
-                  <span className="text-xs font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors flex items-center justify-center gap-1 group">
-                    Advanced Search Options <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* --- RIGHT: HERO TEXT --- */}
-          <div className="lg:col-span-7 order-1 lg:order-2 text-white flex flex-col justify-center h-full pl-0 lg:pl-12">
+      <div className="container mx-auto px-4 relative z-20 -mt-32" ref={searchRef}>
+        <div className="bg-white rounded-lg border border-gray-200 p-6 md:p-8 max-w-5xl mx-auto shadow-md">
             
-            <div className="mb-10 lg:mb-16 space-y-6 animate-in fade-in slide-in-from-right-8 duration-700">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-orange-200 text-sm font-semibold w-fit backdrop-blur-md shadow-lg">
-                <Sparkles className="w-4 h-4 fill-orange-400 text-orange-400" />
-                <span>India's #1 Car Comparison Platform</span>
-              </div>
-              
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.1] drop-shadow-2xl">
-                Compare the <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-yellow-200 to-orange-400 animate-gradient-xy">
-                  Drive.
-                </span>
-              </h1>
-              
-              <p className="text-lg text-slate-200 max-w-xl leading-relaxed drop-shadow-lg font-medium">
-                Analyze variant-wise features, specs, and on-road prices. The smartest way to choose your next ride.
-              </p>
-
-              <div className="flex flex-wrap gap-4 pt-4">
-                <Button className="h-14 px-8 rounded-full text-base font-bold bg-white text-slate-950 hover:bg-slate-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.4)]">
-                  Start Comparing
-                  <ChevronRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button variant="outline" className="h-14 px-8 rounded-full text-base font-bold border-white/30 bg-black/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-md">
-                  View Offers
-                </Button>
-              </div>
-            </div>
-
-            {/* Floating Stats Strip */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-              {[
-                { icon: Car, label: "1000+", sub: "Models" },
-                { icon: ShieldCheck, label: "50+", sub: "Brands" },
-                { icon: Zap, label: "Instant", sub: "Comparisons" },
-                { icon: Users, label: "1M+", sub: "Users" },
-              ].map((stat, i) => (
-                <div key={i} className="group bg-black/40 backdrop-blur-lg border border-white/10 rounded-2xl p-4 hover:bg-white/10 hover:border-white/30 transition-all duration-300 cursor-default hover:-translate-y-1">
-                  <stat.icon className="w-6 h-6 text-orange-400 mb-2 group-hover:scale-110 transition-transform" />
-                  <div className="text-2xl font-bold text-white mb-0.5">{stat.label}</div>
-                  <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-widest">{stat.sub}</div>
+            {/* Header: Title + Location */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-gray-100 pb-4">
+                <h2 className="text-2xl font-bold text-gray-800">Find Your Right Car</h2>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCityDropdown(!showCityDropdown)}
+                    className="flex items-center gap-2 text-gray-600 mt-2 md:mt-0 cursor-pointer hover:text-gray-900 group"
+                  >
+                    <span className="text-sm font-medium border-b border-dotted border-gray-400 group-hover:border-gray-900">{city}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  
+                  {/* City Dropdown */}
+                  {showCityDropdown && cities.length > 0 && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 max-h-80 overflow-y-auto z-50">
+                      {cities.map((cityItem) => (
+                        <button
+                          key={cityItem.id || cityItem.name}
+                          onClick={() => handleCitySelect(cityItem.name)}
+                          className={cn(
+                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
+                            city === cityItem.name && "bg-teal-50 text-teal-700 font-medium"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>{cityItem.name}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
             </div>
 
-          </div>
+            {/* Search Input Area */}
+            <form onSubmit={handleSearch} className="relative">
+                <div className="flex flex-col md:flex-row items-center border border-gray-300 rounded-full bg-white p-1.5 focus-within:ring-2 focus-within:ring-teal-500/20 transition-all shadow-sm">
+                    
+                    {/* Toggle Switch */}
+                    <div className="flex bg-gray-100 rounded-full p-1 w-full md:w-auto mb-2 md:mb-0">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("new")}
+                            className={cn(
+                                "flex-1 md:flex-none px-6 py-2 rounded-full text-sm font-bold transition-all duration-300",
+                                activeTab === "new"
+                                    ? "bg-teal-700 text-white shadow-md"
+                                    : "text-gray-500 hover:text-gray-800"
+                            )}
+                        >
+                            New
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("used")}
+                            className={cn(
+                                "flex-1 md:flex-none px-6 py-2 rounded-full text-sm font-bold transition-all duration-300",
+                                activeTab === "used"
+                                    ? "bg-teal-700 text-white shadow-md"
+                                    : "text-gray-500 hover:text-gray-800"
+                            )}
+                        >
+                            Used
+                        </button>
+                    </div>
+
+                    {/* Text Input */}
+                    <div className="flex-1 w-full px-4 relative">
+                        <Input 
+                            type="text"
+                            placeholder={activeTab === "new" ? "Search by brand or model name" : "Search used cars"}
+                            className="border-0 shadow-none focus-visible:ring-0 text-base h-10 px-0 placeholder:text-gray-400"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => searchQuery.length > 1 && setShowSuggestions(true)}
+                        />
+                        
+                        {/* Suggestions Dropdown */}
+                        {showSuggestions && suggestions.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 max-h-80 overflow-y-auto z-50">
+                            {suggestions.map((suggestion, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() => handleSuggestionClick(suggestion)}
+                                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                              >
+                                <div className="font-medium text-gray-900">{suggestion.name}</div>
+                                {suggestion.type && (
+                                  <div className="text-xs text-gray-500 mt-1 capitalize">{suggestion.type}</div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Search Icon Button */}
+                    <Button 
+                        type="submit"
+                        size="icon"
+                        className="rounded-full bg-transparent hover:bg-gray-100 text-gray-600 w-10 h-10 md:w-12 md:h-12 shrink-0 hidden md:flex"
+                    >
+                        <Search className="h-5 w-5" />
+                    </Button>
+                    
+                    {/* Mobile Search Button (Full width) */}
+                    <Button 
+                        type="submit"
+                        className="w-full rounded-full bg-teal-700 hover:bg-teal-800 text-white mt-2 md:hidden"
+                    >
+                        Search
+                    </Button>
+                </div>
+            </form>
+
+            {/* Filter Options Row */}
+            <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-gray-100">
+                
+                {/* Budget Filter */}
+                <div className="relative">
+                  <button
+                    onClick={() => toggleFilterDropdown("budget")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                      selectedFilters.budget
+                        ? "bg-teal-50 border-teal-300 text-teal-700"
+                        : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                    )}
+                  >
+                    <DollarSign className="h-4 w-4" />
+                    <span>Budget</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  {showFilters.budget && (
+                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                      {BUDGET_OPTIONS.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            handleFilterSelect("budget", option);
+                            toggleFilterDropdown("budget");
+                          }}
+                          className={cn(
+                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
+                            selectedFilters.budget === option && "bg-teal-50 text-teal-700 font-medium"
+                          )}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Body Type Filter */}
+                <div className="relative">
+                  <button
+                    onClick={() => toggleFilterDropdown("bodyType")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                      selectedFilters.bodyType
+                        ? "bg-teal-50 border-teal-300 text-teal-700"
+                        : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                    )}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Body Type</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  {showFilters.bodyType && (
+                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                      {BODY_TYPE_OPTIONS.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            handleFilterSelect("bodyType", option);
+                            toggleFilterDropdown("bodyType");
+                          }}
+                          className={cn(
+                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
+                            selectedFilters.bodyType === option && "bg-teal-50 text-teal-700 font-medium"
+                          )}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Fuel Type Filter */}
+                <div className="relative">
+                  <button
+                    onClick={() => toggleFilterDropdown("fuelType")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                      selectedFilters.fuelType
+                        ? "bg-teal-50 border-teal-300 text-teal-700"
+                        : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                    )}
+                  >
+                    <Zap className="h-4 w-4" />
+                    <span>Fuel Type</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  {showFilters.fuelType && (
+                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                      {FUEL_TYPE_OPTIONS.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            handleFilterSelect("fuelType", option);
+                            toggleFilterDropdown("fuelType");
+                          }}
+                          className={cn(
+                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
+                            selectedFilters.fuelType === option && "bg-teal-50 text-teal-700 font-medium"
+                          )}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Transmission Filter */}
+                <div className="relative">
+                  <button
+                    onClick={() => toggleFilterDropdown("transmission")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                      selectedFilters.transmission
+                        ? "bg-teal-50 border-teal-300 text-teal-700"
+                        : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                    )}
+                  >
+                    <Cog className="h-4 w-4" />
+                    <span>Transmission</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  {showFilters.transmission && (
+                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                      {TRANSMISSION_OPTIONS.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            handleFilterSelect("transmission", option);
+                            toggleFilterDropdown("transmission");
+                          }}
+                          className={cn(
+                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
+                            selectedFilters.transmission === option && "bg-teal-50 text-teal-700 font-medium"
+                          )}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* All Filters Button */}
+                <button
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 transition-all"
+                >
+                  <Search className="h-4 w-4" />
+                  <span>All Filters</span>
+                </button>
+            </div>
         </div>
       </div>
+
     </section>
   );
 };

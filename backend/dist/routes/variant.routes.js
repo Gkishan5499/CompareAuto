@@ -10,4 +10,8 @@ router.post("/bulk", variant_controller_1.bulkCreateVariants);
 router.post("/", variant_controller_1.createVariant);
 router.put("/:id", variant_controller_1.updateVariant);
 router.delete("/:id", variant_controller_1.deleteVariant);
+// Price management endpoints
+router.put("/:id/price", variant_controller_1.updateVariantPrice);
+router.post("/prices/bulk", variant_controller_1.bulkUpdateVariantPrices);
+router.post("/model/:modelId/update-prices", variant_controller_1.updateModelVariantsPrices);
 exports.default = router;

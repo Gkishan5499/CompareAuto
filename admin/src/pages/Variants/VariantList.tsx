@@ -3,7 +3,8 @@ import { Button } from "../../components/ui/button";
 import { useApiList, useApiDelete } from "../../hooks/useapi";
 
 export default function VariantList() {
-  const { data: variants = [], isLoading } = useApiList(["variants"], "/api/variants");
+  const { data: variants = [] } = useApiList<any[]>(["variants"], "/api/variants");
+  const { isLoading } = useApiList(["variants"], "/api/variants");
   const deleteVariant = useApiDelete(["variants"], "/api/variants");
   const navigate = useNavigate();
 
@@ -22,16 +23,18 @@ export default function VariantList() {
       <table className="table-auto w-full border">
         <thead className="bg-gray-100">
           <tr>
-            <th className="p-2">Name</th>
-            <th className="p-2">Model ID</th>
-            <th className="p-2">Price</th>
-            <th className="p-2">Fuel</th>
-            <th className="p-2">Actions</th>
-          </tr>
+              <th className="p-2">Variant ID</th>
+              <th className="p-2">Name</th>
+              <th className="p-2">Model ID</th>
+              <th className="p-2">Price</th>
+              <th className="p-2">Fuel</th>
+              <th className="p-2">Actions</th>
+            </tr>
         </thead>
         <tbody>
-          {variants.map((v: any) => (
+          {variants.map((v: any) =>(
             <tr key={v.id} className="border">
+              <td className="p-2 font-mono text-sm text-gray-700">{v.id}</td>
               <td className="p-2">{v.name}</td>
               <td className="p-2">{v.modelId}</td>
               <td className="p-2">{v.price}</td>

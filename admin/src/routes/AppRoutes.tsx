@@ -11,6 +11,7 @@ import ModelCSVImport from "../pages/Models/ModelCSVImport";
 import VariantList from "../pages/Variants/VariantList";
 import VariantForm from "../pages/Variants/VariantForm";
 import VariantCSVImport from "../pages/Variants/VariantCSVImport";
+import HeroCarouselManager from "../pages/HeroCarousel/HeroCarouselManager";
 
 export default function AppRoutes() {
   return (
@@ -70,6 +71,11 @@ export default function AppRoutes() {
       <Route
         path="/variants/import"
         element={<ProtectedRoute><VariantCSVImport /></ProtectedRoute>}
+      />
+
+      <Route
+        path="/hero-carousel"
+        element={<ProtectedRoute><HeroCarouselManager /></ProtectedRoute>}
       />
     </Routes>
   );

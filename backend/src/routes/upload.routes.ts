@@ -8,15 +8,18 @@ const router = Router();
 // temp upload folder (required by multer)
 const upload = multer({ dest: "tmp/" });
 
-router.post("/", upload.single("file"), async (req: any, res) => {
+const handleUpload = async (req: any, res: any) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
+    // Get folder from request body or query, default to "carwale-clone"
+    const folder = req.body.folder || req.query.folder || "carwale-clone";
+
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "carwale-clone",
+      folder: `carwale-clone/${folder}`,
     });
 
     // Delete temp file
@@ -30,6 +33,9 @@ router.post("/", upload.single("file"), async (req: any, res) => {
     console.error("Upload Error:", error);
     res.status(500).json({ error: "Upload failed" });
   }
-});
+};
+
+router.post("/", upload.single("file"), handleUpload);
+router.post("/single", upload.single("file"), handleUpload);
 
 export default router;

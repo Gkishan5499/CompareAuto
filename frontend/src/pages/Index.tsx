@@ -43,7 +43,7 @@ const Index = () => {
       {/* 1. HERO SECTION (Critical LCP) */}
       <HeroSearch />
 
-      {/* Ad Slot: Top Leaderboard */}
+      {/* Ad Slot: Top Leaderboard
       <div className="w-full bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
         <div className="container mx-auto px-4 py-4">
           <AdSlot 
@@ -51,7 +51,7 @@ const Index = () => {
             sizeMap={{ desktop: "728x90", tablet: "468x60", mobile: "320x50" }} 
           />
         </div>
-      </div>
+      </div> */}
 
       {/* 2. DISCOVERY STRIPS */}
       <div className="flex flex-col">

@@ -21,8 +21,8 @@ const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/98 backdrop-blur-xl shadow-lg">
-      <div className="h-1 bg-gradient-to-r from-primary via-primary/50 to-primary"></div>
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-white/95 backdrop-blur-md">
+      <div className="h-1 bg-gradient-to-r from-teal-500 via-teal-400 to-teal-500"></div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between gap-6">

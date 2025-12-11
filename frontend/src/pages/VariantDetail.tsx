@@ -1,25 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SpecTable from "@/components/specs/SpecTable";
 import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import { PriceBoxCard } from "@/components/variant/PriceBoxCard";
 import { PriceBreakupModal } from "@/components/model/PriceBreakupModal";
+import { PriceBreakupComponent } from "@/components/variant/PriceBreakupComponent";
+import { calculatePriceBreakdown, calculatePriceBreakdownWithConfig, getStateFromCity } from "@/lib/priceCalculations";
 import VariantSwitcher from "@/components/variant/VariantSwitcher";
 import FeatureGrid from "@/components/variant/FeatureGrid";
 import ColorSwatches from "@/components/model/ColorSwatches";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import PhotoGallery from "@/components/model/PhotoGallery";
 import VideoEmbed from "@/components/model/VideoEmbed";
 import Viewer360 from "@/components/model/Viewer360";
 import EMICalculator from "@/components/variant/EMICalculator";
 import { LeadsStrip } from "@/components/leads/LeadsStrip";
 import { FuelPriceWidget } from "@/components/variant/FuelPriceWidget";
-import { getVariant, getVariants, getModel } from "@/lib/data";
 import { useVariant, useModel, useVariants } from "@/lib/api-hooks";
 import { specsApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
@@ -42,75 +51,18 @@ const VariantDetail = () => {
   }>();
   const navigate = useNavigate();
 
-  // --- DATA FETCHING & STATE ---
-  const fallbackVariant = brand && modelSlug && variantSlug ? getVariant(brand, modelSlug, variantSlug) : undefined;
-  const fallbackModel = brand && modelSlug ? getModel(brand, modelSlug) : undefined;
-  const fallbackAllVariants = fallbackModel ? getVariants(fallbackModel.id) : [];
+  // --- DATA FETCHING & STATE (Backend Only - No Fallback) ---
+  const { data: variantData, isLoading: variantLoading } = useVariant(brand || "", modelSlug || "", variantSlug || "");
+  const { data: modelData, isLoading: modelLoading } = useModel(brand || "", modelSlug || "");
+  const { data: allVariants, isLoading: variantsLoading } = useVariants(modelData?.id || "");
 
-  const { data: apiVariant, isLoading: variantLoading } = useVariant(brand || "", modelSlug || "", variantSlug || "");
-  const { data: apiModel, isLoading: modelLoading } = useModel(brand || "", modelSlug || "");
-  const { data: apiVariants, isLoading: variantsLoading } = useVariants(apiModel?.id || fallbackModel?.id || "");
-
-  const variantData = apiVariant || fallbackVariant;
-  const modelData = apiModel || fallbackModel;
   const loading = variantLoading || modelLoading || variantsLoading;
-  const allVariants = apiVariants || fallbackAllVariants;
   const [specs, setSpecs] = useState<any | null>(null);
 
-  const [priceModalOpen, setPriceModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("White");
+  // Get city from context first
   const { city } = useCity();
-  const brandLogo = getBrandLogo(modelData?.brandName);
-  const brandInitial = getBrandInitial(modelData?.brandName);
 
-  // --- HELPERS ---
-  const mediaData = variantData?.media || modelData?.media || {
-    hero: "",
-    gallery: Array(12).fill("photo"),
-    videoUrl: undefined,
-    spin360Url: undefined,
-    spinFrames: undefined,
-  };
-  const carImage = mediaData.hero || modelData?.image || DEFAULT_OG_IMAGE;
-
-  // Features Data
-  const featureCategories = [
-    {
-      title: "Safety",
-      features: [
-        { name: "6 Airbags", available: true },
-        { name: "ABS with EBD", available: true },
-        { name: "ESP", available: true },
-        { name: "Traction Control", available: true },
-        { name: "Hill Hold Assist", available: true },
-        { name: "360° Camera", available: false },
-        { name: "ADAS Level 2", available: false },
-        { name: "TPMS", available: true },
-        { name: "ISOFIX", available: true },
-      ],
-    },
-    {
-      title: "Comfort",
-      features: [
-        { name: "Auto Climate Control", available: true },
-        { name: "Cruise Control", available: true },
-        { name: "Push Button Start", available: true },
-        { name: "Rear AC Vents", available: true },
-        { name: "Wireless Charger", available: true },
-      ],
-    },
-    {
-        title: "Infotainment",
-        features: [
-          { name: "Touchscreen System", available: true },
-          { name: "Android Auto", available: true },
-          { name: "Apple CarPlay", available: true },
-          { name: "Premium Sound", available: true },
-        ],
-      },
-  ];
-
-  // Price Calculation Logic
+  // Price Calculation Logic - MUST BE BEFORE STATE THAT USES IT
   const variantRawPrice = variantData?.price;
   const variantNormalizedPrice = parseINRToRupees(variantRawPrice);
   const specsOverviewRawPrice = specs?.overview?.price;
@@ -133,6 +85,143 @@ const VariantDetail = () => {
       ? specsExtrasNormalizedPrice
       : (specsOverviewNormalizedPrice && specsOverviewNormalizedPrice > 0 ? specsOverviewNormalizedPrice : null);
 
+  const [priceModalOpen, setPriceModalOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState("White");
+  const [selectedCity, setSelectedCity] = useState<string>(city || "Delhi NCR");
+  const brandLogo = getBrandLogo(modelData?.brandName);
+  const brandInitial = getBrandInitial(modelData?.brandName);
+
+  // City-wise pricing - fetch state tax config from backend and prefer backend values
+  const [priceBreakdown, setPriceBreakdown] = useState<any | null>(
+    exShowroomPrice ? null : null
+  );
+  const selectedState = getStateFromCity(selectedCity);
+
+  useEffect(() => {
+    let cancelled = false;
+    const compute = async () => {
+      if (!exShowroomPrice) {
+        setPriceBreakdown(null);
+        return;
+      }
+
+      try {
+        if (variantData?.id) {
+          // Add timestamp to prevent caching and force fresh data
+          const timestamp = new Date().getTime();
+          const resp = await fetch(
+            `/api/pricing/variant/${variantData.id}/price?state=${encodeURIComponent(selectedState)}&city=${encodeURIComponent(selectedCity)}&_t=${timestamp}`,
+            {
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              }
+            }
+          );
+          if (resp.ok) {
+            const json = await resp.json();
+            console.log('Fetched price breakdown from backend:', json.breakdown, 'for state:', selectedState, 'city:', selectedCity);
+            if (!cancelled) setPriceBreakdown(json.breakdown);
+            return;
+          } else {
+            console.warn('Backend pricing API failed:', resp.status, resp.statusText);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch backend pricing, using fallback:', err);
+      }
+
+      // fallback to local calculation
+      const fallbackBreakdown = calculatePriceBreakdown(exShowroomPrice, selectedCity);
+      console.log('Using fallback calculation:', fallbackBreakdown);
+      if (!cancelled) setPriceBreakdown(fallbackBreakdown);
+    };
+
+    compute();
+    return () => {
+      cancelled = true;
+    };
+  }, [exShowroomPrice, selectedCity, selectedState, variantData?.id]);
+
+  // --- HELPERS ---
+  const mediaData = variantData?.media || modelData?.media || {
+    hero: "",
+    gallery: Array(12).fill("photo"),
+    videoUrl: undefined,
+    spin360Url: undefined,
+    spinFrames: undefined,
+  };
+  const carImage = mediaData.hero || modelData?.image || DEFAULT_OG_IMAGE;
+
+  // Features Data - Dynamically built from backend specs
+  const featureCategories = useMemo(() => {
+    if (!specs) return [];
+    
+    const categories = [];
+
+    // Safety Features
+    if (specs.safety) {
+      const safetyFeatures = [];
+      if (specs.safety.airbags) safetyFeatures.push({ name: `${specs.safety.airbags} Airbags`, available: true });
+      if (specs.safety.abs) safetyFeatures.push({ name: "ABS", available: true });
+      if (specs.safety.ebd) safetyFeatures.push({ name: "EBD", available: true });
+      if (specs.safety.esp) safetyFeatures.push({ name: "ESP", available: true });
+      if (specs.safety.tractionControl) safetyFeatures.push({ name: "Traction Control", available: true });
+      if (specs.safety.hillHold) safetyFeatures.push({ name: "Hill Hold Control", available: true });
+      if (specs.safety.hillDescent) safetyFeatures.push({ name: "Hill Descent Control", available: true });
+      if (specs.safety.ncapRating) safetyFeatures.push({ name: `${specs.safety.ncapRating} NCAP Rating`, available: true });
+      if (specs.safety.childSeatAnchor) safetyFeatures.push({ name: "ISOFIX Child Seat Anchor", available: true });
+      
+      if (safetyFeatures.length > 0) {
+        categories.push({ title: "Safety", features: safetyFeatures });
+      }
+    }
+
+    // Comfort Features
+    if (specs.comfort) {
+      const comfortFeatures = [];
+      if (specs.comfort.ac) comfortFeatures.push({ name: specs.comfort.ac, available: true });
+      if (specs.comfort.rearAC) comfortFeatures.push({ name: "Rear AC Vents", available: true });
+      if (specs.comfort.cruiseControl) comfortFeatures.push({ name: "Cruise Control", available: true });
+      if (specs.comfort.steeringAdjustment) comfortFeatures.push({ name: specs.comfort.steeringAdjustment, available: true });
+      if (specs.comfort.parkingSensors) comfortFeatures.push({ name: specs.comfort.parkingSensors, available: true });
+      
+      if (comfortFeatures.length > 0) {
+        categories.push({ title: "Comfort", features: comfortFeatures });
+      }
+    }
+
+    // Infotainment & Tech Features
+    if (specs.tech) {
+      const techFeatures = [];
+      if (specs.tech.infotainment) techFeatures.push({ name: specs.tech.infotainment, available: true });
+      if (specs.tech.speakers) techFeatures.push({ name: `${specs.tech.speakers} Speakers`, available: true });
+      if (specs.tech.androidAuto) techFeatures.push({ name: "Android Auto", available: true });
+      if (specs.tech.appleCarPlay) techFeatures.push({ name: "Apple CarPlay", available: true });
+      if (specs.tech.bluetooth) techFeatures.push({ name: "Bluetooth", available: true });
+      
+      if (techFeatures.length > 0) {
+        categories.push({ title: "Infotainment", features: techFeatures });
+      }
+    }
+
+    // Lighting Features
+    if (specs.lighting) {
+      const lightingFeatures = [];
+      if (specs.lighting.headlamps) lightingFeatures.push({ name: specs.lighting.headlamps, available: true });
+      if (specs.lighting.drl) lightingFeatures.push({ name: "Daytime Running Lights", available: true });
+      if (specs.lighting.foglamps) lightingFeatures.push({ name: specs.lighting.foglamps, available: true });
+      if (specs.lighting.taillamps) lightingFeatures.push({ name: specs.lighting.taillamps, available: true });
+      
+      if (lightingFeatures.length > 0) {
+        categories.push({ title: "Lighting", features: lightingFeatures });
+      }
+    }
+
+    return categories;
+  }, [specs]);
+
   // --- EFFECTS ---
   useEffect(() => {
     if (variantData && modelData) {
@@ -149,8 +238,135 @@ const VariantDetail = () => {
 
   useEffect(() => {
     if (!variantData) return;
-    specsApi.getByVariant(variantData.id).then(setSpecs).catch(() => setSpecs(null));
+    specsApi
+      .getByVariant(variantData.id)
+      .then((data) => {
+        console.log("✅ Specs fetched for variant", variantData.id, ":", data);
+        setSpecs(data);
+      })
+      .catch((err) => {
+        console.error("❌ Failed to fetch specs for variant", variantData.id, ":", err);
+        setSpecs(null);
+      });
   }, [variantData]);
+
+  // Helpers to render dynamic specs object
+  const prettifyKey = (k: string) => {
+    if (!k) return "";
+    return k
+      .replace(/[_\-]/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(" ")
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(" ");
+  };
+
+  const renderSpecValue = (v: any): any => {
+    if (v === null || v === undefined || v === "") return <span className="text-sm text-muted-foreground">N/A</span>;
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return <span className="text-sm">{String(v)}</span>;
+    if (Array.isArray(v)) {
+      return (
+        <ul className="list-disc pl-5 space-y-1">
+          {v.map((it, idx) => (
+            <li key={idx} className="text-sm">{typeof it === 'object' ? JSON.stringify(it) : String(it)}</li>
+          ))}
+        </ul>
+      );
+    }
+    // object
+    return (
+      <div className="space-y-3">
+        {Object.entries(v).map(([k, val]) => (
+          <div key={k} className="flex justify-between items-start gap-4">
+            <div className="text-sm text-muted-foreground w-1/3">{prettifyKey(k)}</div>
+            <div className="w-2/3">{renderSpecValue(val)}</div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Default-open spec sections (prefer these if present)
+  const preferredOpenSections = ["overview", "engine", "performance", "dimensions"];
+  const defaultOpenSections = specs ? Object.keys(specs).filter((k) => preferredOpenSections.includes(k)) : [];
+
+  // Category order and friendly names (matches backend DEFAULT_MAPPING structure)
+  const specCategories = [
+    { key: "overview", label: "Overview", icon: "ℹ️" },
+    { key: "engine", label: "Engine", icon: "⚙️" },
+    { key: "performance", label: "Performance", icon: "🏁" },
+    { key: "dimensions", label: "Dimensions & Weight", icon: "📏" },
+    { key: "safety", label: "Safety", icon: "🛡️" },
+    { key: "comfort", label: "Comfort", icon: "🛋️" },
+    { key: "lighting", label: "Lighting", icon: "💡" },
+    { key: "interior", label: "Interior", icon: "🎨" },
+    { key: "tech", label: "Infotainment & Tech", icon: "📱" },
+    { key: "warranty", label: "Warranty", icon: "✅" },
+    { key: "extras", label: "Additional Info", icon: "📋" },
+  ];
+
+  const friendlyKeyMap: Record<string, string> = {
+    engine_cc: "Engine Displacement",
+    cylinders: "Cylinders",
+    engine_type: "Engine Type",
+    turbocharger: "Turbocharger",
+    hybrid: "Hybrid",
+    battery: "Battery",
+    motor: "Electric Motor",
+    emissionStandard: "Emission Standard",
+    mileage: "Mileage",
+    drivingRange: "Driving Range",
+    idleStartStop: "Idle Start Stop",
+    drivetrain: "Drivetrain",
+    transmission: "Transmission",
+    length: "Length",
+    width: "Width",
+    height: "Height",
+    wheelbase: "Wheelbase",
+    kerbWeight: "Kerb Weight",
+    groundClearance: "Ground Clearance",
+    grossWeight: "Gross Weight",
+    airbags: "Airbags",
+    ncapRating: "NCAP Rating",
+    abs: "ABS",
+    ebd: "EBD",
+    esp: "ESP",
+    tractionControl: "Traction Control",
+    hillHold: "Hill Hold Control",
+    hillDescent: "Hill Descent Control",
+    childSeatAnchor: "Child Seat Anchor Points",
+    ac: "Air Conditioning",
+    rearAC: "Rear AC",
+    cruiseControl: "Cruise Control",
+    steeringAdjustment: "Steering Adjustment",
+    parkingSensors: "Parking Sensors",
+    headlamps: "Headlights",
+    drl: "Daytime Running Lights",
+    taillamps: "Taillights",
+    foglamps: "Fog Lights",
+    upholstery: "Seat Upholstery",
+    colorTheme: "Interior Color Theme",
+    armrests: "Armrests",
+    infotainment: "Infotainment Screen",
+    speakers: "Speakers",
+    androidAuto: "Android Auto",
+    appleCarPlay: "Apple CarPlay",
+    bluetooth: "Bluetooth",
+    vehicleWarranty: "Vehicle Warranty",
+    batteryWarranty: "Battery Warranty",
+    price: "Ex-Showroom Price",
+    brand: "Brand",
+    model: "Model",
+    variant: "Variant",
+    body_type: "Body Type",
+    seating_capacity: "Seating Capacity",
+  };
+
+  const getFriendlyKey = (k: string): string => {
+    return friendlyKeyMap[k] || prettifyKey(k);
+  };
 
   const handleAddToCompare = () => {
     if (variantData) {
@@ -251,88 +467,269 @@ const VariantDetail = () => {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         <div className="p-3 bg-muted/50 rounded-lg">
                                             <p className="text-xs text-muted-foreground">Engine</p>
-                                            <p className="font-semibold">{variantData.engine || "N/A"}</p>
+                                            <p className="font-semibold">{specs?.engine?.engine_cc || variantData.engine || "N/A"}</p>
+                                        </div>
+                                        <div className="p-3 bg-muted/50 rounded-lg">
+                                            <p className="text-xs text-muted-foreground">Power</p>
+                                            <p className="font-semibold text-blue-600">{specs?.engine?.power || "N/A"}</p>
                                         </div>
                                         <div className="p-3 bg-muted/50 rounded-lg">
                                             <p className="text-xs text-muted-foreground">Mileage</p>
-                                            <p className="font-semibold text-emerald-600">{variantData.mileage ? `${variantData.mileage} km/l` : "N/A"}</p>
+                                            <p className="font-semibold text-emerald-600">{specs?.performance?.mileage || variantData.mileage ? `${specs?.performance?.mileage || variantData.mileage} km/l` : "N/A"}</p>
                                         </div>
                                         <div className="p-3 bg-muted/50 rounded-lg">
                                             <p className="text-xs text-muted-foreground">Seating</p>
-                                            <p className="font-semibold">{variantData.seating} Persons</p>
+                                            <p className="font-semibold">{specs?.overview?.seating_capacity || variantData.seating || "N/A"} Persons</p>
                                         </div>
                                         <div className="p-3 bg-muted/50 rounded-lg">
                                             <p className="text-xs text-muted-foreground">Transmission</p>
-                                            <p className="font-semibold">{variantData.transmission}</p>
+                                            <p className="font-semibold">{specs?.performance?.transmission || variantData.transmission || "N/A"}</p>
                                         </div>
                                         <div className="p-3 bg-muted/50 rounded-lg">
                                             <p className="text-xs text-muted-foreground">Fuel</p>
-                                            <p className="font-semibold">{variantData.fuelType}</p>
+                                            <p className="font-semibold">{variantData.fuelType || "N/A"}</p>
                                         </div>
                                         <div className="p-3 bg-muted/50 rounded-lg">
                                             <p className="text-xs text-muted-foreground">Body Type</p>
-                                            <p className="font-semibold">{modelData.bodyType}</p>
+                                            <p className="font-semibold">{specs?.overview?.body_type || modelData.bodyType || "N/A"}</p>
                                         </div>
+                                        {specs?.engine?.torque && (
+                                          <div className="p-3 bg-muted/50 rounded-lg">
+                                              <p className="text-xs text-muted-foreground">Torque</p>
+                                              <p className="font-semibold">{specs.engine.torque}</p>
+                                          </div>
+                                        )}
+                                        {specs?.dimensions?.groundClearance && (
+                                          <div className="p-3 bg-muted/50 rounded-lg">
+                                              <p className="text-xs text-muted-foreground">Ground Clearance</p>
+                                              <p className="font-semibold">{specs.dimensions.groundClearance} mm</p>
+                                          </div>
+                                        )}
                                     </div>
                                 </Card>
 
                                 <Card className="p-6 border-l-4 border-l-blue-500">
                                     <h3 className="text-lg font-semibold mb-2">Verdict</h3>
                                     <p className="text-muted-foreground leading-relaxed">
-                                        The <strong>{variantData.name}</strong> variant strikes a balance between features and affordability. 
-                                        With {variantData.fuelType} efficiency and essential comforts like {featureCategories[1].features[0].name}, 
-                                        it is a solid choice for {modelData.bodyType} buyers.
+                                        The <strong>{variantData.name}</strong> variant 
+                                        {specs?.engine?.engine_cc && ` comes with a ${specs.engine.engine_cc} engine`}
+                                        {specs?.engine?.power && ` producing ${specs.engine.power}`}
+                                        {specs?.performance?.mileage && `, delivering ${specs.performance.mileage} km/l mileage`}.
+                                        {featureCategories.length > 0 && featureCategories[0]?.features?.length > 0 && 
+                                          ` It offers ${featureCategories[0].title.toLowerCase()} features like ${featureCategories[0].features.slice(0, 2).map(f => f.name).join(' and ')}`}.
+                                        {modelData?.bodyType && ` A solid choice for ${modelData.bodyType} buyers`}
+                                        {exShowroomPrice && ` with a starting price of ${formatINR(exShowroomPrice, true)}`}.
                                     </p>
                                 </Card>
+
+                                {/* Detailed Overview Information */}
+                                {specs?.overview && (
+                                  <Card className="overflow-hidden">
+                                    <div className="bg-slate-50 dark:bg-slate-900 px-6 py-4 border-b flex items-center gap-2">
+                                      <Info className="w-5 h-5 text-primary" />
+                                      <h3 className="text-lg font-semibold">Overview</h3>
+                                    </div>
+                                    <CardContent className="p-0">
+                                      <Table>
+                                        <TableBody>
+                                          {specs.overview.description && (
+                                            <TableRow>
+                                              <TableCell className="font-medium w-1/4 align-top py-4">Description</TableCell>
+                                              <TableCell className="py-4">{specs.overview.description}</TableCell>
+                                            </TableRow>
+                                          )}
+                                          {(specs.overview.summary || specs.summary) && (
+                                            <TableRow>
+                                              <TableCell className="font-medium w-1/4 align-top py-4">Summary</TableCell>
+                                              <TableCell className="py-4">{specs.overview.summary || specs.summary}</TableCell>
+                                            </TableRow>
+                                          )}
+                                          {(specs.overview.brand || modelData?.brandName) && (
+                                            <TableRow>
+                                              <TableCell className="font-medium w-1/4 py-4">Brand</TableCell>
+                                              <TableCell className="py-4">{specs.overview.brand || modelData?.brandName}</TableCell>
+                                            </TableRow>
+                                          )}
+                                          {(specs.overview.model || modelData?.name) && (
+                                            <TableRow>
+                                              <TableCell className="font-medium w-1/4 py-4">Model</TableCell>
+                                              <TableCell className="py-4">{specs.overview.model || modelData?.name}</TableCell>
+                                            </TableRow>
+                                          )}
+                                          {(specs.overview.variant || variantData.name) && (
+                                            <TableRow>
+                                              <TableCell className="font-medium w-1/4 py-4">Variant</TableCell>
+                                              <TableCell className="py-4">{specs.overview.variant || variantData.name}</TableCell>
+                                            </TableRow>
+                                          )}
+                                          {specs.overview.vehicle_overview && (
+                                            <TableRow>
+                                              <TableCell className="font-medium w-1/4 align-top py-4">Vehicle Overview</TableCell>
+                                              <TableCell className="py-4 leading-relaxed">{specs.overview.vehicle_overview}</TableCell>
+                                            </TableRow>
+                                          )}
+                                          {specs.overview.body_type && (
+                                            <TableRow>
+                                              <TableCell className="font-medium w-1/4 py-4">Body Type</TableCell>
+                                              <TableCell className="py-4">{specs.overview.body_type}</TableCell>
+                                            </TableRow>
+                                          )}
+                                          {specs.overview.seating_capacity && (
+                                            <TableRow>
+                                              <TableCell className="font-medium w-1/4 py-4">Seating Capacity</TableCell>
+                                              <TableCell className="py-4">{specs.overview.seating_capacity} Persons</TableCell>
+                                            </TableRow>
+                                          )}
+                                          {specs.overview.price && (
+                                            <TableRow>
+                                              <TableCell className="font-medium w-1/4 py-4">Ex-Showroom Price</TableCell>
+                                              <TableCell className="py-4 font-semibold text-primary">{formatINR(parseINRToRupees(specs.overview.price), true)}</TableCell>
+                                            </TableRow>
+                                          )}
+                                        </TableBody>
+                                      </Table>
+                                    </CardContent>
+                                  </Card>
+                                )}
                             </TabsContent>
 
                             {/* SPECIFICATIONS TAB */}
                             <TabsContent value="specifications" className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
-                                {/* Dimensions Diagram */}
-                                <Card>
+                                {/* Dimensions Table - Backend Data Only */}
+                                {specs?.dimensions && (
+                                  <Card>
                                     <CardHeader className="bg-slate-50 dark:bg-slate-900 border-b py-3">
                                         <CardTitle className="text-base">Dimensions</CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-6">
                                         <div className="flex flex-col items-center">
                                             <p className="mb-6 text-sm text-muted-foreground w-full">Detailed exterior measurements.</p>
-
                                         </div>
                                         <Table className="mt-6">
                                             <TableBody>
-                                                <TableRow><TableCell className="font-medium">Length</TableCell><TableCell className="text-right">{specs?.dimensions?.length || "4000"} mm</TableCell></TableRow>
-                                                <TableRow><TableCell className="font-medium">Width</TableCell><TableCell className="text-right">{specs?.dimensions?.width || "1700"} mm</TableCell></TableRow>
-                                                <TableRow><TableCell className="font-medium">Height</TableCell><TableCell className="text-right">{specs?.dimensions?.height || "1500"} mm</TableCell></TableRow>
-                                                <TableRow><TableCell className="font-medium">Wheelbase</TableCell><TableCell className="text-right">{specs?.dimensions?.wheelbase || "2500"} mm</TableCell></TableRow>
+                                                {specs.dimensions.length && <TableRow><TableCell className="font-medium">Length</TableCell><TableCell className="text-right">{specs.dimensions.length} mm</TableCell></TableRow>}
+                                                {specs.dimensions.width && <TableRow><TableCell className="font-medium">Width</TableCell><TableCell className="text-right">{specs.dimensions.width} mm</TableCell></TableRow>}
+                                                {specs.dimensions.height && <TableRow><TableCell className="font-medium">Height</TableCell><TableCell className="text-right">{specs.dimensions.height} mm</TableCell></TableRow>}
+                                                {specs.dimensions.wheelbase && <TableRow><TableCell className="font-medium">Wheelbase</TableCell><TableCell className="text-right">{specs.dimensions.wheelbase} mm</TableCell></TableRow>}
+                                                {specs.dimensions.groundClearance && <TableRow><TableCell className="font-medium">Ground Clearance</TableCell><TableCell className="text-right">{specs.dimensions.groundClearance} mm</TableCell></TableRow>}
+                                                {specs.dimensions.kerbWeight && <TableRow><TableCell className="font-medium">Kerb Weight</TableCell><TableCell className="text-right">{specs.dimensions.kerbWeight} kg</TableCell></TableRow>}
                                             </TableBody>
                                         </Table>
                                     </CardContent>
-                                </Card>
+                                  </Card>
+                                )}
 
-                                <SpecTable
+                                {/* Engine & Performance - Backend Data Only */}
+                                {specs?.engine && (
+                                  <SpecTable
                                     title="Engine & Performance"
                                     rows={[
-                                        { label: 'Displacement', value: specs?.engine?.engine_cc ?? variantData.engine },
-                                        { label: 'Max Power', value: specs?.engine?.power || "115 BHP @ 6000 rpm" },
-                                        { label: 'Max Torque', value: specs?.engine?.torque || "144 Nm @ 4500 rpm" },
-                                        { label: 'ARAI Mileage', value: (specs?.performance?.mileage ?? variantData.mileage) + ' km/l' },
-                                    ]}
-                                />
+                                        specs.engine.engine_cc && { label: 'Displacement', value: specs.engine.engine_cc },
+                                        specs.engine.power && { label: 'Max Power', value: specs.engine.power },
+                                        specs.engine.torque && { label: 'Max Torque', value: specs.engine.torque },
+                                        specs.performance?.mileage && { label: 'ARAI Mileage', value: specs.performance.mileage + ' km/l' },
+                                        specs.engine.engine_type && { label: 'Engine Type', value: specs.engine.engine_type },
+                                        specs.engine.cylinders && { label: 'Cylinders', value: specs.engine.cylinders },
+                                    ].filter(Boolean)}
+                                  />
+                                )}
                                 
-                                <SpecTable
+                                {/* Brakes & Suspension - Backend Data Only */}
+                                {(specs?.brakes || specs?.suspension) && (
+                                  <SpecTable
                                     title="Brakes & Suspension"
                                     rows={[
-                                        { label: 'Front Brakes', value: 'Disc' },
-                                        { label: 'Rear Brakes', value: 'Drum' },
-                                        { label: 'Front Suspension', value: 'MacPherson Strut' },
-                                        { label: 'Rear Suspension', value: 'Torsion Beam' },
-                                    ]}
-                                />
+                                        specs.brakes?.front && { label: 'Front Brakes', value: specs.brakes.front },
+                                        specs.brakes?.rear && { label: 'Rear Brakes', value: specs.brakes.rear },
+                                        specs.suspension?.front && { label: 'Front Suspension', value: specs.suspension.front },
+                                        specs.suspension?.rear && { label: 'Rear Suspension', value: specs.suspension.rear },
+                                    ].filter(Boolean)}
+                                  />
+                                )}
+
+                                {/* Professional Categorized Specs (CarDekho/CarWale style) */}
+                                {specs ? (
+                                  <div className="space-y-2 mt-6">
+                                    <h3 className="text-lg font-semibold mb-4">All Specifications</h3>
+                                    <Accordion type="multiple" defaultValue={defaultOpenSections} className="w-full space-y-2">
+                                      {specCategories.map((category) => {
+                                        const categorySpecs = specs[category.key];
+                                        if (!categorySpecs || (typeof categorySpecs === "object" && Object.keys(categorySpecs).length === 0)) {
+                                          return null;
+                                        }
+                                        return (
+                                          <AccordionItem key={category.key} value={category.key} className="border rounded-lg px-4 data-[state=open]:bg-slate-50 dark:data-[state=open]:bg-slate-900">
+                                            <AccordionTrigger className="py-4 hover:no-underline">
+                                              <div className="flex items-center gap-3">
+                                                <span className="text-xl">{category.icon}</span>
+                                                <span className="text-base font-semibold">{category.label}</span>
+                                              </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="pb-4 pt-2">
+                                              {typeof categorySpecs === "object" && !Array.isArray(categorySpecs) ? (
+                                                <Table className="w-full">
+                                                  <TableBody>
+                                                    {Object.entries(categorySpecs).map(([specKey, specValue]) => (
+                                                      <TableRow key={specKey} className="hover:bg-slate-100/50 dark:hover:bg-slate-800/50">
+                                                        <TableCell className="font-medium text-sm py-3">{getFriendlyKey(specKey)}</TableCell>
+                                                        <TableCell className="text-right text-sm py-3 text-slate-700 dark:text-slate-300">{renderSpecValue(specValue)}</TableCell>
+                                                      </TableRow>
+                                                    ))}
+                                                  </TableBody>
+                                                </Table>
+                                              ) : (
+                                                <div className="py-3 text-sm">{renderSpecValue(categorySpecs)}</div>
+                                              )}
+                                            </AccordionContent>
+                                          </AccordionItem>
+                                        );
+                                      })}
+                                    </Accordion>
+                                  </div>
+                                ) : (
+                                  <Card className="p-6 mt-6 border-dashed">
+                                    <p className="text-sm text-muted-foreground text-center">No specifications available for this variant yet.</p>
+                                  </Card>
+                                )}
                             </TabsContent>
 
                             {/* FEATURES TAB */}
                             <TabsContent value="features" className="animate-in fade-in slide-in-from-bottom-2">
-                                <FeatureGrid categories={featureCategories} />
+                                {featureCategories.length > 0 ? (
+                                  <FeatureGrid categories={featureCategories} />
+                                ) : (
+                                  <Card className="p-8 border-dashed">
+                                    <div className="text-center">
+                                      <Info className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                                      <h3 className="text-lg font-semibold mb-2">No Features Available</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        Features data for this variant is not yet populated. Please check the specifications tab for available details.
+                                      </p>
+                                    </div>
+                                  </Card>
+                                )}
+
+                                {/* Features from specs object (if present) */}
+                                {specs && (specs.features || specs.extras?.features || specs.summary?.features) && (
+                                  <Card className="mt-6">
+                                    <CardHeader className="py-3 border-b bg-slate-50 dark:bg-slate-900">
+                                      <CardTitle className="text-base">Additional Features</CardTitle>
+                                      <CardDescription>Extra features from the database</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="pt-4">
+                                      {(specs.features || specs.extras?.features || specs.summary?.features)?.length ? (
+                                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 list-none">
+                                          {(specs.features || specs.extras?.features || specs.summary?.features).map((f: any, i: number) => (
+                                            <li key={i} className="text-sm flex items-center gap-2">
+                                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                              <span>{typeof f === 'string' ? f : JSON.stringify(f)}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      ) : null}
+                                    </CardContent>
+                                  </Card>
+                                )}
                             </TabsContent>
 
                             {/* COLORS TAB */}
@@ -391,21 +788,72 @@ const VariantDetail = () => {
                          </div>
                          <h1 className="text-2xl font-bold tracking-tight leading-snug">{modelData.name} {variantData.name}</h1>
                          
-                         <div className="mt-4 bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-                             <div className="flex items-center justify-between mb-1">
+                         {/* City Selector */}
+                         <div className="mt-4 space-y-2">
+                           <label className="text-xs text-muted-foreground font-medium uppercase">Select City</label>
+                           <Select value={selectedCity} onValueChange={setSelectedCity}>
+                             <SelectTrigger className="w-full">
+                               <SelectValue placeholder="Select your city" />
+                             </SelectTrigger>
+                             <SelectContent className="max-h-[300px]">
+                               <SelectItem value="Delhi NCR">Delhi NCR</SelectItem>
+                               <SelectItem value="Mumbai">Mumbai</SelectItem>
+                               <SelectItem value="Bangalore">Bangalore</SelectItem>
+                               <SelectItem value="Chennai">Chennai</SelectItem>
+                               <SelectItem value="Kolkata">Kolkata</SelectItem>
+                               <SelectItem value="Hyderabad">Hyderabad</SelectItem>
+                               <SelectItem value="Pune">Pune</SelectItem>
+                               <SelectItem value="Ahmedabad">Ahmedabad</SelectItem>
+                               <SelectItem value="Jaipur">Jaipur</SelectItem>
+                               <SelectItem value="Lucknow">Lucknow</SelectItem>
+                               <SelectItem value="Chandigarh">Chandigarh</SelectItem>
+                               <SelectItem value="Indore">Indore</SelectItem>
+                               <SelectItem value="Kochi">Kochi</SelectItem>
+                               <SelectItem value="Coimbatore">Coimbatore</SelectItem>
+                               <SelectItem value="Visakhapatnam">Visakhapatnam</SelectItem>
+                               <SelectItem value="Nagpur">Nagpur</SelectItem>
+                               <SelectItem value="Surat">Surat</SelectItem>
+                               <SelectItem value="Vadodara">Vadodara</SelectItem>
+                               <SelectItem value="Guwahati">Guwahati</SelectItem>
+                               <SelectItem value="Bhopal">Bhopal</SelectItem>
+                               <SelectItem value="Thiruvananthapuram">Thiruvananthapuram</SelectItem>
+                               <SelectItem value="Ranchi">Ranchi</SelectItem>
+                               <SelectItem value="Patna">Patna</SelectItem>
+                               <SelectItem value="Raipur">Raipur</SelectItem>
+                               <SelectItem value="Agra">Agra</SelectItem>
+                               <SelectItem value="Varanasi">Varanasi</SelectItem>
+                             </SelectContent>
+                           </Select>
+                         </div>
+                         
+                         <div className="mt-4 bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-100 dark:border-slate-800 space-y-3">
+                             {/* Ex-Showroom Price */}
+                             <div>
                                  <span className="text-xs text-muted-foreground font-medium uppercase">Ex-Showroom Price</span>
-                                 {city && <div className="flex items-center text-xs text-muted-foreground"><MapPin className="w-3 h-3 mr-1" /> {city}</div>}
+                                 <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                                    {exShowroomPrice ? formatINR(exShowroomPrice, true) : "TBA"}
+                                 </div>
                              </div>
-                             <div className="text-3xl font-extrabold text-primary">
-                                {exShowroomPrice ? formatINR(exShowroomPrice, true) : "TBA"}
-                             </div>
-                             <p className="text-xs text-muted-foreground mt-1">*Get on-road price for exact figures</p>
+
+                             {/* On-Road Price */}
+                             {priceBreakdown && (
+                               <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                                 <span className="text-xs text-muted-foreground font-medium uppercase">On-Road Price ({selectedCity})</span>
+                                 <div className="text-3xl font-extrabold text-primary mt-1">
+                                    {formatINR(priceBreakdown.onRoadPrice, true)}
+                                 </div>
+                                 <p className="text-xs text-muted-foreground mt-2">
+                                   Includes Individual Registration (₹{Math.round(priceBreakdown.rto).toLocaleString()}) + Insurance (₹{Math.round(priceBreakdown.insurance).toLocaleString()}) + Other Charges (₹{Math.round(priceBreakdown.otherCharges).toLocaleString()})
+                                 </p>
+                               </div>
+                             )}
                          </div>
                     </CardHeader>
                     <CardContent className="space-y-3 pt-0">
                          <Button size="lg" className="w-full font-semibold shadow-lg shadow-primary/20" onClick={() => setPriceModalOpen(true)}>
                             <Calculator className="w-4 h-4 mr-2" /> Check On-Road Price
                          </Button>
+                         {priceBreakdown && <PriceBreakupComponent breakdown={priceBreakdown} city={selectedCity} />}
                          <div className="grid grid-cols-2 gap-3">
                             <Button variant="outline" onClick={handleAddToCompare}>
                                 <Plus className="w-4 h-4 mr-2" /> Compare
@@ -442,9 +890,10 @@ const VariantDetail = () => {
         open={priceModalOpen}
         onOpenChange={setPriceModalOpen}
         variantId={variantData.id}
-        city={city}
+        city={selectedCity}
         brandName={modelData.brandName}
         modelName={modelData.name}
+        exShowroomPrice={exShowroomPrice || undefined}
       />
     </div>
   );

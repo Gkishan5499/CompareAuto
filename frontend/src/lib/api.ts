@@ -82,7 +82,11 @@ export const variantsApi = {
 
 // Specs API
 export const specsApi = {
-  getByVariant: (variantId: string) => fetchApi<any>(`/specs/${variantId}`),
+  getByVariant: async (variantId: string) => {
+    const result = await fetchApi<any>(`/specs/${variantId}`);
+    // Handle both { data: {...} } and {...} response formats
+    return result?.data || result;
+  },
   list: (page?: number, limit?: number) => fetchApi<any>(`/specs?page=${page || 1}&limit=${limit || 50}`),
 };
 

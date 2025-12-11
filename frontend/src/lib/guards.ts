@@ -50,11 +50,11 @@ export function formatINR(
 
   if (inLakhs) {
     // Assume value is in rupees, convert to lakhs
-    return `₹${(num / 100000).toFixed(2)} L`;
+    return `Rs. ${(num / 100000).toFixed(2)} Lakh`;
   }
 
   // Format as full rupees with commas
-  return `₹${num.toLocaleString("en-IN")}`;
+  return `Rs. ${num.toLocaleString("en-IN")}`;
 }
 
 /**

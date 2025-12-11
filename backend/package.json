@@ -21,14 +21,18 @@
     "migrate:media": "ts-node src/scripts/import-mediaMap.ts",
     "migrate:comparisons": "ts-node src/scripts/import-comparisons.ts",
     "create-admin": "ts-node src/scripts/create-admin.ts",
-    "migrate:images": "ts-node src/scripts/migrate-images.ts"
+    "migrate:images": "ts-node src/scripts/migrate-images.ts",
+    "migrate:hero": "ts-node src/scripts/import-heroCarousel.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-switch": "^1.2.6",
     "bcryptjs": "^3.0.3",
+    "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",

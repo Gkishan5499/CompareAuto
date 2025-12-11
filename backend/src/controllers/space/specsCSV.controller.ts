@@ -192,6 +192,7 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
     createdBrands: 0,
     createdModels: 0,
     createdVariants: 0,
+    updatedVariants: 0,
     createdSpecs: 0,
     updatedSpecs: 0,
     failed: 0,
@@ -334,46 +335,55 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
 
       let variant = await Variant.findOne({ id: variantId });
 
-      if (!variant) {
-        // ensure variant-level values are scalar (not arrays) and parsed correctly
-        const pick = (paths: string[]) => {
-          for (const p of paths) {
-            const parts = p.split('.');
-            let cur: any = specsObj;
-            for (const part of parts) {
-              if (!cur || typeof cur !== 'object') { cur = undefined; break; }
-              cur = cur[part];
-            }
-            if (cur !== undefined && cur !== null && String(cur).trim() !== '') return cur;
+      // Helper to pick a value from nested paths
+      const pick = (paths: string[]) => {
+        for (const p of paths) {
+          const parts = p.split('.');
+          let cur: any = specsObj;
+          for (const part of parts) {
+            if (!cur || typeof cur !== 'object') { cur = undefined; break; }
+            cur = cur[part];
           }
-          return undefined;
-        };
+          if (cur !== undefined && cur !== null && String(cur).trim() !== '') return cur;
+        }
+        return undefined;
+      };
 
-        const priceRaw = pick(['overview.price', 'ex_showroom_price', 'price', 'variant.price']) || 0;
-        const priceNum = typeof priceRaw === 'string' && priceRaw !== '' ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) : Number(priceRaw) || 0;
+      const priceRaw = normalizedRow.exshowroomprice || normalizedRow.ex_showroom_price || pick(['overview.price', 'ex_showroom_price', 'price', 'variant.price']) || normalizedRow.price || 0;
+      console.log('Price extraction:', { 
+        priceRaw, 
+        exshowroomprice: normalizedRow.exshowroomprice,
+        ex_showroom_price: normalizedRow.ex_showroom_price, 
+        price: normalizedRow.price,
+        normalizedRowKeys: Object.keys(normalizedRow).filter(k => k.includes('price'))
+      });
+      const priceNum = typeof priceRaw === 'string' && priceRaw !== '' ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) : Number(priceRaw) || 0;
+      console.log('Parsed price:', priceNum);
 
-        let transmissionVal: any = pick(['performance.transmission', 'transmission', 'variant.transmission']);
-        if (Array.isArray(transmissionVal)) transmissionVal = transmissionVal.join(', ');
-        if (transmissionVal === undefined || transmissionVal === null || String(transmissionVal).trim() === '') transmissionVal = 'Unknown';
+      let transmissionVal: any = pick(['performance.transmission', 'transmission', 'variant.transmission']) || normalizedRow.transmission;
+      if (Array.isArray(transmissionVal)) transmissionVal = transmissionVal.join(', ');
+      if (transmissionVal === undefined || transmissionVal === null || String(transmissionVal).trim() === '') transmissionVal = 'Unknown';
 
-        let fuelTypeVal: any = pick(['fuel_type', 'fuelType', 'variant.fuelType']);
-        if (Array.isArray(fuelTypeVal)) fuelTypeVal = fuelTypeVal.join(', ');
-        if (fuelTypeVal === undefined || fuelTypeVal === null || String(fuelTypeVal).trim() === '') fuelTypeVal = 'Unknown';
+      let fuelTypeVal: any = pick(['fuel_type', 'fuelType', 'variant.fuelType']) || normalizedRow.fuel_type || normalizedRow.fueltype;
+      if (Array.isArray(fuelTypeVal)) fuelTypeVal = fuelTypeVal.join(', ');
+      if (fuelTypeVal === undefined || fuelTypeVal === null || String(fuelTypeVal).trim() === '') fuelTypeVal = 'Unknown';
 
-        let mileageVal: any = pick(['performance.mileage', 'mileage_raw', 'mileage']);
-        if (Array.isArray(mileageVal)) mileageVal = mileageVal[0];
-        const mileageNum = mileageVal ? Number(String(mileageVal).replace(/[^0-9.]/g, '')) : undefined;
+      let mileageVal: any = pick(['performance.mileage', 'mileage_raw', 'mileage']) || normalizedRow.mileage_raw || normalizedRow.mileage;
+      if (Array.isArray(mileageVal)) mileageVal = mileageVal[0];
+      const mileageNum = mileageVal ? Number(String(mileageVal).replace(/[^0-9.]/g, '')) : undefined;
 
-        let seatingVal: any = pick(['seating_capacity', 'seating', 'seating_capacity_raw']);
-        if (Array.isArray(seatingVal)) seatingVal = seatingVal[0];
-        const seatingNum = seatingVal ? parseInt(String(seatingVal).replace(/[^0-9]/g, ''), 10) : undefined;
+      let seatingVal: any = pick(['seating_capacity', 'seating', 'seating_capacity_raw']) || normalizedRow.seating_capacity_raw || normalizedRow.seating;
+      if (Array.isArray(seatingVal)) seatingVal = seatingVal[0];
+      const seatingNum = seatingVal ? parseInt(String(seatingVal).replace(/[^0-9]/g, ''), 10) : undefined;
 
+      if (!variant) {
         variant = await Variant.create({
           id: variantId,
           modelId: carModel.id,
           name: variantName,
           slug: slugify(variantName),
           price: priceNum,
+          exShowroomPrice: priceNum,
           fuelType: fuelTypeVal,
           transmission: String(transmissionVal),
           mileage: mileageNum,
@@ -384,6 +394,24 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
 
         // increase variant count
         await Model.updateOne({ id: carModel.id }, { $inc: { variantCount: 1 } });
+      } else {
+        // Update existing variant with new data
+        await Variant.updateOne(
+          { id: variantId },
+          {
+            $set: {
+              name: variantName,
+              slug: slugify(variantName),
+              price: priceNum,
+              exShowroomPrice: priceNum,
+              fuelType: fuelTypeVal,
+              transmission: String(transmissionVal),
+              mileage: mileageNum,
+              seating: seatingNum,
+            }
+          }
+        );
+        report.updatedVariants = (report.updatedVariants || 0) + 1;
       }
 
       // =============================

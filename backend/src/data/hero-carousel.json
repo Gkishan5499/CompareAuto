@@ -1,0 +1,34 @@
+[
+  {
+    "id": "hero-1",
+    "title": "Premium Cars Collection",
+    "imageUrl": "https://images.unsplash.com/photo-1542362567-b07e54358753?w=1920&h=1080&fit=crop",
+    "order": 0,
+    "isActive": true,
+    "description": "Discover our premium collection"
+  },
+  {
+    "id": "hero-2",
+    "title": "Latest Models",
+    "imageUrl": "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=1920&h=1080&fit=crop",
+    "order": 1,
+    "isActive": true,
+    "description": "Explore the latest car models"
+  },
+  {
+    "id": "hero-3",
+    "title": "Luxury Experience",
+    "imageUrl": "https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=1920&h=1080&fit=crop",
+    "order": 2,
+    "isActive": true,
+    "description": "Experience luxury on wheels"
+  },
+  {
+    "id": "hero-4",
+    "title": "Drive Your Dream",
+    "imageUrl": "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=1920&h=1080&fit=crop",
+    "order": 3,
+    "isActive": true,
+    "description": "Find your perfect match"
+  }
+]

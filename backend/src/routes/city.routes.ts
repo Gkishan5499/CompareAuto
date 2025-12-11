@@ -1,31 +1,46 @@
 import express from "express";
 import { Request, Response } from "express";
+import { CITY_TO_STATE } from "../lib/cityStateMapping";
 
 const router = express.Router();
 
-// Popular cities in India
-const CITIES = [
-  { id: "delhi-ncr", name: "Delhi NCR", state: "Delhi", slug: "delhi-ncr" },
-  { id: "mumbai", name: "Mumbai", state: "Maharashtra", slug: "mumbai" },
-  { id: "bangalore", name: "Bangalore", state: "Karnataka", slug: "bangalore" },
-  { id: "hyderabad", name: "Hyderabad", state: "Telangana", slug: "hyderabad" },
-  { id: "chennai", name: "Chennai", state: "Tamil Nadu", slug: "chennai" },
-  { id: "pune", name: "Pune", state: "Maharashtra", slug: "pune" },
-  { id: "kolkata", name: "Kolkata", state: "West Bengal", slug: "kolkata" },
-  { id: "ahmedabad", name: "Ahmedabad", state: "Gujarat", slug: "ahmedabad" },
-  { id: "jaipur", name: "Jaipur", state: "Rajasthan", slug: "jaipur" },
-  { id: "chandigarh", name: "Chandigarh", state: "Chandigarh", slug: "chandigarh" },
-  { id: "surat", name: "Surat", state: "Gujarat", slug: "surat" },
-  { id: "lucknow", name: "Lucknow", state: "Uttar Pradesh", slug: "lucknow" },
-  { id: "kochi", name: "Kochi", state: "Kerala", slug: "kochi" },
-  { id: "indore", name: "Indore", state: "Madhya Pradesh", slug: "indore" },
-  { id: "nagpur", name: "Nagpur", state: "Maharashtra", slug: "nagpur" },
-  { id: "bhopal", name: "Bhopal", state: "Madhya Pradesh", slug: "bhopal" },
-  { id: "visakhapatnam", name: "Visakhapatnam", state: "Andhra Pradesh", slug: "visakhapatnam" },
-  { id: "patna", name: "Patna", state: "Bihar", slug: "patna" },
-  { id: "vadodara", name: "Vadodara", state: "Gujarat", slug: "vadodara" },
-  { id: "ghaziabad", name: "Ghaziabad", state: "Uttar Pradesh", slug: "ghaziabad" },
+// Generate city list from mapping with proper format
+const generateCities = () => {
+  return Object.entries(CITY_TO_STATE)
+    .map(([cityName, stateName]) => ({
+      id: cityName.toLowerCase().replace(/\s+/g, "-"),
+      name: cityName,
+      state: stateName,
+      slug: cityName.toLowerCase().replace(/\s+/g, "-"),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+};
+
+// Popular cities in India (top 20 major cities)
+const POPULAR_CITY_NAMES = [
+  "Mumbai",
+  "Delhi",
+  "Bangalore",
+  "Bengaluru",
+  "Hyderabad",
+  "Chennai",
+  "Pune",
+  "Kolkata",
+  "Ahmedabad",
+  "Jaipur",
+  "Chandigarh",
+  "Surat",
+  "Lucknow",
+  "Kochi",
+  "Indore",
+  "Nagpur",
+  "Bhopal",
+  "Visakhapatnam",
+  "Patna",
+  "Vadodara",
 ];
+
+const CITIES = generateCities();
 
 // Get all cities
 router.get("/", (req: Request, res: Response) => {
@@ -36,10 +51,12 @@ router.get("/", (req: Request, res: Response) => {
   }
 });
 
-// Get popular cities (top 10)
+// Get popular cities (top 20)
 router.get("/popular", (req: Request, res: Response) => {
   try {
-    const popularCities = CITIES.slice(0, 10);
+    const popularCities = CITIES.filter((city) =>
+      POPULAR_CITY_NAMES.includes(city.name)
+    );
     res.json(popularCities);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch popular cities" });

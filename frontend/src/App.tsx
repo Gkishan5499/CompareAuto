@@ -40,6 +40,7 @@ import AdminVariantSync from "./pages/AdminVariantSync";
 import AdminImportReport from "./pages/AdminImportReport";
 import AdminContentGuide from "./pages/AdminContentGuide";
 import DataLoader from "./components/DataLoader";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -50,11 +51,12 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <ErrorBoundary>
             <div className="flex flex-col min-h-screen overflow-x-hidden">
               <DataLoader />
               <Header />
-              <main className="flex-1 overflow-x-hidden">
+              <main className="flex-1 overflow-x-hidden pt-24">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/brands" element={<Brands />} />
