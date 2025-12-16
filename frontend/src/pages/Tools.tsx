@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Calculator, DollarSign, Fuel, User } from "lucide-react";
+import { Calculator, DollarSign, Fuel, User, Zap } from "lucide-react";
 import ToolTile from "@/components/tools/ToolTile";
 import EMICalculatorSection from "@/components/tools/EMICalculatorSection";
 import OnRoadPriceEstimator from "@/components/tools/OnRoadPriceEstimator";
 import FuelCostEstimator from "@/components/tools/FuelCostEstimator";
+import RTOCalculator from "@/components/tools/RTOCalculator";
 import PersonaBuilderCTA from "@/components/tools/PersonaBuilderCTA";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
 
@@ -58,6 +59,14 @@ const Tools = () => {
       icon: Fuel,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
+    },
+    {
+      id: "rto",
+      title: "RTO Calculator",
+      description: "Calculate road tax by state",
+      icon: Zap,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
     },
     {
       id: "persona",
@@ -147,6 +156,21 @@ const Tools = () => {
               </p>
             </div>
             <FuelCostEstimator />
+          </div>
+        </div>
+      </section>
+
+      {/* RTO CALCULATOR */}
+      <section id="section-rto" className="subsection-spacing border-b scroll-mt-20">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="mb-3">RTO Calculator</h2>
+              <p className="text-muted-foreground">
+                Calculate road tax based on state, fuel type, and vehicle price
+              </p>
+            </div>
+            <RTOCalculator />
           </div>
         </div>
       </section>

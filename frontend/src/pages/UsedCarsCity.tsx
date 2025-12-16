@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/select";
 import { ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { getUsedCars, UsedCar } from "@/lib/data";
+import { UsedCar } from "@/lib/data";
+import { usedCarsApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData, generateItemListSchema } from "@/lib/seo";
 
 const UsedCarsCity = () => {
@@ -23,6 +24,7 @@ const UsedCarsCity = () => {
   const [cars, setCars] = useState<UsedCar[]>([]);
   const [filteredCars, setFilteredCars] = useState<UsedCar[]>([]);
   const [sortBy, setSortBy] = useState("newest");
+  const [visibleCount, setVisibleCount] = useState(12);
   const allBrands = Array.from(new Set(cars.map((car) => car.brand))).sort();
   const [filters, setFilters] = useState({
     brand: "all",
@@ -35,9 +37,16 @@ const UsedCarsCity = () => {
   });
 
   useEffect(() => {
-    const allCars = getUsedCars({ city: cityName });
-    setCars(allCars);
-    setFilteredCars(allCars);
+    const load = async () => {
+      try {
+        const byCity = await usedCarsApi.getByCity(cityName);
+        setCars(byCity);
+        setFilteredCars(byCity.slice(0, visibleCount));
+      } catch (e) {
+        console.error("Failed to fetch city used cars", e);
+      }
+    };
+    if (cityName) load();
 
     // SEO
     updateMetaTags({
@@ -48,7 +57,7 @@ const UsedCarsCity = () => {
     });
 
     const schema = generateItemListSchema(
-      allCars.slice(0, 20).map((car, idx) => ({
+      filteredCars.slice(0, visibleCount).map((car, idx) => ({
         name: car.title,
         url: `https://compareauto.in${car.listingUrl}`,
         position: idx + 1,
@@ -96,8 +105,30 @@ const UsedCarsCity = () => {
         break;
     }
 
-    setFilteredCars(result);
-  }, [filters, sortBy, cars]);
+    // Sorting
+    switch (sortBy) {
+      case "price-low":
+        result = [...result].sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        result = [...result].sort((a, b) => b.price - a.price);
+        break;
+      case "kms-low":
+        result = [...result].sort((a, b) => a.kms - b.kms);
+        break;
+      case "year-new":
+        result = [...result].sort((a, b) => b.year - a.year);
+        break;
+      default:
+        result = [...result];
+        break;
+    }
+
+    setFilteredCars(result.slice(0, visibleCount));
+  }, [filters, sortBy, cars, visibleCount]);
+  const loadMore = () => {
+    setVisibleCount((c) => c + 12);
+  };
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -196,9 +227,9 @@ const UsedCarsCity = () => {
                 </div>
               )}
 
-              {filteredCars.length > 0 && (
+              {filteredCars.length > 0 && filteredCars.length < cars.length && (
                 <div className="mt-8 text-center">
-                  <Button variant="outline" size="lg">
+                  <Button variant="outline" size="lg" onClick={loadMore}>
                     Load More
                   </Button>
                 </div>

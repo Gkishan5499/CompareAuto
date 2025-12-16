@@ -2,10 +2,8 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock } from "lucide-react";
-import { Article } from "@/lib/data";
-
 interface ArticleCardProps {
-  article: Article;
+  article: any;
 }
 
 const ArticleCard = ({ article }: ArticleCardProps) => {
@@ -22,7 +20,11 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
     <Link to={`/news/${article.slug}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-all group h-full flex flex-col">
         <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-          <span className="text-6xl group-hover:scale-110 transition-transform">📰</span>
+          {article.heroImage ? (
+            <img src={article.heroImage} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+          ) : (
+            <span className="text-6xl group-hover:scale-110 transition-transform">📰</span>
+          )}
         </div>
         <div className="p-4 flex flex-col flex-1">
           <div className="flex items-center gap-2 mb-3">

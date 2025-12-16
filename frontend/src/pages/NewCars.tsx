@@ -42,6 +42,34 @@ const NewCars = () => {
       result = result.filter((model) => model.bodyType === filters.bodyType);
     }
 
+    // Filter by fuel type
+    if (filters.fuelType !== "all") {
+      result = result.filter((model) => {
+        const modelFuel = model.fuelTypes || model.fuelType;
+        if (Array.isArray(modelFuel)) {
+          return modelFuel.some(f => f.toLowerCase() === filters.fuelType.toLowerCase());
+        }
+        return modelFuel?.toLowerCase() === filters.fuelType.toLowerCase();
+      });
+    }
+
+    // Filter by transmission
+    if (filters.transmission !== "all") {
+      result = result.filter((model) => {
+        const modelTrans = model.transmissions || model.transmission;
+        if (Array.isArray(modelTrans)) {
+          return modelTrans.some(t => t.toLowerCase().includes(filters.transmission.toLowerCase()));
+        }
+        return modelTrans?.toLowerCase().includes(filters.transmission.toLowerCase());
+      });
+    }
+
+    // Filter by seating
+    if (filters.seating !== "all") {
+      const seatCount = parseInt(filters.seating);
+      result = result.filter((model) => model.seating === seatCount);
+    }
+
     // Sort
     switch (sortBy) {
       case "price_asc":
@@ -141,6 +169,53 @@ const NewCars = () => {
             <SelectItem value="Sedan">Sedan</SelectItem>
             <SelectItem value="SUV">SUV</SelectItem>
             <SelectItem value="MUV">MUV</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Fuel Type</Label>
+        <Select value={filters.fuelType} onValueChange={(val) => setFilters({ ...filters, fuelType: val })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="all">All Fuel Types</SelectItem>
+            <SelectItem value="Petrol">Petrol</SelectItem>
+            <SelectItem value="Diesel">Diesel</SelectItem>
+            <SelectItem value="CNG">CNG</SelectItem>
+            <SelectItem value="Hybrid">Hybrid</SelectItem>
+            <SelectItem value="Electric">Electric</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Transmission</Label>
+        <Select value={filters.transmission} onValueChange={(val) => setFilters({ ...filters, transmission: val })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="all">All Transmission</SelectItem>
+            <SelectItem value="Manual">Manual</SelectItem>
+            <SelectItem value="Automatic">Automatic</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Seating</Label>
+        <Select value={filters.seating} onValueChange={(val) => setFilters({ ...filters, seating: val })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="all">All Seating</SelectItem>
+            <SelectItem value="2">2 Seater</SelectItem>
+            <SelectItem value="5">5 Seater</SelectItem>
+            <SelectItem value="7">7 Seater</SelectItem>
+            <SelectItem value="8">8+ Seater</SelectItem>
           </SelectContent>
         </Select>
       </div>

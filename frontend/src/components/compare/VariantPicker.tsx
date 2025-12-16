@@ -60,15 +60,10 @@ const VariantPicker = ({ slot, initialValue, onSelect }: VariantPickerProps) => 
 
   const handleVariantChange = (value: string) => {
     setSelectedVariant(value);
-    // Find the variant and get its ID
-    const brand = getBrandBySlug(selectedBrand);
-    const model = brand ? getModel(selectedBrand, selectedModel) : undefined;
-    if (model) {
-      const variantsList = getVariants(model.id);
-      const variant = variantsList.find(v => v.slug === value);
-      if (variant) {
-        onSelect(variant.id);
-      }
+    // Find the variant and get its ID from the API variants
+    const selectedVariantObj = variants.find(v => v.slug === value);
+    if (selectedVariantObj) {
+      onSelect(selectedVariantObj.id);
     }
   };
 

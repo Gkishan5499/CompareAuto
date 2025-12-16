@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CarFront, Layers, Settings, FileSpreadsheet, MapPin, Users, Database, DollarSign, Image } from "lucide-react";
+import { LayoutDashboard, CarFront, Layers, Settings, FileSpreadsheet, MapPin, Users, Database, DollarSign, Image, Mail, FileText, MessageSquare } from "lucide-react";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -9,6 +9,10 @@ const nav = [
   { to: "/specs", label: "Specs", icon: Database },
   { to: "/pricing", label: "Pricing & Taxes", icon: DollarSign },
   { to: "/hero-carousel", label: "Hero Carousel", icon: Image },
+  { to: "/enquiries", label: "Enquiries", icon: Mail },
+  { to: "/articles", label: "Articles", icon: FileText },
+  { to: "/comments", label: "Comments", icon: MessageSquare },
+  { to: "/used-cars", label: "Used Cars", icon: CarFront },
   { to: "/dealers", label: "Dealers", icon: MapPin },
   { to: "/users", label: "Users", icon: Users },
   { to: "/import", label: "Import CSV", icon: FileSpreadsheet },
@@ -26,7 +30,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
         {!collapsed && <div className="text-xs text-muted-foreground">v1.0</div>}
       </div>
 
-      <nav className="flex-1 p-2 space-y-1 mt-3">
+      <nav className="flex-1 p-2 space-y-1 mt-3 overflow-y-auto min-h-0">
         {nav.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}

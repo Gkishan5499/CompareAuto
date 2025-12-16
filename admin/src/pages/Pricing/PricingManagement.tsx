@@ -11,6 +11,13 @@ interface StateTaxConfig {
   state: string;
   gstRate: number;
   rtoPercentage: number;
+  rtoByFuelType?: {
+    petrol?: number;
+    diesel?: number;
+    cng?: number;
+    hybrid?: number;
+    ev?: number;
+  };
   insurancePercentage: number;
   registrationFee: number;
   tcsRate?: number;
@@ -33,6 +40,9 @@ const PricingManagement = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // RTO Fuel Type Selection State
+  const [selectedFuelType, setSelectedFuelType] = useState<"petrol" | "diesel" | "cng" | "hybrid" | "ev">("petrol");
 
   // Pricing Update State
   const [priceUpdateType, setPriceUpdateType] = useState<"percentage" | "fixed">("percentage");
@@ -184,6 +194,23 @@ const PricingManagement = () => {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
+                <div className="mb-4 flex items-center gap-4">
+                  <label className="block text-sm font-medium">View RTO by Fuel Type:</label>
+                  <select
+                    value={selectedFuelType}
+                    onChange={(e) => setSelectedFuelType(e.target.value as any)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="petrol">Petrol</option>
+                    <option value="diesel">Diesel</option>
+                    <option value="cng">CNG</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="ev">EV</option>
+                  </select>
+                  <span className="text-sm text-gray-500">
+                    Select a fuel type to see and edit RTO percentages for that fuel type across all states.
+                  </span>
+                </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -191,7 +218,6 @@ const PricingManagement = () => {
                       <TableHead>GST Rate</TableHead>
                       <TableHead>RTO %</TableHead>
                       <TableHead>Insurance %</TableHead>
-                      <TableHead>Registration Fee</TableHead>
                       <TableHead>TCS Rate</TableHead>
                       <TableHead>FASTag</TableHead>
                       <TableHead>Actions</TableHead>
@@ -224,11 +250,21 @@ const PricingManagement = () => {
                               type="number"
                               step="0.1"
                               className="w-20"
-                              value={editData.rtoPercentage || 0}
-                              onChange={(e) => setInlineEditData({ ...inlineEditData, rtoPercentage: parseFloat(e.target.value) })}
+                                value={editData.rtoByFuelType?.[selectedFuelType] || editData.rtoPercentage || 0}
+                                onChange={(e) => setInlineEditData({ 
+                                  ...inlineEditData, 
+                                  rtoByFuelType: { 
+                                    ...inlineEditData.rtoByFuelType,
+                                    [selectedFuelType]: parseFloat(e.target.value)
+                                  }
+                                })}
                             />
                           ) : (
-                            `${config.rtoPercentage}%`
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs px-2 py-1 bg-gray-100 rounded">
+                                  {selectedFuelType.charAt(0).toUpperCase() + selectedFuelType.slice(1)}: {config.rtoByFuelType?.[selectedFuelType] ?? config.rtoPercentage}%
+                                </span>
+                              </div>
                           )}
                         </TableCell>
                         <TableCell>
@@ -242,18 +278,6 @@ const PricingManagement = () => {
                             />
                           ) : (
                             `${config.insurancePercentage}%`
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {isEditing ? (
-                            <Input
-                              type="number"
-                              className="w-28"
-                              value={editData.registrationFee || 0}
-                              onChange={(e) => setInlineEditData({ ...inlineEditData, registrationFee: parseInt(e.target.value) })}
-                            />
-                          ) : (
-                            `₹${config.registrationFee.toLocaleString()}`
                           )}
                         </TableCell>
                         <TableCell>
@@ -370,6 +394,91 @@ const PricingManagement = () => {
                                       onChange={(e) => setEditFormData({ ...editFormData, rtoPercentage: parseFloat(e.target.value) })}
                                     />
                                   </div>
+                                  <div className="col-span-2">
+                                    <label className="block text-sm font-medium mb-3">RTO by Fuel Type (%)</label>
+                                    <div className="grid grid-cols-5 gap-2">
+                                      <div>
+                                        <label className="block text-xs text-gray-600 mb-1">Petrol</label>
+                                        <Input
+                                          type="number"
+                                          step="0.1"
+                                          value={editFormData.rtoByFuelType?.petrol ?? editFormData.rtoPercentage ?? 0}
+                                          onChange={(e) => setEditFormData({ 
+                                            ...editFormData, 
+                                            rtoByFuelType: { 
+                                              ...editFormData.rtoByFuelType, 
+                                              petrol: parseFloat(e.target.value) 
+                                            } 
+                                          })}
+                                          placeholder="9"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-600 mb-1">Diesel</label>
+                                        <Input
+                                          type="number"
+                                          step="0.1"
+                                          value={editFormData.rtoByFuelType?.diesel ?? editFormData.rtoPercentage ?? 0}
+                                          onChange={(e) => setEditFormData({ 
+                                            ...editFormData, 
+                                            rtoByFuelType: { 
+                                              ...editFormData.rtoByFuelType, 
+                                              diesel: parseFloat(e.target.value) 
+                                            } 
+                                          })}
+                                          placeholder="9.5"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-600 mb-1">CNG</label>
+                                        <Input
+                                          type="number"
+                                          step="0.1"
+                                          value={editFormData.rtoByFuelType?.cng ?? editFormData.rtoPercentage ?? 0}
+                                          onChange={(e) => setEditFormData({ 
+                                            ...editFormData, 
+                                            rtoByFuelType: { 
+                                              ...editFormData.rtoByFuelType, 
+                                              cng: parseFloat(e.target.value) 
+                                            } 
+                                          })}
+                                          placeholder="8.5"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-600 mb-1">Hybrid</label>
+                                        <Input
+                                          type="number"
+                                          step="0.1"
+                                          value={editFormData.rtoByFuelType?.hybrid ?? editFormData.rtoPercentage ?? 0}
+                                          onChange={(e) => setEditFormData({ 
+                                            ...editFormData, 
+                                            rtoByFuelType: { 
+                                              ...editFormData.rtoByFuelType, 
+                                              hybrid: parseFloat(e.target.value) 
+                                            } 
+                                          })}
+                                          placeholder="8"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-600 mb-1">EV</label>
+                                        <Input
+                                          type="number"
+                                          step="0.1"
+                                          value={editFormData.rtoByFuelType?.ev ?? editFormData.rtoPercentage ?? 0}
+                                          onChange={(e) => setEditFormData({ 
+                                            ...editFormData, 
+                                            rtoByFuelType: { 
+                                              ...editFormData.rtoByFuelType, 
+                                              ev: parseFloat(e.target.value) 
+                                            } 
+                                          })}
+                                          placeholder="0"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
                                   <div>
                                     <label className="block text-sm font-medium mb-1">Insurance Percentage (%)</label>
                                     <Input
@@ -377,14 +486,6 @@ const PricingManagement = () => {
                                       step="0.1"
                                       value={editFormData.insurancePercentage || 0}
                                       onChange={(e) => setEditFormData({ ...editFormData, insurancePercentage: parseFloat(e.target.value) })}
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-sm font-medium mb-1">Registration Fee (₹)</label>
-                                    <Input
-                                      type="number"
-                                      value={editFormData.registrationFee || 0}
-                                      onChange={(e) => setEditFormData({ ...editFormData, registrationFee: parseInt(e.target.value) })}
                                     />
                                   </div>
                                   <div>
@@ -408,7 +509,7 @@ const PricingManagement = () => {
                                 <div className="bg-blue-50 p-3 rounded-lg text-sm">
                                   <p className="font-medium mb-1">Current Breakdown:</p>
                                   <ul className="list-disc list-inside space-y-1 text-xs">
-                                    <li>Individual Registration = RTO % + Registration Fee</li>
+                                    <li>Individual Registration = RTO %</li>
                                     <li>TCS applies only to vehicles with ex-showroom ≥ Rs. 10,00,000</li>
                                     <li>Other Charges = TCS + FASTag</li>
                                   </ul>
@@ -496,7 +597,7 @@ const PricingManagement = () => {
         <Card>
           <CardHeader>
             <CardTitle>State-wise Tax Configuration</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">Manage GST, RTO, insurance, registration fees, TCS rate, and FASTag charges by state</p>
+            <p className="text-sm text-gray-600 mt-1">Manage GST, RTO, insurance, TCS rate, and FASTag charges by state</p>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">

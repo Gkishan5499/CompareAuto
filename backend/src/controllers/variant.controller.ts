@@ -90,6 +90,19 @@ export const bulkCreateVariants = async (req: Request, res: Response) => {
       // Add default values for required fields if missing
       if (!variant.fuelType) variant.fuelType = "Unknown";
       if (!variant.transmission) variant.transmission = "Unknown";
+      
+      // Normalize price: if < 1000, assume it's in lakhs and convert to rupees
+      let price = Number(variant.price) || 0;
+      let exShowroomPrice = Number(variant.exShowroomPrice) || price;
+      if (price > 0 && price < 1000) {
+        price = Math.round(price * 100000);
+      }
+      if (exShowroomPrice > 0 && exShowroomPrice < 1000) {
+        exShowroomPrice = Math.round(exShowroomPrice * 100000);
+      }
+      variant.price = price;
+      variant.exShowroomPrice = exShowroomPrice;
+      
       return variant;
     });
 

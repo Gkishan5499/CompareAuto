@@ -1,5 +1,10 @@
 import { Router } from "express";
 import { getVariantPriceBreakdown, calcPriceFromValue } from "../controllers/pricing.controller";
+import {
+  calculateRTOController,
+  bulkCalculateRTOController,
+  getRTORatesController,
+} from "../controllers/rtoCalculator.controller";
 import { ALL_STATES, CITY_TO_STATE } from "../lib/cityStateMapping";
 
 const router = Router();
@@ -24,5 +29,15 @@ router.post("/calc", calcPriceFromValue);
 
 // GET /api/pricing/variant/:id/price?city=...&state=...
 router.get("/variant/:id/price", getVariantPriceBreakdown);
+
+// RTO Calculator Routes
+// POST /api/pricing/calculate-rto
+router.post("/calculate-rto", calculateRTOController);
+
+// POST /api/pricing/calculate-rto-bulk
+router.post("/calculate-rto-bulk", bulkCalculateRTOController);
+
+// GET /api/pricing/rto-rates
+router.get("/rto-rates", getRTORatesController);
 
 export default router;

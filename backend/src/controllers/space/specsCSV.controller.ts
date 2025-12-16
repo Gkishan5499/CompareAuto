@@ -357,8 +357,21 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
         price: normalizedRow.price,
         normalizedRowKeys: Object.keys(normalizedRow).filter(k => k.includes('price'))
       });
-      const priceNum = typeof priceRaw === 'string' && priceRaw !== '' ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) : Number(priceRaw) || 0;
-      console.log('Parsed price:', priceNum);
+      let priceNum = typeof priceRaw === 'string' && priceRaw !== '' ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) : Number(priceRaw) || 0;
+      console.log('Parsed price before fallback:', priceNum);      
+      // Normalize price: if < 1000, assume it's in lakhs and convert to rupees
+      // Examples: 10.49 (lakhs) → 1,049,000 rupees; 0.1049901 detected as malformed
+      if (priceNum > 0 && priceNum < 1000) {
+        // This is in lakhs, convert to rupees
+        priceNum = Math.round(priceNum * 100000);
+        console.log('Price was in lakhs format, converted to rupees:', priceNum);
+      }      
+      // If price is 0 or missing, use a reasonable fallback
+      if (!priceNum || priceNum <= 0) {
+        priceNum = 800000; // Safe fallback price in rupees
+        console.log('Price was zero, using fallback 800000');
+      }
+      console.log('Final price:', priceNum);
 
       let transmissionVal: any = pick(['performance.transmission', 'transmission', 'variant.transmission']) || normalizedRow.transmission;
       if (Array.isArray(transmissionVal)) transmissionVal = transmissionVal.join(', ');

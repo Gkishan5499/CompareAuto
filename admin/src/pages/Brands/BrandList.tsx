@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
 import { useApiList, useApiDelete } from "../../hooks/useapi";
 import { Button } from "../../components/ui/button";
-import { Pencil, Trash2, Plus, Upload } from "lucide-react"; // Assuming you use lucide-react
+import { Input } from "../../components/ui/input";
+import { Pencil, Trash2, Plus, Upload, Search } from "lucide-react";
 
 // 1. Define the data shape
 interface Brand {
@@ -17,6 +19,21 @@ export default function BrandList() {
   // 2. Add Type to the hook for autocomplete support
   const { data: brands = [], isLoading } = useApiList<Brand[]>(["brands"], "/api/brands");
   const deleteBrand = useApiDelete(["brands"], "/api/brands");
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [displayCount, setDisplayCount] = useState(20);
+  
+  const filteredBrands = useMemo(() => {
+    if (!searchQuery) return brands;
+    const query = searchQuery.toLowerCase();
+    return brands.filter((b: Brand) => 
+      b.name?.toLowerCase().includes(query) ||
+      b.country?.toLowerCase().includes(query) ||
+      b.id?.toLowerCase().includes(query)
+    );
+  }, [brands, searchQuery]);
+  
+  const displayedBrands = filteredBrands.slice(0, displayCount);
 
   // 3. Safety Check for Deletion
   const handleDelete = (id: string) => {
@@ -53,6 +70,22 @@ export default function BrandList() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          type="text"
+          placeholder="Search by brand name, country, or ID..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      <div className="text-sm text-gray-600">
+        Showing {displayedBrands.length} of {filteredBrands.length} brands
+      </div>
+
       {/* Table Section */}
       <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -67,14 +100,14 @@ export default function BrandList() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {brands.length === 0 ? (
+              {displayedBrands.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-500">
-                    No brands found. Click "New Brand" to create one.
+                    {searchQuery ? "No brands found matching your search." : "No brands found. Click \"New Brand\" to create one."}
                   </td>
                 </tr>
               ) : (
-                brands.map((b: Brand) => (
+                displayedBrands.map((b: Brand) => (
                   <tr key={b.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       {b.logo ? (
@@ -119,6 +152,18 @@ export default function BrandList() {
           </table>
         </div>
       </div>
+
+      {/* Load More Button */}
+      {displayCount < filteredBrands.length && (
+        <div className="text-center">
+          <Button 
+            variant="outline" 
+            onClick={() => setDisplayCount(prev => prev + 20)}
+          >
+            Load More ({filteredBrands.length - displayCount} remaining)
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

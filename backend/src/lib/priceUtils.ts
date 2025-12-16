@@ -58,8 +58,8 @@ export interface SimplePriceBreakdown {
 
 export const calculatePriceBreakdownWithConfig = (
   exShowroomPrice: number,
-  config: { gstRate?: number; rtoPercentage?: number; insurancePercentage?: number; registrationFee?: number; state?: string; tcsRate?: number; fastagCharges?: number },
-  options?: { fuelType?: string; engineCc?: number; stateCode?: string }
+  config: { gstRate?: number; rtoPercentage?: number; rtoByFuelType?: { petrol?: number; diesel?: number; cng?: number; hybrid?: number; ev?: number }; insurancePercentage?: number; registrationFee?: number; state?: string; tcsRate?: number; fastagCharges?: number },
+  options?: { fuelType?: string; engineCc?: number; stateCode?: string; seating?: number; transmission?: string; bodyType?: string }
 ): SimplePriceBreakdown => {
   // Normalize percentage fields: allow storing as 5 (meaning 5%) or 0.05
   const normalize = (v: number | undefined, defaultVal: number) => {
@@ -74,7 +74,63 @@ export const calculatePriceBreakdownWithConfig = (
   };
 
   const gstRate = normalize(config.gstRate, 0.05);
-  const rtoRate = normalize(config.rtoPercentage, 0.09);
+
+  // Select RTO rate based on fuel type, falling back to legacy rtoPercentage
+  let rtoRateValue: number | undefined;
+  if (config.rtoByFuelType && options?.fuelType) {
+    const fuelLower = options.fuelType.toLowerCase();
+    if (fuelLower === 'ev' || fuelLower === 'electric') {
+      rtoRateValue = config.rtoByFuelType.ev;
+    } else if (fuelLower === 'cng') {
+      rtoRateValue = config.rtoByFuelType.cng;
+    } else if (fuelLower === 'diesel') {
+      rtoRateValue = config.rtoByFuelType.diesel;
+    } else if (fuelLower === 'hybrid') {
+      rtoRateValue = config.rtoByFuelType.hybrid;
+    } else if (fuelLower === 'petrol' || fuelLower === 'petrol/hybrid') {
+      rtoRateValue = config.rtoByFuelType.petrol;
+    }
+  }
+  let rtoRate = normalize(rtoRateValue ?? config.rtoPercentage, 0.09);
+
+  // Apply variant-specific RTO multipliers (like CarDekho)
+  // 1. Engine capacity based multiplier
+  if (options?.engineCc) {
+    const cc = options.engineCc;
+    if (cc > 2000) {
+      rtoRate *= 1.15; // +15% for >2000cc (luxury/performance)
+    } else if (cc > 1500) {
+      rtoRate *= 1.10; // +10% for 1500-2000cc (mid-size)
+    } else if (cc > 1200) {
+      rtoRate *= 1.05; // +5% for 1200-1500cc (compact+)
+    }
+    // Below 1200cc: no multiplier (base rate)
+  }
+
+  // 2. Seating capacity multiplier (more seats = commercial/utility category)
+  if (options?.seating && options.seating > 7) {
+    rtoRate *= 1.08; // +8% for 8+ seater (commercial category)
+  } else if (options?.seating && options.seating === 7) {
+    rtoRate *= 1.03; // +3% for 7-seater (family SUV/MPV)
+  }
+
+  // 3. Body type consideration (SUV/MUV typically higher)
+  if (options?.bodyType) {
+    const bodyLower = options.bodyType.toLowerCase();
+    if (bodyLower.includes('suv') || bodyLower.includes('muv')) {
+      rtoRate *= 1.02; // +2% for SUV/MUV
+    }
+  }
+
+  // 4. Price slab multiplier (higher price = higher RTO rate)
+  if (exShowroomPrice > 2000000) {
+    rtoRate *= 1.20; // +20% for >20L (luxury segment)
+  } else if (exShowroomPrice > 1500000) {
+    rtoRate *= 1.12; // +12% for 15-20L (premium segment)
+  } else if (exShowroomPrice > 1000000) {
+    rtoRate *= 1.08; // +8% for 10-15L (mid-premium)
+  }
+
   const insurancePct = normalize(config.insurancePercentage, 0.035);
   const registrationFee = config.registrationFee ?? 2500;
   const tcsRate = normalizeTcs(config.tcsRate, 0.01); // Always treat as percentage

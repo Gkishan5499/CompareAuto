@@ -125,7 +125,8 @@ const OnRoadPriceEstimator = () => {
                 {variants.map((variant) => (
                   <SelectItem key={variant.id} value={variant.id}>
                     {variant.name} - {(() => {
-                      const p = parseINRToRupees(variant.price);
+                      const raw = variant.exShowroomPrice ?? variant.price;
+                      const p = parseINRToRupees(raw);
                       return p && p > 0 ? formatINR(p, true) : "—";
                     })()}
                   </SelectItem>

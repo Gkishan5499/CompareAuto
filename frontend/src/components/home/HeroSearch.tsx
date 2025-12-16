@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, MapPin, ChevronDown, DollarSign, Zap, Cog, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Carousel,
   CarouselContent,
@@ -142,9 +143,11 @@ const HeroSearch = () => {
 
   const handleSuggestionClick = (suggestion: any) => {
     if (suggestion.type === "brand") {
-      navigate(`/brands/${suggestion.slug}`);
+      navigate(`/brands/${suggestion.brandSlug}`);
     } else if (suggestion.type === "model") {
-      navigate(`/brands/${suggestion.brandSlug}/${suggestion.slug}`);
+      navigate(`/${suggestion.brandSlug}/${suggestion.slug}`);
+    } else if (suggestion.type === "variant") {
+      navigate(`/${suggestion.brandSlug}/${suggestion.modelSlug}/${suggestion.slug}`);
     }
     setShowSuggestions(false);
     setSearchQuery("");
@@ -322,17 +325,29 @@ const HeroSearch = () => {
                         
                         {/* Suggestions Dropdown */}
                         {showSuggestions && suggestions.length > 0 && (
-                          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 max-h-80 overflow-y-auto z-50">
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-96 overflow-y-auto z-50">
                             {suggestions.map((suggestion, index) => (
                               <button
                                 key={index}
                                 type="button"
                                 onClick={() => handleSuggestionClick(suggestion)}
-                                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-center gap-3"
                               >
-                                <div className="font-medium text-gray-900">{suggestion.name}</div>
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-900 text-base">
+                                    {suggestion.name}
+                                  </div>
+                                  {suggestion.type === "brand" && (
+                                    <div className="text-xs text-gray-500 mt-0.5">View all models</div>
+                                  )}
+                                  {suggestion.type === "model" && suggestion.bodyType && (
+                                    <div className="text-xs text-gray-500 mt-0.5">{suggestion.bodyType}</div>
+                                  )}
+                                </div>
                                 {suggestion.type && (
-                                  <div className="text-xs text-gray-500 mt-1 capitalize">{suggestion.type}</div>
+                                  <Badge variant="outline" className="text-xs capitalize">
+                                    {suggestion.type}
+                                  </Badge>
                                 )}
                               </button>
                             ))}

@@ -30,6 +30,12 @@ import SpecCSVImport from "./pages/Specs/SpecCSVImport";
 import Settings from "./pages/Settings/Settings";
 import PricingManagement from "./pages/Pricing/PricingManagement";
 import HeroCarouselManager from "./pages/HeroCarousel/HeroCarouselManager";
+import UsedCarList from "./pages/UsedCars/UsedCarList";
+import UsedCarForm from "./pages/UsedCars/UsedCarForm";
+import EnquiryList from "./pages/Enquiries/EnquiryList";
+import ArticleList from "./pages/Articles/ArticleList";
+import ArticleForm from "./pages/Articles/ArticleForm";
+import CommentList from "./pages/Comments/CommentList";
 
 const queryClient = new QueryClient();
 
@@ -314,6 +320,94 @@ export default function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <HeroCarouselManager />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Enquiries */}
+          <Route
+            path="/enquiries"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <EnquiryList />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Used Cars Routes */}
+          <Route
+            path="/used-cars"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <UsedCarList />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/used-cars/new"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <UsedCarForm />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/used-cars/:id/edit"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <UsedCarForm />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Articles Routes */}
+          <Route
+            path="/articles"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ArticleList />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/articles/new"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ArticleForm />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/articles/:id/edit"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ArticleForm />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Comments Routes */}
+          <Route
+            path="/comments"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <CommentList />
                 </DashboardLayout>
               </ProtectedRoute>
             }

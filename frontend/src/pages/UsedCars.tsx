@@ -20,7 +20,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Search, MapPin, CheckCircle2, Car, FilterX, ArrowRight } from "lucide-react";
-import { getUsedCars, getUsedCities, UsedCar } from "@/lib/data";
+import { usedCarsApi } from "@/lib/api";
+import type { UsedCar } from "@/lib/data";
 import { updateMetaTags, injectStructuredData, generateItemListSchema, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,9 @@ const UsedCars = () => {
   const navigate = useNavigate();
   const [cars, setCars] = useState<UsedCar[]>([]);
   const [filteredCars, setFilteredCars] = useState<UsedCar[]>([]);
-  const cities = getUsedCities();
+  const [visibleCount, setVisibleCount] = useState(12);
+  const [sortBy, setSortBy] = useState("newest");
+  const [cities, setCities] = useState<string[]>([]);
   const [selectedCity, setSelectedCity] = useState("all");
   const [filters, setFilters] = useState({
     brand: "all",
@@ -44,9 +47,18 @@ const UsedCars = () => {
   const allBrands = Array.from(new Set(cars.map((car) => car.brand))).sort();
 
   useEffect(() => {
-    const allCars = getUsedCars();
-    setCars(allCars);
-    setFilteredCars(allCars.slice(0, 12));
+    const load = async () => {
+      try {
+        const allCars = await usedCarsApi.getAll();
+        setCars(allCars);
+        setFilteredCars(allCars.slice(0, visibleCount));
+        const citySet = Array.from(new Set(allCars.map((c: any) => c.city))).filter(Boolean);
+        setCities(citySet);
+      } catch (err) {
+        console.error("Failed to load used cars:", err);
+      }
+    };
+    load();
 
     // SEO
     updateMetaTags({
@@ -58,7 +70,7 @@ const UsedCars = () => {
     });
 
     const schema = generateItemListSchema(
-      allCars.slice(0, 12).map((car, idx) => ({
+      filteredCars.slice(0, visibleCount).map((car, idx) => ({
         name: car.title,
         url: `https://compareauto.in${car.listingUrl}`,
         position: idx + 1,
@@ -87,8 +99,19 @@ const UsedCars = () => {
       result = result.filter((car) => car.owners <= filters.owners);
     }
 
-    setFilteredCars(result.slice(0, 12));
-  }, [filters, cars]);
+    // Sorting
+    if (sortBy === "price_low") {
+      result = [...result].sort((a, b) => a.price - b.price);
+    } else if (sortBy === "price_high") {
+      result = [...result].sort((a, b) => b.price - a.price);
+    } else if (sortBy === "km_low") {
+      result = [...result].sort((a, b) => a.kms - b.kms);
+    } else {
+      result = [...result];
+    }
+
+    setFilteredCars(result.slice(0, visibleCount));
+  }, [filters, cars, sortBy, visibleCount]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -106,9 +129,28 @@ const UsedCars = () => {
     });
   };
 
-  const handleCityClick = (city: string) => {
+  const handleCityClick = async (city: string) => {
     const citySlug = city.toLowerCase().replace(/\s+/g, "-");
-    navigate(`/used-cars/${citySlug}`);
+    setSelectedCity(city);
+    if (city === "all") {
+      const allCars = await usedCarsApi.getAll();
+      setCars(allCars);
+      setVisibleCount(12);
+      return;
+    }
+    try {
+      const cityName = city.replace(/-/g, " ");
+      const byCity = await usedCarsApi.getByCity(cityName);
+      setCars(byCity);
+      setVisibleCount(12);
+      navigate(`/used-cars/${citySlug}`);
+    } catch (e) {
+      console.error("Failed to fetch city cars", e);
+    }
+  };
+
+  const loadMore = () => {
+    setVisibleCount((c) => c + 12);
   };
 
   return (
@@ -202,7 +244,7 @@ const UsedCars = () => {
                     <Badge variant="secondary" className="ml-2">{filteredCars.length}</Badge>
                 </h2>
                 
-                <Select defaultValue="newest">
+                <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger className="w-[160px] h-9">
                         <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
@@ -235,11 +277,11 @@ const UsedCars = () => {
             )}
 
             {/* Pagination Placeholder (if needed later) */}
-            {filteredCars.length > 0 && (
+            {filteredCars.length > 0 && filteredCars.length < cars.length && (
                 <div className="mt-10 flex justify-center">
-                    <Button variant="outline" size="lg" className="gap-2">
-                        Load More Cars <ArrowRight className="w-4 h-4" />
-                    </Button>
+                <Button variant="outline" size="lg" className="gap-2" onClick={loadMore}>
+                  Load More Cars <ArrowRight className="w-4 h-4" />
+                </Button>
                 </div>
             )}
           </div>

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import ArticleCard from "@/components/news/ArticleCard";
-import { getArticleBySlug, getRelatedArticles } from "@/lib/data";
+import { articlesApi, commentsApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData } from "@/lib/seo";
 import { Calendar, Clock, User, Share2, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,12 +15,39 @@ import AdSlot from "@/components/ads/AdSlot";
 const NewsArticle = () => {
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
-  const article = slug ? getArticleBySlug(slug) : undefined;
+  const [article, setArticle] = useState<any>(null);
+  const [relatedArticles, setRelatedArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentForm, setCommentForm] = useState({ name: "", email: "", content: "" });
+  const [submittingComment, setSubmittingComment] = useState(false);
 
-  const relatedArticles = article 
-    ? getRelatedArticles(article.id, article.relatedIds).slice(0, 4)
-    : [];
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const art = await articlesApi.getBySlug(slug || "");
+        setArticle(art);
+        
+        // Get all articles and filter related ones
+        if (art) {
+          const allArticles = await articlesApi.getAll();
+          const related = allArticles
+            .filter((a: any) => a.id !== art.id && a.category === art.category)
+            .slice(0, 4);
+          setRelatedArticles(related);
+          // Load approved comments
+          const c = await commentsApi.listByArticle(art.id);
+          setComments(c.items || []);
+        }
+      } catch (err) {
+        console.error("Failed to load article", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [slug]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -37,7 +64,7 @@ const NewsArticle = () => {
       updateMetaTags({
         title: article.title,
         description: article.excerpt,
-        keywords: article.tags,
+        keywords: article.tags || [],
         canonical: `${window.location.origin}/news/${article.slug}`,
         ogImage: article.heroImage,
         ogType: "article",
@@ -184,8 +211,12 @@ const NewsArticle = () => {
           </header>
 
           {/* Hero Image */}
-          <div className="aspect-video bg-muted rounded-2xl flex items-center justify-center mb-8">
-            <span className="text-9xl">📰</span>
+          <div className="aspect-video bg-muted rounded-2xl overflow-hidden flex items-center justify-center mb-8">
+            {article.heroImage ? (
+              <img src={article.heroImage} alt={article.title} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-9xl">📰</span>
+            )}
           </div>
 
           {/* Article Body */}
@@ -198,13 +229,68 @@ const NewsArticle = () => {
           <div className="mb-8">
             <h3 className="text-sm font-semibold mb-3">Tags:</h3>
             <div className="flex flex-wrap gap-2">
-              {article.tags.map((tag) => (
+              {(article.tags || []).map((tag) => (
                 <Badge key={tag} variant="outline">
                   {tag}
                 </Badge>
               ))}
             </div>
           </div>
+
+          {/* Comments Section */}
+          <section className="mb-12">
+            <h2 className="text-xl font-bold mb-4">Comments</h2>
+            {comments.length === 0 && (
+              <p className="text-sm text-muted-foreground mb-4">No comments yet. Be the first to comment.</p>
+            )}
+            <div className="space-y-4 mb-8">
+              {comments.map((c) => (
+                <div key={c._id} className="border rounded-lg p-4">
+                  <div className="text-sm font-semibold">{c.name}</div>
+                  <div className="text-xs text-muted-foreground mb-2">{new Date(c.createdAt).toLocaleString()}</div>
+                  <div className="text-sm">{c.content}</div>
+                </div>
+              ))}
+            </div>
+
+            <h3 className="text-lg font-semibold mb-2">Add a Comment</h3>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-sm" htmlFor="cname">Name *</label>
+                <input id="cname" className="w-full h-10 rounded-md border px-3" value={commentForm.name} onChange={(e) => setCommentForm({ ...commentForm, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm" htmlFor="cemail">Email *</label>
+                <input id="cemail" type="email" className="w-full h-10 rounded-md border px-3" value={commentForm.email} onChange={(e) => setCommentForm({ ...commentForm, email: e.target.value })} />
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="text-sm" htmlFor="ccontent">Comment *</label>
+              <textarea id="ccontent" className="w-full rounded-md border px-3 py-2" rows={4} value={commentForm.content} onChange={(e) => setCommentForm({ ...commentForm, content: e.target.value })} />
+            </div>
+            <Button
+              disabled={submittingComment}
+              onClick={async () => {
+                if (!commentForm.name.trim() || !commentForm.email.trim() || !commentForm.content.trim()) return;
+                setSubmittingComment(true);
+                try {
+                  await commentsApi.create({ articleId: article.id, name: commentForm.name, email: commentForm.email, content: commentForm.content });
+                  setCommentForm({ name: "", email: "", content: "" });
+                  const c = await commentsApi.listByArticle(article.id);
+                  setComments(c.items || []);
+                  toast({ title: "Comment submitted", description: "Pending admin approval." });
+                } catch (err) {
+                  console.error(err);
+                  toast({ title: "Failed to submit comment", variant: "destructive" });
+                } finally {
+                  setSubmittingComment(false);
+                }
+              }}
+            >
+              Submit Comment
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">Your comment will be visible once approved by admin.</p>
+          </section>
 
           <Separator className="my-8" />
 

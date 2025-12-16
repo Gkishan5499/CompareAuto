@@ -39,14 +39,99 @@ router.get("/suggestions", async (req: Request, res: Response) => {
       return res.json([]);
     }
     
-    const query = q.toLowerCase();
+    const query = q.toLowerCase().trim();
     
-    // This would typically query your database for suggestions
-    // For now, returning empty array
+    // Import models
+    const Brand = require("../models/Brand.model").default;
+    const CarModel = require("../models/CarModel.model").default;
+    const Variant = require("../models/Variant.model").default;
+    
     const suggestions: any[] = [];
     
-    res.json(suggestions);
+    // Search brands
+    const brands = await Brand.find({ 
+      name: { $regex: query, $options: "i" } 
+    }).limit(5).lean();
+    
+    // Add "All [Brand] Cars" option if brand matches
+    if (brands.length > 0) {
+      brands.forEach((brand: any) => {
+        suggestions.push({
+          type: "brand",
+          name: `All ${brand.name} Cars`,
+          displayName: brand.name,
+          slug: brand.slug,
+          brandSlug: brand.slug,
+          category: "Brand"
+        });
+      });
+    }
+    
+    // Search models
+    const models = await CarModel.find({
+      $or: [
+        { name: { $regex: query, $options: "i" } },
+        { brandName: { $regex: query, $options: "i" } }
+      ]
+    })
+    .limit(10)
+    .lean();
+    
+    // Add models with brand name
+    for (const model of models) {
+      const brand = await Brand.findOne({ id: model.brandId }).lean();
+      const brandName = brand?.name || model.brandName || "";
+      
+      suggestions.push({
+        type: "model",
+        name: `${brandName} ${model.name}`,
+        displayName: model.name,
+        brandName: brandName,
+        slug: model.slug,
+        brandSlug: brand?.slug || brandName.toLowerCase().replace(/\s+/g, "-"),
+        category: "Model",
+        bodyType: model.bodyType
+      });
+    }
+    
+    // Search variants
+    const variants = await Variant.find({
+      name: { $regex: query, $options: "i" }
+    })
+    .limit(8)
+    .lean();
+    
+    // Add variants with model and brand name
+    for (const variant of variants) {
+      const model = await CarModel.findOne({ id: variant.modelId }).lean();
+      if (model) {
+        const brand = await Brand.findOne({ id: model.brandId }).lean();
+        const brandName = brand?.name || model.brandName || "";
+        
+        suggestions.push({
+          type: "variant",
+          name: `${brandName} ${model.name} ${variant.name}`,
+          displayName: variant.name,
+          modelName: model.name,
+          brandName: brandName,
+          slug: variant.slug,
+          modelSlug: model.slug,
+          brandSlug: brand?.slug || brandName.toLowerCase().replace(/\s+/g, "-"),
+          category: "Variant"
+        });
+      }
+    }
+    
+    // Remove duplicates and limit
+    const uniqueSuggestions = suggestions
+      .filter((item, index, self) => 
+        index === self.findIndex(t => t.name === item.name)
+      )
+      .slice(0, 10);
+    
+    res.json(uniqueSuggestions);
   } catch (error) {
+    console.error("Search suggestions error:", error);
     res.status(500).json({ error: "Failed to get suggestions" });
   }
 });

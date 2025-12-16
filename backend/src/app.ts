@@ -28,6 +28,8 @@ import dashboardRoutes from "./routes/dashboard.routes";
 import specsRoutes from "./routes/specs.routes";
 import specsCsvRoutes from "./routes/specsCSV.routes";
 import heroCarouselRoutes from "./routes/heroCarousel.routes";
+import enquiryRoutes from "./routes/enquiry.routes";
+import commentRoutes from "./routes/comment.routes";
 
 
 
@@ -102,6 +104,8 @@ app.use("/api/popular", popularRoutes);
 app.use("/api/state-tax-config", stateTaxConfigRoutes);
 app.use("/api/specs", specsRoutes);
 app.use("/api/hero-carousel", heroCarouselRoutes);
+app.use("/api/enquiries", enquiryRoutes);
+app.use("/api/comments", commentRoutes);
 
 
 // Serve static images

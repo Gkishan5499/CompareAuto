@@ -118,3 +118,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Rich text editor sizing and scrolling */
+.rich-editor .ql-container {
+  min-height: 280px;
+}
+.rich-editor .ql-editor {
+  min-height: 240px;
+  max-height: 520px;
+  overflow-y: auto;
+}

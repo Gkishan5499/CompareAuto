@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { Variant } from "@/lib/data";
 import { ChevronRight } from "lucide-react";
 import { formatINR, parseINRToRupees } from "@/lib/guards";
+import { useEffect, useState } from "react";
+import { useCity } from "@/contexts/CityContext";
 
 interface VariantSwitcherProps {
   variants: Variant[];
@@ -19,6 +21,38 @@ const VariantSwitcher = ({
   brandSlug,
   modelSlug,
 }: VariantSwitcherProps) => {
+  const { city } = useCity();
+  const [onRoadPrices, setOnRoadPrices] = useState<Record<string, number>>({});
+
+  // Fetch on-road prices for all variants
+  useEffect(() => {
+    const fetchPrices = async () => {
+      const prices: Record<string, number> = {};
+      
+      await Promise.all(
+        variants.map(async (variant) => {
+          try {
+            const response = await fetch(
+              `/api/pricing/variant/${variant.id}/price?city=${encodeURIComponent(city)}`
+            );
+            if (response.ok) {
+              const data = await response.json();
+              prices[variant.id] = data.breakdown?.onRoadPrice || 0;
+            }
+          } catch (error) {
+            console.error(`Failed to fetch price for variant ${variant.id}:`, error);
+          }
+        })
+      );
+      
+      setOnRoadPrices(prices);
+    };
+
+    if (variants.length > 0 && city) {
+      fetchPrices();
+    }
+  }, [variants, city]);
+
   return (
     <div className="relative">
       <div className="flex items-center gap-2 mb-3">
@@ -36,7 +70,7 @@ const VariantSwitcher = ({
             >
               <Card
                 className={cn(
-                  "min-w-[280px] p-4 hover:shadow-lg transition-all",
+                  "min-w-[280px] p-4 hover:shadow-lg transition-all relative",
                   isCurrent && "ring-2 ring-primary bg-primary/5"
                 )}
               >
@@ -53,15 +87,26 @@ const VariantSwitcher = ({
                     <Badge variant="default" className="ml-2">Current</Badge>
                   )}
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-lg font-bold text-primary">
-                    {(() => {
-                      const p = parseINRToRupees(variant.price);
-                      return p && p > 0 ? formatINR(p, true) : "—";
-                    })()}
-                  </p>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Ex-Showroom</span>
+                    <p className="text-sm font-semibold">
+                      {(() => {
+                        const p = parseINRToRupees(variant.price);
+                        return p && p > 0 ? formatINR(p, true) : "—";
+                      })()}
+                    </p>
+                  </div>
+                  {onRoadPrices[variant.id] && (
+                    <div className="flex items-center justify-between pt-1 border-t">
+                      <span className="text-xs text-muted-foreground">On-Road ({city})</span>
+                      <p className="text-lg font-bold text-primary">
+                        {formatINR(onRoadPrices[variant.id], true)}
+                      </p>
+                    </div>
+                  )}
                 </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground absolute top-4 right-4" />
               </Card>
             </Link>
           );

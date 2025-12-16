@@ -5,7 +5,7 @@
 
 import { dataCache } from "./data-cache";
 import { parseINRToRupees } from "./guards";
-
+import { CITY_TO_STATE } from "./cityStateMapping";
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 class ApiError extends Error {
@@ -87,6 +87,11 @@ export const specsApi = {
     // Handle both { data: {...} } and {...} response formats
     return result?.data || result;
   },
+  getByVariantId: async (variantId: string) => {
+    const result = await fetchApi<any>(`/specs/${variantId}`);
+    // Handle both { data: {...} } and {...} response formats
+    return result?.data || result;
+  },
   list: (page?: number, limit?: number) => fetchApi<any>(`/specs?page=${page || 1}&limit=${limit || 50}`),
 };
 
@@ -98,6 +103,16 @@ export const articlesApi = {
     const articles = await fetchApi<any[]>("/articles");
     return articles.find((a: any) => a.slug === slug);
   },
+};
+
+// Comments API
+export const commentsApi = {
+  listByArticle: (articleId: string) => fetchApi<any>(`/comments/article/${articleId}`),
+  create: (payload: { articleId: string; name: string; email: string; content: string }) =>
+    fetchApi<any>(`/comments`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 };
 
 // Comparisons API
@@ -278,70 +293,22 @@ export const getOnRoadPrice = async (
   variantId: string,
   city: string
 ): Promise<PriceBreakdown> => {
-  // Get variant data to get base price
-  const variant = dataCache.getVariants().find((v) => v.id === variantId);
-  
-  let exShowroom = variant?.price || 0;
-
-  // If variant price is missing or zero, try to fetch specs and extract ex-showroom price
-  if (!exShowroom || exShowroom <= 0) {
-    try {
-      const specs = await specsApi.getByVariant(variantId);
-      let rawPrice: any = null;
-
-      // Check common locations for ex-showroom price
-      const extras = specs?.extras || specs?.extra || specs?.extrasData || null;
-      if (extras && typeof extras === "object") {
-        rawPrice = extras.ex_showroom_price ?? extras.exShowroomPrice ?? extras.showroom_price ?? null;
-        if (!rawPrice) {
-          for (const k of Object.keys(extras)) {
-            if (k.toLowerCase().includes("showroom")) {
-              rawPrice = extras[k];
-              break;
-            }
-          }
-        }
-      }
-
-      // Fallback to overview.price
-      if (!rawPrice && specs?.overview?.price) {
-        rawPrice = specs.overview.price;
-      }
-
-      const parsed = parseINRToRupees(rawPrice);
-      if (parsed && parsed > 0) {
-        exShowroom = parsed;
-      }
-    } catch (err) {
-      // Ignore errors and fall back to default
-      // console.warn('Failed to fetch specs for fallback price', err);
+  const state = CITY_TO_STATE[city] || city;
+  const timestamp = new Date().getTime();
+  const resp = await fetch(`/api/pricing/variant/${variantId}/price?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}&_t=${timestamp}`, {
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
     }
+  });
+  if (!resp.ok) {
+    throw new ApiError(resp.status, `API Error: ${resp.statusText}`);
   }
-
-  if (!exShowroom || exShowroom <= 0) {
-    exShowroom = 800000;
-  }
-
-  // Calculate on-road price components
-  // RTO charges vary by state (typically 10-15% of ex-showroom)
-  const rto = Math.round(exShowroom * 0.12); // ~12% RTO
-  
-  // Insurance (typically 3-5% of ex-showroom)
-  const insurance = Math.round(exShowroom * 0.03); // ~3% insurance
-  
-  // Other charges (handling, TCS, etc.)
-  const others = 15000; // Fixed other charges
-  
-  const onRoad = exShowroom + rto + insurance + others;
-
-  return {
-    exShowroom,
-    rto,
-    insurance,
-    others,
-    onRoad,
-    onRoadTotal: onRoad, // Alias for compatibility
-  };
+  const json = await resp.json();
+  const breakdown = json.breakdown as PriceBreakdown;
+  breakdown.onRoadTotal = breakdown.onRoadTotal ?? breakdown.onRoad;
+  return breakdown;
 };
 
 export { ApiError };

@@ -1,54 +1,75 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import ArticleCard from "@/components/news/ArticleCard";
 import Breadcrumbs from "@/components/brands/Breadcrumbs";
-import { getArticles, getArticlesByCategory } from "@/lib/data";
+import { articlesApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { Search, Mail } from "lucide-react";
 import AdSlot from "@/components/ads/AdSlot";
 
 const News = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const allArticles = getArticles();
+  const [articles, setArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(12);
   
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get("cat") || "All");
 
-  const categories = ["All", "News", "Reviews", "Comparisons", "EVs"];
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    articles.forEach((a) => a.category && set.add(a.category));
+    return ["All", ...Array.from(set).sort()];
+  }, [articles]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await articlesApi.getAll();
+        setArticles(data);
+      } catch (err) {
+        console.error("Failed to load articles", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   // Filter articles
   const filteredArticles = useMemo(() => {
-    let articles = selectedCategory === "All" 
-      ? allArticles 
-      : getArticlesByCategory(selectedCategory);
+    let result = selectedCategory === "All" 
+      ? articles 
+      : articles.filter((a) => a.category === selectedCategory);
 
     if (searchQuery.trim()) {
       const lowerQuery = searchQuery.toLowerCase();
-      articles = articles.filter(
+      result = result.filter(
         (article) =>
           article.title.toLowerCase().includes(lowerQuery) ||
           article.excerpt.toLowerCase().includes(lowerQuery) ||
-          article.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
+          (article.tags || []).some((tag: string) => tag.toLowerCase().includes(lowerQuery))
       );
     }
 
-    return articles;
-  }, [allArticles, selectedCategory, searchQuery]);
+    return result;
+  }, [articles, selectedCategory, searchQuery]);
 
   // Featured article
-  const featuredArticle = allArticles[0];
+  const featuredArticle = articles[0];
 
   // Editorial strips
-  const buyingGuides = allArticles.filter(a => 
-    a.tags.includes("Buying Guide") || a.category === "Reviews"
+  const buyingGuides = articles.filter(a => 
+    (a.tags || []).includes("Buying Guide") || a.category === "Reviews"
   ).slice(0, 3);
 
-  const evSpotlight = allArticles.filter(a => a.category === "EVs").slice(0, 3);
+  const evSpotlight = articles.filter(a => a.category === "EVs").slice(0, 3);
 
   // Update URL params
   useEffect(() => {
@@ -142,7 +163,7 @@ const News = () => {
         </section>
 
         {/* 4) FEATURED STORY */}
-        {featuredArticle && selectedCategory === "All" && !searchQuery && (
+        {!loading && featuredArticle && selectedCategory === "All" && !searchQuery && (
           <section className="mb-12">
             <h2 className="text-2xl font-semibold mb-6">Featured Story</h2>
             <Card className="overflow-hidden hover:shadow-xl transition-shadow">
@@ -183,12 +204,29 @@ const News = () => {
             </h2>
           </div>
 
-          {filteredArticles.length > 0 ? (
+          {loading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredArticles.map((article) => (
-                <ArticleCard key={article.id} article={article} />
+              {Array.from({ length: 8 }).map((_, idx) => (
+                <Card key={idx} className="p-4">
+                  <Skeleton className="aspect-video rounded mb-3" />
+                  <Skeleton className="h-4 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
+                </Card>
               ))}
             </div>
+          ) : filteredArticles.length > 0 ? (
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredArticles.slice(0, visibleCount).map((article) => (
+                  <ArticleCard key={article.id} article={article} />
+                ))}
+              </div>
+              {filteredArticles.length > visibleCount && (
+                <div className="flex justify-center mt-8">
+                  <Button variant="outline" onClick={() => setVisibleCount((c) => c + 12)}>Load More</Button>
+                </div>
+              )}
+            </>
           ) : (
             <Card className="p-12 text-center">
               <span className="text-6xl mb-4 block">🔍</span>
@@ -214,7 +252,7 @@ const News = () => {
             <section className="mb-12">
               <h2 className="text-2xl font-semibold mb-6">Buying Guides</h2>
               <div className="grid md:grid-cols-3 gap-6">
-                {buyingGuides.map((article) => (
+                {buyingGuides.slice(0, 3).map((article) => (
                   <ArticleCard key={article.id} article={article} />
                 ))}
               </div>
@@ -224,7 +262,7 @@ const News = () => {
               <section className="mb-12">
                 <h2 className="text-2xl font-semibold mb-6">EV Spotlight</h2>
                 <div className="grid md:grid-cols-3 gap-6">
-                  {evSpotlight.map((article) => (
+                  {evSpotlight.slice(0, 3).map((article) => (
                     <ArticleCard key={article.id} article={article} />
                   ))}
                 </div>

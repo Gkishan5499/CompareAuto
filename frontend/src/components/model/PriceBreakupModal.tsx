@@ -39,15 +39,13 @@ export const PriceBreakupModal = ({
   }, [open, exShowroomPrice, city, variantId]);
   
   const calculatePrice = async () => {
-    if (!exShowroomPrice) return;
+    if (!exShowroomPrice && !variantId) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      // Try to fetch from backend with admin-configured taxes
       if (variantId) {
-        // Add timestamp to prevent caching
         const timestamp = new Date().getTime();
         const resp = await fetch(
           `/api/pricing/variant/${variantId}/price?state=${encodeURIComponent(state)}&city=${encodeURIComponent(city)}&_t=${timestamp}`,
@@ -61,29 +59,22 @@ export const PriceBreakupModal = ({
         );
         if (resp.ok) {
           const json = await resp.json();
-          console.log('Modal: Fetched price from backend:', json.breakdown, 'State:', state, 'City:', city);
-          setPriceData(json.breakdown);
+          console.log('Modal: Backend pricing response:', json);
+          if (json.breakdown?.exShowroomPrice > 0) {
+            setPriceData(json.breakdown);
+          } else {
+            setError('Variant price data not available. Please check admin data.');
+          }
           setLoading(false);
           return;
         } else {
-          console.warn('Modal: Backend pricing API failed:', resp.status);
+          setError('Pricing unavailable for selected state/city.');
+          return;
         }
       }
-      
-      // Fallback to local calculation if backend fails
-      const breakdown = calculatePriceBreakdown(exShowroomPrice, city);
-      console.log('Modal: Using fallback calculation:', breakdown);
-      setPriceData(breakdown);
     } catch (err) {
-      console.warn('Modal: Error fetching backend pricing:', err);
-      // Fallback to local calculation on error
-      try {
-        const breakdown = calculatePriceBreakdown(exShowroomPrice, city);
-        setPriceData(breakdown);
-      } catch (fallbackErr) {
-        setError("Failed to calculate price details. Please try again.");
-        console.error("Price calculation error:", fallbackErr);
-      }
+      console.error('Modal pricing error:', err);
+      setError('Pricing service error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -135,6 +126,14 @@ export const PriceBreakupModal = ({
 
           {!loading && !error && priceData && (
             <div className="space-y-6">
+              {/* Debug Info */}
+              {priceData.exShowroomPrice <= 0 && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    Variant price is ₹0. Please update the variant price in admin before checking on-road pricing.
+                  </AlertDescription>
+                </Alert>
+              )}
               {/* Main Price Card - CarWale Style */}
               <div className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/20 rounded-xl p-6">
                 <div className="space-y-4">

@@ -80,7 +80,7 @@ export const getStateWiseTaxes = async (req: Request, res: Response) => {
  */
 export const updateStateWiseTaxes = async (req: Request, res: Response) => {
   try {
-    const { state, gstRate, rtoPercentage, insurancePercentage, registrationFee, tcsRate, fastagCharges } = req.body;
+    const { state, gstRate, rtoPercentage, rtoByFuelType, insurancePercentage, registrationFee, tcsRate, fastagCharges } = req.body;
 
     if (!state) {
       return res.status(400).json({ error: "State is required" });
@@ -91,6 +91,7 @@ export const updateStateWiseTaxes = async (req: Request, res: Response) => {
       {
         ...(gstRate !== undefined && { gstRate }),
         ...(rtoPercentage !== undefined && { rtoPercentage }),
+        ...(rtoByFuelType && { rtoByFuelType }),
         ...(insurancePercentage !== undefined && { insurancePercentage }),
         ...(registrationFee !== undefined && { registrationFee }),
         ...(tcsRate !== undefined && { tcsRate }),

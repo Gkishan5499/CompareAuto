@@ -30,7 +30,7 @@ import EMICalculator from "@/components/variant/EMICalculator";
 import { LeadsStrip } from "@/components/leads/LeadsStrip";
 import { FuelPriceWidget } from "@/components/variant/FuelPriceWidget";
 import { useVariant, useModel, useVariants } from "@/lib/api-hooks";
-import { specsApi } from "@/lib/api";
+import { specsApi, citiesApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { parseINRToRupees, formatINR } from "@/lib/guards";
 import { useCity } from "@/contexts/CityContext";
@@ -59,11 +59,11 @@ const VariantDetail = () => {
   const loading = variantLoading || modelLoading || variantsLoading;
   const [specs, setSpecs] = useState<any | null>(null);
 
-  // Get city from context first
-  const { city } = useCity();
+  // Get city from context and share selection globally
+  const { city, setCity } = useCity();
 
   // Price Calculation Logic - MUST BE BEFORE STATE THAT USES IT
-  const variantRawPrice = variantData?.price;
+  const variantRawPrice = variantData?.exShowroomPrice ?? variantData?.price;
   const variantNormalizedPrice = parseINRToRupees(variantRawPrice);
   const specsOverviewRawPrice = specs?.overview?.price;
   const specsOverviewNormalizedPrice = parseINRToRupees(specsOverviewRawPrice);
@@ -88,6 +88,25 @@ const VariantDetail = () => {
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState("White");
   const [selectedCity, setSelectedCity] = useState<string>(city || "Delhi NCR");
+  const [cities, setCities] = useState<Array<{ id: string; name: string; state: string; slug: string }>>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  // Fetch cities from backend (single source of truth)
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setLoadingCities(true);
+        const allCities = await citiesApi.getAll();
+        setCities(allCities || []);
+      } catch (error) {
+        console.error("Failed to fetch cities for selector:", error);
+        setCities([]);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, []);
   const brandLogo = getBrandLogo(modelData?.brandName);
   const brandInitial = getBrandInitial(modelData?.brandName);
 
@@ -132,10 +151,8 @@ const VariantDetail = () => {
         console.warn('Failed to fetch backend pricing, using fallback:', err);
       }
 
-      // fallback to local calculation
-      const fallbackBreakdown = calculatePriceBreakdown(exShowroomPrice, selectedCity);
-      console.log('Using fallback calculation:', fallbackBreakdown);
-      if (!cancelled) setPriceBreakdown(fallbackBreakdown);
+      // If backend fails, do not fallback; indicate unavailable
+      if (!cancelled) setPriceBreakdown(null);
     };
 
     compute();
@@ -791,37 +808,32 @@ const VariantDetail = () => {
                          {/* City Selector */}
                          <div className="mt-4 space-y-2">
                            <label className="text-xs text-muted-foreground font-medium uppercase">Select City</label>
-                           <Select value={selectedCity} onValueChange={setSelectedCity}>
+                           <Select
+                             value={selectedCity}
+                             onValueChange={(val) => {
+                               setSelectedCity(val);
+                               setCity(val);
+                             }}
+                           >
                              <SelectTrigger className="w-full">
                                <SelectValue placeholder="Select your city" />
                              </SelectTrigger>
-                             <SelectContent className="max-h-[300px]">
-                               <SelectItem value="Delhi NCR">Delhi NCR</SelectItem>
-                               <SelectItem value="Mumbai">Mumbai</SelectItem>
-                               <SelectItem value="Bangalore">Bangalore</SelectItem>
-                               <SelectItem value="Chennai">Chennai</SelectItem>
-                               <SelectItem value="Kolkata">Kolkata</SelectItem>
-                               <SelectItem value="Hyderabad">Hyderabad</SelectItem>
-                               <SelectItem value="Pune">Pune</SelectItem>
-                               <SelectItem value="Ahmedabad">Ahmedabad</SelectItem>
-                               <SelectItem value="Jaipur">Jaipur</SelectItem>
-                               <SelectItem value="Lucknow">Lucknow</SelectItem>
-                               <SelectItem value="Chandigarh">Chandigarh</SelectItem>
-                               <SelectItem value="Indore">Indore</SelectItem>
-                               <SelectItem value="Kochi">Kochi</SelectItem>
-                               <SelectItem value="Coimbatore">Coimbatore</SelectItem>
-                               <SelectItem value="Visakhapatnam">Visakhapatnam</SelectItem>
-                               <SelectItem value="Nagpur">Nagpur</SelectItem>
-                               <SelectItem value="Surat">Surat</SelectItem>
-                               <SelectItem value="Vadodara">Vadodara</SelectItem>
-                               <SelectItem value="Guwahati">Guwahati</SelectItem>
-                               <SelectItem value="Bhopal">Bhopal</SelectItem>
-                               <SelectItem value="Thiruvananthapuram">Thiruvananthapuram</SelectItem>
-                               <SelectItem value="Ranchi">Ranchi</SelectItem>
-                               <SelectItem value="Patna">Patna</SelectItem>
-                               <SelectItem value="Raipur">Raipur</SelectItem>
-                               <SelectItem value="Agra">Agra</SelectItem>
-                               <SelectItem value="Varanasi">Varanasi</SelectItem>
+                             <SelectContent className="max-h-[320px]">
+                               {loadingCities ? (
+                                 <div className="p-4 text-center text-sm text-muted-foreground">Loading cities...</div>
+                               ) : cities.length > 0 ? (
+                                 cities.map((city) => (
+                                   <SelectItem key={city.id} value={city.name}>
+                                     {city.name} ({city.state})
+                                   </SelectItem>
+                                 ))
+                               ) : (
+                                 [
+                                   "Delhi NCR","Mumbai","Bangalore","Chennai","Kolkata","Hyderabad","Pune","Ahmedabad","Jaipur","Lucknow","Chandigarh","Indore","Kochi","Coimbatore","Visakhapatnam","Nagpur","Surat","Vadodara","Guwahati","Bhopal","Thiruvananthapuram","Ranchi","Patna","Raipur","Agra","Varanasi"
+                                 ].map((name) => (
+                                   <SelectItem key={name} value={name}>{name}</SelectItem>
+                                 ))
+                               )}
                              </SelectContent>
                            </Select>
                          </div>
