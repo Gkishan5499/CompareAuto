@@ -289,7 +289,7 @@ const ModelOverview = () => {
                     {/* Quick Specs Strip */}
                     <div className="bg-white dark:bg-card border-t grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 dark:divide-slate-800">
                         <div className="p-4 flex flex-col items-center justify-center text-center gap-1">
-                             <Fuel className="w-5 h-5 text-blue-500" />
+                             <Fuel className="w-5 h-5 text-primary" />
                              <span className="text-xs text-muted-foreground">Fuel Type</span>
                              <span className="font-semibold text-sm">{variants?.[0]?.fuelType || "Petrol/Diesel"}</span>
                         </div>

@@ -8,6 +8,7 @@ export interface IArticle extends Document {
   tags: string[];
   date: string;
   author: string;
+  authorBio: string;
   heroImage: string;
   excerpt: string;
   body: string;
@@ -24,6 +25,7 @@ const ArticleSchema = new Schema<IArticle>(
     tags: { type: [String], default: [] },
     date: { type: String, required: true },
     author: { type: String, required: true },
+    authorBio: { type: String, default: "" },
     heroImage: { type: String },
     excerpt: { type: String },
     body: { type: String, required: true },

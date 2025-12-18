@@ -25,7 +25,7 @@ const FuelTypeStrip = () => {
 
   const fuelTypes = [
     { name: "EV", icon: Battery, slug: "ev", color: "text-green-600", bg: "bg-green-100 dark:bg-green-900/30", description: "Zero Emissions" },
-    { name: "Hybrid", icon: Leaf, slug: "hybrid", color: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-900/30", description: "Efficient & Smart" },
+    { name: "Hybrid", icon: Leaf, slug: "hybrid", color: "text-primary", bg: "bg-primary/10 dark:bg-primary/20", description: "Efficient & Smart" },
     { name: "CNG", icon: Wind, slug: "cng", color: "text-cyan-600", bg: "bg-cyan-100 dark:bg-cyan-900/30", description: "Budget Friendly" },
     { name: "Petrol", icon: Fuel, slug: "petrol", color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-900/30", description: "High Performance" },
     { name: "Diesel", icon: Zap, slug: "diesel", color: "text-yellow-600", bg: "bg-yellow-100 dark:bg-yellow-900/30", description: "Long Range" },

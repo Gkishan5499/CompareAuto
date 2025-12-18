@@ -125,7 +125,7 @@ const AdminVariantSync = () => {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-blue-500" />
+                      <CheckCircle className="h-5 w-5 text-primary" />
                       <div>
                         <p className="text-2xl font-bold">{result.created}</p>
                         <p className="text-xs text-muted-foreground">Created</p>

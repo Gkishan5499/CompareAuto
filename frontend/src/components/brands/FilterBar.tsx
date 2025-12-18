@@ -14,6 +14,7 @@ interface FilterBarProps {
   onPriceRangeChange: (value: string) => void;
   onClearAll: () => void;
   hideFuel?: boolean;
+  hideBodyType?: boolean;
 }
 
 const bodyTypes = ["All", "Hatchback", "Sedan", "SUV", "MUV", "Coupe", "Convertible"];
@@ -39,6 +40,7 @@ const FilterBar = ({
   onPriceRangeChange,
   onClearAll,
   hideFuel = false,
+  hideBodyType = false,
 }: FilterBarProps) => {
   const hasActiveFilters =
     selectedBodyType !== "All" ||
@@ -50,21 +52,23 @@ const FilterBar = ({
     <div className="bg-card border rounded-lg p-4 mb-8 sticky top-0 z-10 shadow-sm">
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Body Type Filter */}
-        <div className="flex-1">
-          <label className="text-sm font-medium mb-2 block">Body Type</label>
-          <Select value={selectedBodyType} onValueChange={onBodyTypeChange}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {bodyTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!hideBodyType && (
+          <div className="flex-1">
+            <label className="text-sm font-medium mb-2 block">Body Type</label>
+            <Select value={selectedBodyType} onValueChange={onBodyTypeChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {bodyTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Fuel Type Filter */}
         {!hideFuel && (

@@ -30,6 +30,7 @@ import specsCsvRoutes from "./routes/specsCSV.routes";
 import heroCarouselRoutes from "./routes/heroCarousel.routes";
 import enquiryRoutes from "./routes/enquiry.routes";
 import commentRoutes from "./routes/comment.routes";
+import siteSettingRoutes from "./routes/siteSetting.routes";
 
 
 
@@ -106,6 +107,7 @@ app.use("/api/specs", specsRoutes);
 app.use("/api/hero-carousel", heroCarouselRoutes);
 app.use("/api/enquiries", enquiryRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/site-settings", siteSettingRoutes);
 
 
 // Serve static images

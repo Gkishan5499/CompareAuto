@@ -17,6 +17,7 @@ interface ArticleForm {
   content: string;
   category: string;
   author: string;
+  authorBio: string;
   date: string;
   heroImage: string;
   slug: string;
@@ -40,6 +41,7 @@ export default function ArticleForm() {
     content: "",
     category: "News",
     author: "",
+    authorBio: "",
     date: new Date().toISOString().split("T")[0],
     heroImage: "",
     slug: "",
@@ -114,6 +116,7 @@ export default function ArticleForm() {
             content: data.body || "",
             category: data.category || "News",
             author: data.author || "",
+            authorBio: data.authorBio || "",
             date: data.date?.split("T")[0] || "",
             heroImage: data.heroImage || "",
             slug: data.slug || "",
@@ -147,6 +150,7 @@ export default function ArticleForm() {
         body: form.content,
         category: form.category,
         author: form.author,
+        authorBio: form.authorBio,
         date: form.date,
         heroImage: form.heroImage,
         slug: form.slug || form.title.toLowerCase().replace(/\s+/g, "-"),
@@ -254,6 +258,19 @@ export default function ArticleForm() {
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="authorBio">Author Bio</Label>
+            <Textarea
+              id="authorBio"
+              value={form.authorBio}
+              onChange={(e) => setForm({ ...form, authorBio: e.target.value })}
+              placeholder="Brief description about the author (optional)"
+              rows={3}
+              maxLength={500}
+            />
+            <p className="text-xs text-gray-500">This will be displayed at the bottom of the article</p>
           </div>
 
           <div className="space-y-2">

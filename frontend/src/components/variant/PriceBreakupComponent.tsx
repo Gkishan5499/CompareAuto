@@ -136,7 +136,7 @@ export const PriceBreakupComponent = ({
             </CardContent>
           </Card>
 
-          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-muted-foreground">
+          <div className="bg-primary/10 border border-primary/20 rounded p-3 text-sm text-muted-foreground">
             <p>
               <strong>Note:</strong> Prices vary by city and state. These calculations are approximate and based on current rates.
               Actual on-road prices may vary depending on dealer discounts, exchange value, and finance options.

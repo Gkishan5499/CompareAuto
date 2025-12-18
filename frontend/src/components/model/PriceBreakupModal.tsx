@@ -251,7 +251,7 @@ export const PriceBreakupModal = ({
               </div>
 
               {/* Summary Box */}
-              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-2">
+              <div className="bg-primary/10 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg p-4 space-y-2">
                 <h4 className="font-semibold text-sm flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   Price Summary for {city}

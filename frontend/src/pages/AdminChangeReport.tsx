@@ -362,14 +362,14 @@ const AdminChangeReport = () => {
                 </ul>
               </div>
 
-              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900">
+              <div className="mt-4 p-4 bg-primary/5 dark:bg-primary/10 rounded-lg border border-primary/20 dark:border-primary/30">
                 <div className="flex items-center gap-2 mb-2">
-                  <Zap className="h-5 w-5 text-blue-600" />
-                  <p className="font-semibold text-blue-900 dark:text-blue-100">
+                  <Zap className="h-5 w-5 text-primary" />
+                  <p className="font-semibold text-primary">
                     Ready for Scale
                   </p>
                 </div>
-                <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                <ul className="text-sm text-primary/80 space-y-1">
                   <li>✓ Optimized to handle 2000+ variants without performance degradation</li>
                   <li>✓ Infrastructure prepared for lazy loading of 5000+ images</li>
                   <li>✓ Safe data access patterns prevent crashes from incomplete data</li>

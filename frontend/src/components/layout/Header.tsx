@@ -3,11 +3,28 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { SearchAutocomplete } from "@/components/search/SearchAutocomplete";
 import { CityPicker } from "@/components/layout/CityPicker";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [logo, setLogo] = useState("");
   const location = useLocation();
+
+  useEffect(() => {
+    const loadLogo = async () => {
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+        const res = await fetch(`${API_BASE}/site-settings/logo`);
+        if (res.ok) {
+          const data = await res.json();
+          setLogo(data.value);
+        }
+      } catch (err) {
+        console.error("Failed to load logo", err);
+      }
+    };
+    loadLogo();
+  }, []);
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -29,11 +46,19 @@ const Header = () => {
 
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img
-              src="/logo.png"
-              alt="CompareAuto Logo"
-              className="h-12 w-auto md:h-14 object-contain"
-            />
+            {logo ? (
+              <img
+                src={logo}
+                alt="CompareAuto Logo"
+                className="h-12 w-auto md:h-14 object-contain"
+              />
+            ) : (
+              <img
+                src="/logo.png"
+                alt="CompareAuto Logo"
+                className="h-12 w-auto md:h-14 object-contain"
+              />
+            )}
           </Link>
 
           {/* Desktop Navigation */}

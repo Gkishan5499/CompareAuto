@@ -4,7 +4,7 @@ import HeroSearch from "@/components/home/HeroSearch";
 import BodyTypesStrip from "@/components/home/BodyTypesStrip";
 import FuelTypeStrip from "@/components/home/FuelTypeStrip";
 import TopPicks from "@/components/home/TopPicks";
-import NewLaunches from "@/components/home/NewLaunches";
+import RecentModelsSlider from "@/components/home/RecentModelsSlider";
 import BrandsStrip from "@/components/home/BrandsStrip";
 import QuickToolsRibbon from "@/components/home/QuickToolsRibbon";
 import CompareBar from "@/components/home/CompareBar";
@@ -52,6 +52,9 @@ const Index = () => {
           />
         </div>
       </div> */}
+      
+        {/* 4. RECENT MODELS SLIDER */}
+      <RecentModelsSlider />
 
       {/* 2. DISCOVERY STRIPS */}
       <div className="flex flex-col">
@@ -76,8 +79,7 @@ const Index = () => {
         </div>
       </section> */}
 
-      {/* 4. NEW & TRENDING */}
-      <NewLaunches />
+    
 
       <section className="border-t border-slate-100 dark:border-slate-800">
         <BrandsStrip />

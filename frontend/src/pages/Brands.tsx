@@ -26,12 +26,12 @@ const Brands = () => {
 
   // Map body types to icons for better visuals
   const bodyTypes = [
-    { name: "Hatchback", icon: CarFront, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { name: "Sedan", icon: CarFront, color: "text-indigo-500", bg: "bg-indigo-500/10" },
-    { name: "SUV", icon: Mountain, color: "text-orange-500", bg: "bg-orange-500/10" },
-    { name: "MUV", icon: CarFront, color: "text-slate-500", bg: "bg-slate-500/10" },
-    { name: "EV", icon: Zap, color: "text-green-500", bg: "bg-green-500/10" },
-    { name: "Luxury", icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10" },
+    { name: "Hatchback", icon: CarFront, color: "text-primary", bg: "bg-primary/10" },
+    { name: "Sedan", icon: CarFront, color: "text-primary", bg: "bg-primary/10" },
+    { name: "SUV", icon: Mountain, color: "text-primary", bg: "bg-primary/10" },
+    { name: "MUV", icon: CarFront, color: "text-primary", bg: "bg-primary/10" },
+    { name: "EV", icon: Zap, color: "text-primary", bg: "bg-primary/10" },
+    { name: "Luxury", icon: Crown, color: "text-primary", bg: "bg-primary/10" },
   ];
 
   // Spotlight logic
@@ -43,7 +43,7 @@ const Brands = () => {
   const spotlightLogo = spotlightBrand ? getBrandLogo(spotlightBrand.name) : null;
   const spotlightInitial = spotlightBrand ? getBrandInitial(spotlightBrand.name) : "";
 
-  // Filter brands
+  // Filter brands by search and letter
   const filteredBrands = useMemo(() => {
     return brands.filter((brand) => {
       const matchesSearch = brand.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -89,7 +89,6 @@ const Brands = () => {
 
   const handleLetterClick = (letter: string) => {
     setSelectedLetter(letter);
-    // Smooth scroll to top of grid
     document.getElementById("brand-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -109,7 +108,7 @@ const Brands = () => {
         {/* Abstract Background Elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-blue-500 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-primary rounded-full blur-3xl"></div>
         </div>
 
         <div className="container relative mx-auto px-4 text-center z-10">
@@ -119,7 +118,7 @@ const Brands = () => {
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
             Find Your Dream Car Brand
           </h1>
-          <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-8 leading-relaxed">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
             From budget-friendly daily drivers to premium luxury cruisers. 
             Browse specs, compare models, and find the perfect match.
           </p>
@@ -128,19 +127,19 @@ const Brands = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-12 opacity-80">
             <div className="p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
               <div className="text-2xl font-bold">{brands.length}</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider">Brands</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Brands</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
               <div className="text-2xl font-bold">1000+</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider">Models</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Models</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
               <div className="text-2xl font-bold">EV</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider">Available</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Available</div>
             </div>
              <div className="p-4 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
               <div className="text-2xl font-bold">24/7</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider">Updated</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Updated</div>
             </div>
           </div>
         </div>
@@ -214,7 +213,7 @@ const Brands = () => {
               </h3>
               <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
                 {bodyTypes.map((type) => (
-                  <Link key={type.name} to={`/brands?bodyType=${type.name.toLowerCase()}`}>
+                  <Link key={type.name} to={`/body/${type.name.toLowerCase()}`}>
                     <div className="group flex items-center justify-between p-3 rounded-lg border bg-card hover:shadow-md transition-all cursor-pointer">
                       <div className="flex items-center gap-3">
                         <div className={cn("p-2 rounded-md", type.bg, type.color)}>
@@ -254,12 +253,12 @@ const Brands = () => {
                   </div>
                   <div className="md:col-span-2 flex flex-col justify-center text-center md:text-left">
                     <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                       <Badge variant="secondary" className="bg-amber-400 text-amber-950 hover:bg-amber-500">
+                       <Badge variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90">
                          <Crown className="w-3 h-3 mr-1" /> Featured Brand
                        </Badge>
                     </div>
                     <h2 className="text-3xl md:text-4xl font-bold mb-3">{spotlightBrand.name}</h2>
-                    <p className="text-slate-300 mb-6 max-w-lg">
+                    <p className="text-muted-foreground mb-6 max-w-lg">
                       Discover why {spotlightBrand.name} remains a top choice in India. 
                       Featuring {spotlightModels.length} distinct models ranging from efficient hatchbacks to premium SUVs.
                     </p>
@@ -295,7 +294,7 @@ const Brands = () => {
                     size="sm" 
                     onClick={() => {
                        setSearchQuery("");
-                       handleLetterClick("All");
+                       setSelectedLetter("All");
                     }}
                     className="text-muted-foreground hover:text-destructive"
                   >

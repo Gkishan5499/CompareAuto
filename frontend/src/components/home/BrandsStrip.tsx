@@ -84,7 +84,7 @@ const BrandsStrip = () => {
               >
                 <Card className="h-full border-muted/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-card overflow-hidden">
                   <CardContent className="p-6 flex flex-col items-center justify-center gap-4 h-full min-h-[160px]">
-                    <div className="w-20 h-20 relative flex items-center justify-center grayscale group-hover:grayscale-0 transition-all duration-300">
+                    <div className="w-20 h-20 relative flex items-center justify-center  group-hover:grayscale-0 transition-all duration-300">
                       {brand.logo ? (
                         <img 
                           src={brand.logo} 

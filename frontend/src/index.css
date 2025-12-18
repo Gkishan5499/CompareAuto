@@ -25,16 +25,16 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary - Trust Blue for automotive reliability */
-    --primary: 217 91% 60%;
+    /* Primary - Brand Red (#B71F25) */
+    --primary: 358 71% 42%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 217 91% 70%;
-    --primary-dark: 217 91% 50%;
+    --primary-light: 358 71% 52%;
+    --primary-dark: 358 71% 32%;
 
-    /* Secondary - Action Orange for CTAs */
-    --secondary: 25 95% 53%;
+    /* Secondary - Brand Gray (#737671) */
+    --secondary: 96 2% 45%;
     --secondary-foreground: 0 0% 100%;
-    --secondary-light: 25 95% 63%;
+    --secondary-light: 96 2% 55%;
 
     /* Muted - Subtle backgrounds */
     --muted: 210 40% 96%;
@@ -55,7 +55,7 @@ All colors MUST be HSL.
     /* Borders and inputs */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 217 91% 60%;
+    --ring: 358 71% 42%;
 
     /* Neutral scale for automotive sophistication */
     --neutral-50: 210 40% 98%;
@@ -101,9 +101,9 @@ All colors MUST be HSL.
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
+    --primary: 358 71% 42%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 25 95% 53%;
+    --secondary: 96 2% 45%;
     --secondary-foreground: 0 0% 100%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
@@ -111,7 +111,7 @@ All colors MUST be HSL.
     --accent-foreground: 210 40% 98%;
     --border: 217 33% 17%;
     --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --ring: 358 71% 42%;
   }
 }
 

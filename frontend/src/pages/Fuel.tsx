@@ -19,11 +19,11 @@ const Fuel = () => {
   };
 
   const fuelColors: Record<string, string> = {
-    EV: "bg-green-500/10 text-green-700 dark:text-green-400",
-    Hybrid: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
-    CNG: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
-    Petrol: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
-    Diesel: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400",
+    EV: "bg-primary/10 text-primary",
+    Hybrid: "bg-primary/10 text-primary",
+    CNG: "bg-primary/10 text-primary",
+    Petrol: "bg-primary/10 text-primary",
+    Diesel: "bg-primary/10 text-primary",
   };
 
   useEffect(() => {

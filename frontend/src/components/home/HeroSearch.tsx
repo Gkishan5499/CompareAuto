@@ -201,24 +201,24 @@ const HeroSearch = () => {
   const displayImages = heroImages.length > 0 ? heroImages : FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` }));
 
   return (
-    <section className="relative w-full bg-white pb-20">
+    <section className="relative w-full  pb-20">
       
       {/* ----------------------------------------------------------------------- */}
       {/* 1. HERO BANNER AREA (Image Only - Clean Modern Design) */}
       {/* ----------------------------------------------------------------------- */}
-      <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
+      <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden"> 
         
         {/* Background Carousel */}
         <Carousel
           setApi={setApi}
           opts={{ loop: true, align: "start", duration: 60 }}
           plugins={[Autoplay({ delay: 6000, stopOnInteraction: false })]}
-          className="w-full h-full absolute inset-0 z-0"
+          className="w-full h-full absolute inset-0 z-0 "
         >
           <CarouselContent className="h-full ml-0">
             {displayImages.map((item, index) => (
-              <CarouselItem key={item.id || index} className="pl-0 h-full w-full">
-                <div className="w-full h-full relative">
+              <CarouselItem key={item.id || index} className="pl-0 h-full w-full ">
+                <div className="w-full h-full relative ">
                   <img
                     src={item.imageUrl}
                     alt={item.title || `Hero Background ${index + 1}`}
@@ -242,7 +242,7 @@ const HeroSearch = () => {
       {/* ----------------------------------------------------------------------- */}
       {/* 2. SEARCH WIDGET (Overlapping Bottom) */}
       {/* ----------------------------------------------------------------------- */}
-      <div className="container mx-auto px-4 relative z-20 -mt-32" ref={searchRef}>
+      <div className="container mx-auto px-4 relative z-20 -mt-48" ref={searchRef}>
         <div className="bg-white rounded-lg border border-gray-200 p-6 md:p-8 max-w-5xl mx-auto shadow-md">
             
             {/* Header: Title + Location */}
@@ -292,7 +292,7 @@ const HeroSearch = () => {
                             className={cn(
                                 "flex-1 md:flex-none px-6 py-2 rounded-full text-sm font-bold transition-all duration-300",
                                 activeTab === "new"
-                                    ? "bg-teal-700 text-white shadow-md"
+                                    ? "bg-[#B71F25] text-white shadow-md"
                                     : "text-gray-500 hover:text-gray-800"
                             )}
                         >
@@ -304,7 +304,7 @@ const HeroSearch = () => {
                             className={cn(
                                 "flex-1 md:flex-none px-6 py-2 rounded-full text-sm font-bold transition-all duration-300",
                                 activeTab === "used"
-                                    ? "bg-teal-700 text-white shadow-md"
+                                    ? "bg-[#B71F25] text-white shadow-md"
                                     : "text-gray-500 hover:text-gray-800"
                             )}
                         >
@@ -367,7 +367,7 @@ const HeroSearch = () => {
                     {/* Mobile Search Button (Full width) */}
                     <Button 
                         type="submit"
-                        className="w-full rounded-full bg-teal-700 hover:bg-teal-800 text-white mt-2 md:hidden"
+                        className="w-full rounded-full bg-[#B71F25] hover:bg-[#B71F25] text-white mt-2 md:hidden"
                     >
                         Search
                     </Button>

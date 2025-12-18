@@ -163,7 +163,7 @@ const Compare = () => {
       
       {/* 1) COMPACT HEADER */}
       <div className="bg-white dark:bg-card border-b shadow-sm">
-        <div className="container max-w-6xl mx-auto px-4 py-6">
+        <div className="container max-w-7xl mx-auto px-4 py-6">
             <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Compare" }]} />
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
                 <div>
@@ -261,7 +261,7 @@ const Compare = () => {
                                                     return p && p > 0 ? formatINR(p, true) : "—";
                                                 })()}
                                             </p>
-                                            <Link to={`/${model.brandId}/${model.slug}/${variant.slug}`} className="text-xs text-blue-500 hover:underline mt-1 block">
+                                            <Link to={`/${model.brandId}/${model.slug}/${variant.slug}`} className="text-xs text-primary hover:underline mt-1 block">
                                                 View Details
                                             </Link>
                                         </div>
@@ -377,9 +377,9 @@ const Compare = () => {
                              </CardContent>
                         </Card>
 
-                        <Card className="bg-blue-50/50 dark:bg-blue-950/10 border-blue-100 dark:border-blue-900">
+                        <Card className="bg-primary/5 dark:bg-primary/10 border-primary/20 dark:border-primary/30">
                              <CardHeader className="pb-2">
-                                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold text-sm uppercase tracking-wide">
+                                <div className="flex items-center gap-2 text-primary font-semibold text-sm uppercase tracking-wide">
                                     <Trophy className="w-4 h-4" /> Top Spec
                                 </div>
                              </CardHeader>

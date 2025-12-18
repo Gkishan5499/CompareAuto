@@ -241,7 +241,7 @@ const RTOCalculator = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-primary hover:bg-primary/90 text-white"
             >
               {loading ? (
                 <>
@@ -262,7 +262,7 @@ const RTOCalculator = () => {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-xs text-gray-600 mb-1">RTO Percentage</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold text-primary">
                     {result.totalRTOPercentage.toFixed(2)}%
                   </p>
                 </div>
@@ -310,7 +310,7 @@ const RTOCalculator = () => {
                 )}
               </div>
 
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-gray-700 space-y-1">
+              <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded text-xs text-gray-700 space-y-1">
                 <p>
                   <strong>Price Slab:</strong> Vehicles are taxed at different rates based on their
                   ex-showroom price (base rate increases for more expensive vehicles)

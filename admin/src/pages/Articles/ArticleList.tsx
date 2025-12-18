@@ -108,7 +108,7 @@ export default function ArticleList() {
                     <Badge variant="secondary">{article.category}</Badge>
                     <span className="text-xs text-muted-foreground">{dayjs(article.date).format("DD MMM YYYY")}</span>
                   </div>
-                  <h3 className="font-semibold line-clamp-2 min-h-[48px]">{article.title}</h3>
+                  <h3 className="font-semibold line-clamp-2 min-h-12">{article.title}</h3>
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{article.excerpt}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">By {article.author}</span>

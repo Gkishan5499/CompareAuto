@@ -107,8 +107,8 @@ export const getPopularCarModels = async (req: Request, res: Response) => {
 export const getNewCarModels = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
-    const models = await CarModel.find({ status: "new" })
-      .sort({ launchDate: -1 })
+    const models = await CarModel.find({ status: { $ne: "upcoming" } })
+      .sort({ createdAt: -1 })
       .limit(limit);
     res.json(models);
   } catch (error) {

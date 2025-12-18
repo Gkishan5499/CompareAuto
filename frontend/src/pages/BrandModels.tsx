@@ -226,7 +226,7 @@ const BrandModels = () => {
                             {modelsCount} Models
                         </Badge>
                         <Badge variant="secondary" className="px-3 py-1.5 h-auto text-sm gap-2">
-                            <Layers className="w-4 h-4 text-blue-500" />
+                          <Layers className="w-4 h-4 text-primary" />
                             {variantsCount} Variants
                         </Badge>
                         {startingPrice !== null && (
@@ -488,7 +488,7 @@ const BrandModels = () => {
 
         {/* 7) RELATED BRANDS */}
         <section>
-             <h3 className="text-lg font-semibold mb-4 text-muted-foreground uppercase tracking-wider text-sm">Other Brands to Explore</h3>
+             <h3 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wider">Other Brands to Explore</h3>
              <div className="flex flex-wrap gap-4">
                  {relatedBrands.map((rb) => (
                      <Link key={rb.id} to={`/${rb.slug}`}>

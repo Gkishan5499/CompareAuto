@@ -36,6 +36,7 @@ import EnquiryList from "./pages/Enquiries/EnquiryList";
 import ArticleList from "./pages/Articles/ArticleList";
 import ArticleForm from "./pages/Articles/ArticleForm";
 import CommentList from "./pages/Comments/CommentList";
+import BrandingSettings from "./pages/Branding/BrandingSettings";
 
 const queryClient = new QueryClient();
 
@@ -240,6 +241,17 @@ export default function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <Settings />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/branding"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <BrandingSettings />
                 </DashboardLayout>
               </ProtectedRoute>
             }

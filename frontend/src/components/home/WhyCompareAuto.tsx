@@ -7,8 +7,8 @@ const WhyCompareAuto = () => {
       icon: Calculator,
       title: "Accurate Pricing",
       description: "City-wise on-road prices with complete breakdown of taxes and fees",
-      color: "text-blue-600",
-      bgColor: "bg-blue-500/10",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
     },
     {
       icon: TrendingUp,

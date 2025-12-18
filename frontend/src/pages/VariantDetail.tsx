@@ -488,7 +488,7 @@ const VariantDetail = () => {
                                         </div>
                                         <div className="p-3 bg-muted/50 rounded-lg">
                                             <p className="text-xs text-muted-foreground">Power</p>
-                                            <p className="font-semibold text-blue-600">{specs?.engine?.power || "N/A"}</p>
+                                            <p className="font-semibold text-primary">{specs?.engine?.power || "N/A"}</p>
                                         </div>
                                         <div className="p-3 bg-muted/50 rounded-lg">
                                             <p className="text-xs text-muted-foreground">Mileage</p>
@@ -525,7 +525,7 @@ const VariantDetail = () => {
                                     </div>
                                 </Card>
 
-                                <Card className="p-6 border-l-4 border-l-blue-500">
+                                <Card className="p-6 border-l-4 border-l-primary">
                                     <h3 className="text-lg font-semibold mb-2">Verdict</h3>
                                     <p className="text-muted-foreground leading-relaxed">
                                         The <strong>{variantData.name}</strong> variant 
