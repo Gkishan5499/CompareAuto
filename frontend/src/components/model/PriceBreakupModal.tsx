@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { getOnRoadPrice } from "@/lib/api";
 import { calculatePriceBreakdown, PriceBreakdown, getStateFromCity } from "@/lib/priceCalculations";
 import { formatINR } from "@/lib/guards";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, Fuel } from "lucide-react";
 
 interface PriceBreakupModalProps {
   open: boolean;
@@ -30,13 +31,31 @@ export const PriceBreakupModal = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [priceData, setPriceData] = useState<PriceBreakdown | null>(null);
+  const [variantData, setVariantData] = useState<any>(null);
   const state = getStateFromCity(city);
 
   useEffect(() => {
-    if (open && exShowroomPrice && variantId) {
-      calculatePrice();
+    if (open && variantId) {
+      fetchVariantData();
+      if (exShowroomPrice) {
+        calculatePrice();
+      }
     }
   }, [open, exShowroomPrice, city, variantId]);
+
+  const fetchVariantData = async () => {
+    if (!variantId) return;
+    
+    try {
+      const resp = await fetch(`/api/variants/${variantId}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        setVariantData(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch variant data:', err);
+    }
+  };
   
   const calculatePrice = async () => {
     if (!exShowroomPrice && !variantId) return;
@@ -100,6 +119,19 @@ export const PriceBreakupModal = ({
                 {brandName} {modelName}
               </span>
             )}
+            {variantData && (
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span className="text-sm font-medium text-muted-foreground">
+                  {variantData.name}
+                </span>
+                {variantData.fuelType && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Fuel className="w-3 h-3" />
+                    {variantData.fuelType}
+                  </Badge>
+                )}
+              </div>
+            )}
             <span className="block text-sm font-normal text-muted-foreground mt-1">
               {city}, {state}
             </span>
@@ -146,20 +178,20 @@ export const PriceBreakupModal = ({
                   {/* Individual Registration */}
                   <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700">
                     <span className="text-sm font-medium text-muted-foreground">Individual Registration</span>
-                    <span className="text-xl font-semibold text-orange-600">{formatINR(priceData.rto, true)}</span>
+                    <span className="text-xl font-semibold text-orange-600">{formatINR(priceData.rto)}</span>
                   </div>
 
                   {/* Insurance */}
                   <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700">
                     <span className="text-sm font-medium text-muted-foreground">Insurance</span>
-                    <span className="text-xl font-semibold text-orange-600">{formatINR(priceData.insurance, true)}</span>
+                    <span className="text-xl font-semibold text-orange-600">{formatINR(priceData.insurance)}</span>
                   </div>
 
                   {/* Other Charges */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700">
                       <span className="text-sm font-medium text-muted-foreground">Other Charges</span>
-                      <span className="text-xl font-semibold text-orange-600">{formatINR(priceData.otherCharges, true)}</span>
+                      <span className="text-xl font-semibold text-orange-600">{formatINR(priceData.otherCharges)}</span>
                     </div>
                     <div className="pl-4 space-y-2 text-sm">
                       <div className="flex justify-between items-center text-muted-foreground">
@@ -197,42 +229,42 @@ export const PriceBreakupModal = ({
                     <TableRow>
                       <TableHead>Component</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="text-right w-24">% of Base</TableHead>
+                      {/* <TableHead className="text-right w-24">% of Base</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     <TableRow className="font-medium">
                       <TableCell>Ex-Showroom Price</TableCell>
                       <TableCell className="text-right">{formatINR(priceData.exShowroomPrice)}</TableCell>
-                      <TableCell className="text-right">100%</TableCell>
+                      {/* <TableCell className="text-right">100%</TableCell> */}
                     </TableRow>
                     <TableRow>
                       <TableCell className="text-muted-foreground">Individual Registration (RTO)</TableCell>
                       <TableCell className="text-right text-orange-600">{formatINR(priceData.rto)}</TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         {((priceData.rto / priceData.exShowroomPrice) * 100).toFixed(1)}%
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                     <TableRow>
                       <TableCell className="text-muted-foreground">Insurance (Comprehensive)</TableCell>
                       <TableCell className="text-right text-orange-600">{formatINR(priceData.insurance)}</TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         {((priceData.insurance / priceData.exShowroomPrice) * 100).toFixed(1)}%
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                     <TableRow>
                       <TableCell className="text-muted-foreground">Other Charges</TableCell>
                       <TableCell className="text-right text-orange-600">{formatINR(priceData.otherCharges)}</TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         {((priceData.otherCharges / priceData.exShowroomPrice) * 100).toFixed(2)}%
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                     <TableRow className="text-xs">
                       <TableCell className="pl-8 text-muted-foreground/70">TCS (1%)</TableCell>
                       <TableCell className="text-right">Rs. {priceData.tcs.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         {((priceData.tcs / priceData.exShowroomPrice) * 100).toFixed(2)}%
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                     <TableRow className="text-xs">
                       <TableCell className="pl-8 text-muted-foreground/70">FASTag</TableCell>
@@ -242,9 +274,9 @@ export const PriceBreakupModal = ({
                     <TableRow className="border-t-2 bg-primary/5 font-bold">
                       <TableCell>On-Road Price</TableCell>
                       <TableCell className="text-right text-primary text-lg">{formatINR(priceData.onRoadPrice)}</TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         {((priceData.onRoadPrice / priceData.exShowroomPrice - 1) * 100).toFixed(1)}%
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   </TableBody>
                 </Table>

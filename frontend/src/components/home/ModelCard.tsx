@@ -189,7 +189,7 @@ const ModelCard = memo(({ model }: ModelCardProps) => {
             </div>
           </div>
           <div className="absolute top-2 right-2">
-            <Badge variant="secondary" className="shadow-sm backdrop-blur-sm bg-background/80">
+            <Badge variant="secondary" className="shadow-sm backdrop-blur-sm bg-gray-700">
               {model.bodyType}
             </Badge>
           </div>

@@ -12,6 +12,7 @@ import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import { PriceBoxCard } from "@/components/variant/PriceBoxCard";
 import { PriceBreakupModal } from "@/components/model/PriceBreakupModal";
 import { PriceBreakupComponent } from "@/components/variant/PriceBreakupComponent";
+import { VariantPriceCalculator } from "@/components/pricing/VariantPriceCalculator";
 import { calculatePriceBreakdown, calculatePriceBreakdownWithConfig, getStateFromCity } from "@/lib/priceCalculations";
 import VariantSwitcher from "@/components/variant/VariantSwitcher";
 import FeatureGrid from "@/components/variant/FeatureGrid";
@@ -759,6 +760,12 @@ const VariantDetail = () => {
 
                             {/* PRICE & EMI TAB */}
                             <TabsContent value="price-emi" className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                                {variantData && (
+                                    <VariantPriceCalculator
+                                        variant={variantData}
+                                        selectedCity={selectedCity}
+                                    />
+                                )}
                                 <EMICalculator defaultAmount={exShowroomPrice || 500000} />
                                 <FuelPriceWidget />
                             </TabsContent>

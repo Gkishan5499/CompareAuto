@@ -11,7 +11,14 @@ export interface IStateTaxConfig extends Document {
     hybrid?: number;
     ev?: number;
   }; // Fuel-type specific RTO percentages
-  insurancePercentage: number; // percentage of vehicle price
+  insurancePercentage: number; // LEGACY: single percentage (for backwards compatibility)
+  insuranceByFuelType?: {
+    petrol?: number;
+    diesel?: number;
+    cng?: number;
+    hybrid?: number;
+    ev?: number;
+  }; // Fuel-type specific Insurance percentages
   registrationFee: number; // fixed amount in INR
   tcsRate?: number; // Tax Collected at Source percentage (default: 1%)
   fastagCharges?: number; // FASTag charges in INR (default: 500)
@@ -40,6 +47,22 @@ const StateTaxConfigSchema = new Schema<IStateTaxConfig>(
       },
     },
     insurancePercentage: { type: Number, required: true, default: 3.5 },
+    insuranceByFuelType: {
+      type: {
+        petrol: { type: Number, default: 5.6 },
+        diesel: { type: Number, default: 5.8 },
+        cng: { type: Number, default: 5.4 },
+        hybrid: { type: Number, default: 5.2 },
+        ev: { type: Number, default: 5.0 },
+      },
+      default: {
+        petrol: 5.6,
+        diesel: 5.8,
+        cng: 5.4,
+        hybrid: 5.2,
+        ev: 5.0,
+      },
+    },
     registrationFee: { type: Number, required: true, default: 2000 },
     tcsRate: { type: Number, default: 1 }, // 1% for vehicles ≥10L
     fastagCharges: { type: Number, default: 500 }, // Default FASTag charges

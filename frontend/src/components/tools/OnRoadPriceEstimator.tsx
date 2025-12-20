@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,27 +10,37 @@ import { getOnRoadPrice, PriceBreakdown } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
 
-const cities = [
-  { id: "delhi", name: "Delhi NCR" },
-  { id: "mumbai", name: "Mumbai" },
-  { id: "bangalore", name: "Bangalore" },
-  { id: "chennai", name: "Chennai" },
-  { id: "kolkata", name: "Kolkata" },
-  { id: "hyderabad", name: "Hyderabad" },
-  { id: "pune", name: "Pune" },
-  { id: "ahmedabad", name: "Ahmedabad" },
-];
-
 const OnRoadPriceEstimator = () => {
   const navigate = useNavigate();
   const brands = getBrands();
 
+  const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [selectedVariant, setSelectedVariant] = useState<string>("");
-  const [selectedCity, setSelectedCity] = useState("delhi");
+  const [selectedCity, setSelectedCity] = useState("");
   const [priceData, setPriceData] = useState<PriceBreakdown | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch cities from backend on component mount
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const resp = await fetch("/api/pricing/cities");
+        if (resp.ok) {
+          const data = await resp.json();
+          const cityList = data.cities.map((city: string) => ({ id: city, name: city }));
+          setCities(cityList);
+          if (cityList.length > 0) {
+            setSelectedCity(cityList[0].id);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch cities:", error);
+      }
+    };
+    fetchCities();
+  }, []);
 
   const models = selectedBrand ? getModelsByBrand(selectedBrand) : [];
   const variants = selectedModel
@@ -165,7 +175,7 @@ const OnRoadPriceEstimator = () => {
         {priceData && (
           <div className="space-y-4 pt-4 border-t">
             <h3 className="font-semibold text-lg">
-              Price Breakdown for {cities.find((c) => c.id === selectedCity)?.name}
+              Price Breakdown for {cities.find((c) => c.id === selectedCity)?.name || selectedCity}
             </h3>
 
             <div className="border rounded-lg overflow-hidden">
@@ -180,29 +190,47 @@ const OnRoadPriceEstimator = () => {
                   <TableRow>
                     <TableCell className="font-medium">Ex-showroom Price</TableCell>
                     <TableCell className="text-right">
-                      ₹{priceData.exShowroom.toLocaleString()}
+                      ₹{(priceData.exShowroom ?? priceData.exShowroomPrice ?? 0).toLocaleString()}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">RTO & Registration</TableCell>
-                    <TableCell className="text-right">₹{priceData.rto.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">₹{(priceData.rto ?? 0).toLocaleString()}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Insurance</TableCell>
                     <TableCell className="text-right">
-                      ₹{priceData.insurance.toLocaleString()}
+                      ₹{(priceData.insurance ?? 0).toLocaleString()}
                     </TableCell>
                   </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Other Charges</TableCell>
-                    <TableCell className="text-right">
-                      ₹{priceData.others.toLocaleString()}
-                    </TableCell>
-                  </TableRow>
+                  {(priceData.tcs ?? 0) > 0 && (
+                    <TableRow>
+                      <TableCell className="font-medium">TCS</TableCell>
+                      <TableCell className="text-right">
+                        ₹{(priceData.tcs ?? 0).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {(priceData.fastag ?? 0) > 0 && (
+                    <TableRow>
+                      <TableCell className="font-medium">FASTag Charges</TableCell>
+                      <TableCell className="text-right">
+                        ₹{(priceData.fastag ?? 0).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {(priceData.otherCharges ?? 0) > 0 && (priceData.tcs ?? 0) === 0 && (priceData.fastag ?? 0) === 0 && (
+                    <TableRow>
+                      <TableCell className="font-medium">Other Charges</TableCell>
+                      <TableCell className="text-right">
+                        ₹{(priceData.otherCharges ?? 0).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  )}
                   <TableRow className="bg-primary/5 font-semibold">
                     <TableCell>Total On-Road Price</TableCell>
                     <TableCell className="text-right text-primary text-lg">
-                      ₹{priceData.onRoadTotal.toLocaleString()}
+                      ₹{(priceData.onRoadTotal ?? priceData.onRoadPrice ?? 0).toLocaleString()}
                     </TableCell>
                   </TableRow>
                 </TableBody>

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CarFront, Layers, Settings, FileSpreadsheet, MapPin, Users, Database, DollarSign, Image, Mail, FileText, MessageSquare, Palette } from "lucide-react";
+import { LayoutDashboard, CarFront, Layers, Settings, FileSpreadsheet, MapPin, Users, Database, DollarSign, Image, Mail, FileText, MessageSquare, Palette, PrinterCheck, TextAlignEnd } from "lucide-react";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -7,7 +7,7 @@ const nav = [
   { to: "/models", label: "Models", icon: Layers },
   { to: "/variants", label: "Variants", icon: Layers },
   { to: "/specs", label: "Specs", icon: Database },
-  { to: "/pricing", label: "Pricing & Taxes", icon: DollarSign },
+  { to: "/pricing", label: "Pricing & Taxes", icon: TextAlignEnd },
   { to: "/hero-carousel", label: "Hero Carousel", icon: Image },
   { to: "/enquiries", label: "Enquiries", icon: Mail },
   { to: "/articles", label: "Articles", icon: FileText },

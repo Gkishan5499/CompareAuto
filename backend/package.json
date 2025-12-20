@@ -23,7 +23,8 @@
     "create-admin": "ts-node src/scripts/create-admin.ts",
     "migrate:images": "ts-node src/scripts/migrate-images.ts",
     "migrate:hero": "ts-node src/scripts/import-heroCarousel.ts",
-    "fix:prices": "ts-node src/scripts/fix-decimal-prices.ts"
+    "fix:prices": "ts-node src/scripts/fix-decimal-prices.ts",
+    "update:tax-configs": "ts-node src/scripts/updateStateTaxConfigs.ts"
   },
   "keywords": [],
   "author": "",

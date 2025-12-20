@@ -280,12 +280,18 @@ export const calculateEMI = async (
 
 // On-road price calculation interface
 export interface PriceBreakdown {
-  exShowroom: number;
+  exShowroomPrice: number;
   rto: number;
   insurance: number;
-  others: number;
-  onRoad: number;
-  onRoadTotal?: number; // Alias for onRoad for compatibility
+  tcs?: number;
+  fastag?: number;
+  otherCharges?: number;
+  onRoadPrice: number;
+  // Legacy aliases for compatibility
+  exShowroom?: number;
+  others?: number;
+  onRoad?: number;
+  onRoadTotal?: number;
 }
 
 // Get on-road price breakup for a variant in a city
@@ -307,7 +313,13 @@ export const getOnRoadPrice = async (
   }
   const json = await resp.json();
   const breakdown = json.breakdown as PriceBreakdown;
-  breakdown.onRoadTotal = breakdown.onRoadTotal ?? breakdown.onRoad;
+  
+  // Add legacy aliases for backward compatibility
+  breakdown.exShowroom = breakdown.exShowroom ?? breakdown.exShowroomPrice;
+  breakdown.others = breakdown.others ?? breakdown.otherCharges ?? 0;
+  breakdown.onRoad = breakdown.onRoad ?? breakdown.onRoadPrice;
+  breakdown.onRoadTotal = breakdown.onRoadTotal ?? breakdown.onRoadPrice;
+  
   return breakdown;
 };
 

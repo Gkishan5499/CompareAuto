@@ -19,6 +19,13 @@ interface StateTaxConfig {
     ev?: number;
   };
   insurancePercentage: number;
+  insuranceByFuelType?: {
+    petrol?: number;
+    diesel?: number;
+    cng?: number;
+    hybrid?: number;
+    ev?: number;
+  };
   registrationFee: number;
   tcsRate?: number;
   fastagCharges?: number;
@@ -60,6 +67,10 @@ const PricingManagement = () => {
   // Inline Editing State
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
   const [inlineEditData, setInlineEditData] = useState<Partial<StateTaxConfig>>({});
+
+  // CSV Import State
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvUploading, setCsvUploading] = useState(false);
 
   // Fetch Summary
   useEffect(() => {
@@ -129,6 +140,64 @@ const PricingManagement = () => {
     }
   };
 
+  const handleApplyPredefinedUpdates = async () => {
+    if (!confirm("This will update RTO and Insurance percentages for Petrol fuel type across all states. Continue?")) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch("/api/state-tax-config/apply-updates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) throw new Error("Failed to apply updates");
+      const data = await response.json();
+
+      setMessage({ 
+        type: "success", 
+        text: `Successfully updated ${data.updatedCount} out of ${data.totalAttempted} state configurations` 
+      });
+      fetchPricingSummary();
+    } catch (error) {
+      setMessage({ type: "error", text: "Failed to apply predefined updates" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImportCsv = async () => {
+    if (!csvFile) {
+      setMessage({ type: "error", text: "Please choose a CSV file first" });
+      return;
+    }
+    try {
+      setCsvUploading(true);
+      setMessage(null);
+      const form = new FormData();
+      form.append("file", csvFile);
+
+      const resp = await fetch("/api/state-tax-config/import-csv", {
+        method: "POST",
+        body: form,
+      });
+      if (!resp.ok) throw new Error("Import failed");
+      const data = await resp.json();
+      setMessage({
+        type: "success",
+        text: `Imported ${data.updated + data.created} (updated ${data.updated}, created ${data.created}, skipped ${data.skipped})`,
+      });
+      setCsvFile(null);
+      (document.getElementById("csv-input") as HTMLInputElement | null)?.value && ((document.getElementById("csv-input") as HTMLInputElement).value = "");
+      fetchPricingSummary();
+    } catch (e) {
+      setMessage({ type: "error", text: "Failed to import CSV" });
+    } finally {
+      setCsvUploading(false);
+    }
+  };
+
   const tabs = [
     { id: "overview", label: "Overview" },
     { id: "prices", label: "Update Prices" },
@@ -194,28 +263,51 @@ const PricingManagement = () => {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <div className="mb-4 flex items-center gap-4">
-                  <label className="block text-sm font-medium">View RTO by Fuel Type:</label>
-                  <select
-                    value={selectedFuelType}
-                    onChange={(e) => setSelectedFuelType(e.target.value as any)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <label className="block text-sm font-medium">View RTO by Fuel Type:</label>
+                    <select
+                      value={selectedFuelType}
+                      onChange={(e) => setSelectedFuelType(e.target.value as any)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="petrol">Petrol</option>
+                      <option value="diesel">Diesel</option>
+                      <option value="cng">CNG</option>
+                      <option value="hybrid">Hybrid</option>
+                      <option value="ev">EV</option>
+                    </select>
+                    <span className="text-sm text-gray-500">
+                      Select a fuel type to see and edit RTO and Insurance percentages for that fuel type across all states.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="csv-input"
+                      type="file"
+                      accept=".csv,text/csv"
+                      onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                      className="text-sm bg-gray-50 border border-gray-30 rounded p-3"
+                    />
+                    <Button onClick={handleImportCsv} disabled={csvUploading || !csvFile} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                      {csvUploading ? <Loader className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Import CSV
+                    </Button>
+                  </div>
+
+                  <Button 
+                    onClick={handleApplyPredefinedUpdates} 
+                    disabled={loading}
+                    className="bg-green-600 hover:bg-green-700 text-white"
                   >
-                    <option value="petrol">Petrol</option>
-                    <option value="diesel">Diesel</option>
-                    <option value="cng">CNG</option>
-                    <option value="hybrid">Hybrid</option>
-                    <option value="ev">EV</option>
-                  </select>
-                  <span className="text-sm text-gray-500">
-                    Select a fuel type to see and edit RTO percentages for that fuel type across all states.
-                  </span>
+                    {loading ? <Loader className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Apply Latest Updates
+                  </Button>
                 </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>State</TableHead>
-                      <TableHead>GST Rate</TableHead>
                       <TableHead>RTO %</TableHead>
                       <TableHead>Insurance %</TableHead>
                       <TableHead>TCS Rate</TableHead>
@@ -231,19 +323,7 @@ const PricingManagement = () => {
                       return (
                       <TableRow key={config._id} className={isEditing ? "bg-blue-50" : ""}>
                         <TableCell className="font-medium">{config.state}</TableCell>
-                        <TableCell>
-                          {isEditing ? (
-                            <Input
-                              type="number"
-                              step="0.1"
-                              className="w-20"
-                              value={editData.gstRate || 0}
-                              onChange={(e) => setInlineEditData({ ...inlineEditData, gstRate: parseFloat(e.target.value) })}
-                            />
-                          ) : (
-                            `${config.gstRate}%`
-                          )}
-                        </TableCell>
+                        
                         <TableCell>
                           {isEditing ? (
                             <Input
@@ -273,11 +353,21 @@ const PricingManagement = () => {
                               type="number"
                               step="0.1"
                               className="w-20"
-                              value={editData.insurancePercentage || 0}
-                              onChange={(e) => setInlineEditData({ ...inlineEditData, insurancePercentage: parseFloat(e.target.value) })}
+                              value={editData.insuranceByFuelType?.[selectedFuelType] || editData.insurancePercentage || 0}
+                              onChange={(e) => setInlineEditData({ 
+                                ...inlineEditData, 
+                                insuranceByFuelType: { 
+                                  ...inlineEditData.insuranceByFuelType,
+                                  [selectedFuelType]: parseFloat(e.target.value)
+                                }
+                              })}
                             />
                           ) : (
-                            `${config.insurancePercentage}%`
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs px-2 py-1 bg-gray-100 rounded">
+                                {selectedFuelType.charAt(0).toUpperCase() + selectedFuelType.slice(1)}: {config.insuranceByFuelType?.[selectedFuelType] ?? config.insurancePercentage}%
+                              </span>
+                            </div>
                           )}
                         </TableCell>
                         <TableCell>

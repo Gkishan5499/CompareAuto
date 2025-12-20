@@ -12,6 +12,7 @@ import VariantTable from "@/components/model/VariantTable";
 import ColorSwatches from "@/components/model/ColorSwatches";
 import { PriceBreakupModal } from "@/components/model/PriceBreakupModal";
 import { PriceBreakupComponent } from "@/components/variant/PriceBreakupComponent";
+import { OnRoadPriceCalculator } from "@/components/pricing/OnRoadPriceCalculator";
 import { calculatePriceBreakdown, calculatePriceBreakdownWithConfig, getStateFromCity } from "@/lib/priceCalculations";
 import PhotoGallery from "@/components/model/PhotoGallery";
 import VideoEmbed from "@/components/model/VideoEmbed";
@@ -54,6 +55,7 @@ const ModelOverview = () => {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState("White");
   const [selectedCity, setSelectedCity] = useState<string>(city || "Delhi NCR");
+  const [selectedFuelType, setSelectedFuelType] = useState<string>("petrol");
   const [activeTab, setActiveTab] = useState<"overview" | "variants" | "specs" | "colors" | "photos" | "faq">("overview");
   const [specs, setSpecs] = useState<any | null>(null);
   const [cities, setCities] = useState<Array<{ id: string; name: string; state: string; slug: string }>>([]);
@@ -384,6 +386,18 @@ const ModelOverview = () => {
                                     ))}
                                 </div>
                             </div>
+
+                            {/* On-Road Price Calculator */}
+                            {displayPrice > 0 && (
+                                <div>
+                                    <OnRoadPriceCalculator
+                                        exShowroomPrice={displayPrice}
+                                        selectedCity={selectedCity}
+                                        fuelType={selectedFuelType}
+                                        onFuelTypeChange={setSelectedFuelType}
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
 

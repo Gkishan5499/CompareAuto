@@ -242,7 +242,7 @@ const HeroSearch = () => {
       {/* ----------------------------------------------------------------------- */}
       {/* 2. SEARCH WIDGET (Overlapping Bottom) */}
       {/* ----------------------------------------------------------------------- */}
-      <div className="container mx-auto px-4 relative z-20 -mt-48" ref={searchRef}>
+      <div className="container max-w-4xl mx-auto px-4 relative z-20 -mt-24" ref={searchRef}>
         <div className="bg-white rounded-lg border border-gray-200 p-6 md:p-8 max-w-5xl mx-auto shadow-md">
             
             {/* Header: Title + Location */}
@@ -261,11 +261,11 @@ const HeroSearch = () => {
                   {showCityDropdown && cities.length > 0 && (
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 max-h-80 overflow-y-auto z-50">
                       {cities.map((cityItem) => (
-                        <button
+                        <div
                           key={cityItem.id || cityItem.name}
                           onClick={() => handleCitySelect(cityItem.name)}
                           className={cn(
-                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
+                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 cursor-pointer",
                             city === cityItem.name && "bg-teal-50 text-teal-700 font-medium"
                           )}
                         >
@@ -273,7 +273,7 @@ const HeroSearch = () => {
                             <MapPin className="h-4 w-4" />
                             <span>{cityItem.name}</span>
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
                   )}
