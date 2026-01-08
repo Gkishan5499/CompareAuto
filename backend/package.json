@@ -6,7 +6,7 @@
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
     "start": "node dist/server.js",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
     "migrate:brands": "ts-node src/scripts/import-brands.ts",
     "migrate:models": "ts-node src/scripts/import-models.ts",
     "migrate:variants": "ts-node src/scripts/import-variants.ts",
