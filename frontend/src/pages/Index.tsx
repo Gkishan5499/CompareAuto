@@ -5,6 +5,7 @@ import BodyTypesStrip from "@/components/home/BodyTypesStrip";
 import FuelTypeStrip from "@/components/home/FuelTypeStrip";
 import TopPicks from "@/components/home/TopPicks";
 import RecentModelsSlider from "@/components/home/RecentModelsSlider";
+import UpcomingTimeline from "@/components/home/UpcomingTimeline";
 import BrandsStrip from "@/components/home/BrandsStrip";
 import QuickToolsRibbon from "@/components/home/QuickToolsRibbon";
 import CompareBar from "@/components/home/CompareBar";
@@ -12,7 +13,6 @@ import AdSlot from "@/components/ads/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Lazy load non-critical sections to improve Initial Load Time (LCP)
-const UpcomingTimeline = lazy(() => import("@/components/home/UpcomingTimeline"));
 const TrendingComparisons = lazy(() => import("@/components/home/TrendingComparisons"));
 const LatestNews = lazy(() => import("@/components/home/LatestNews"));
 const ExploreBodyTypes = lazy(() => import("@/components/home/ExploreBodyTypes"));
@@ -38,71 +38,64 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans text-foreground">
-      
-      {/* 1. HERO SECTION (Critical LCP) */}
-      <HeroSearch />
+    <div className="min-h-screen bg-background flex flex-col font-sans text-foreground overflow-x-hidden">
+      <main className="flex flex-col gap-8 sm:gap-10 lg:gap-12">
+        {/* 1. HERO SECTION (Critical LCP) */}
+        <HeroSearch />
 
-      {/* Ad Slot: Top Leaderboard
-      <div className="w-full bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-        <div className="container mx-auto px-4 py-4">
-          <AdSlot 
-            id="home_top_leaderboard" 
-            sizeMap={{ desktop: "728x90", tablet: "468x60", mobile: "320x50" }} 
-          />
-        </div>
-      </div> */}
-      
-        {/* 4. RECENT MODELS SLIDER */}
-      <RecentModelsSlider />
+        {/* Ad Slot: Top Leaderboard */}
+        <section className="w-full bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+          <div className="container mx-auto px-4 max-w-7xl py-4 sm:py-5">
+            <AdSlot
+              id="home_top_leaderboard"
+              sizeMap={{ desktop: "728x90", tablet: "468x60", mobile: "320x50" }}
+            />
+          </div>
+        </section>
 
-      {/* 2. DISCOVERY STRIPS */}
-      <div className="flex flex-col">
-        {/* Body Types */}
-        <BodyTypesStrip />
-        
-        {/* Fuel Types */}
-        <FuelTypeStrip />
-      </div>
-
-      {/* 3. EDITORIAL & RANKINGS */}
-      <TopPicks />
-
-      {/* Ad Slot: Mid Billboard (High Visibility) */}
-      {/* <section className="py-8 bg-muted/20 border-y border-dashed border-slate-200 dark:border-slate-800">
-        <div className="container mx-auto px-4 text-center">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2 block">Sponsored</span>
-          <AdSlot 
-            id="home_mid_billboard" 
-            sizeMap={{ desktop: "970x250", tablet: "728x90", mobile: "320x100" }} 
-          />
-        </div>
-      </section> */}
-
-    
-
-      <section className="border-t border-slate-100 dark:border-slate-800">
-        <BrandsStrip />
-      </section>
-
-      {/* 5. LAZY LOADED SECTIONS (Performance Optimization) */}
-      <Suspense fallback={<SectionSkeleton />}>
-        
-        <UpcomingTimeline />
-        
-        <TrendingComparisons />
-        
-        <LatestNews />
-        
-        <QuickToolsRibbon />
-        
-        {/* SEO Content Blocks */}
-        <div className="bg-slate-50 dark:bg-slate-950/50">
-          <ExploreBodyTypes />
-          <WhyCompareAuto />
+        {/* Recent and Upcoming sections stacked with tighter mobile spacing */}
+        <div className="flex flex-col gap-8 sm:gap-10">
+          <RecentModelsSlider />
+          <UpcomingTimeline />
         </div>
 
-      </Suspense>
+        {/* 2. DISCOVERY STRIPS */}
+        <div className="flex flex-col gap-4 sm:gap-6">
+          <BodyTypesStrip />
+          <FuelTypeStrip />
+        </div>
+
+        {/* 3. EDITORIAL & RANKINGS */}
+        <TopPicks />
+
+        {/* Ad Slot: Mid Billboard (High Visibility) */}
+        <section className="py-6 sm:py-8 bg-muted/20 border-y border-dashed border-slate-200 dark:border-slate-800">
+          <div className="container mx-auto px-4 max-w-7xl text-center">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2 block">Sponsored</span>
+            <AdSlot
+              id="home_mid_billboard"
+              sizeMap={{ desktop: "970x250", tablet: "728x90", mobile: "320x100" }}
+            />
+          </div>
+        </section>
+
+        <section className="border-t border-slate-100 dark:border-slate-800">
+          <BrandsStrip />
+        </section>
+
+        {/* 5. LAZY LOADED SECTIONS (Performance Optimization) */}
+        <Suspense fallback={<SectionSkeleton />}>
+          <div className="flex flex-col gap-8 sm:gap-10">
+            <TrendingComparisons />
+            <LatestNews />
+            <QuickToolsRibbon />
+            <div className="bg-slate-50 dark:bg-slate-950/50">
+              <ExploreBodyTypes />
+              <WhyCompareAuto />
+            </div>
+          </div>
+        </Suspense>
+      </main>
 
       {/* Sticky Compare Bar (Always visible if items selected) */}
       <CompareBar />
@@ -112,7 +105,7 @@ const Index = () => {
 
 // Simple Skeleton for lazy sections
 const SectionSkeleton = () => (
-  <div className="container mx-auto px-4 py-16 space-y-8">
+  <div className="container mx-auto px-4 max-w-7xl py-12 sm:py-16 space-y-6 sm:space-y-8">
     <Skeleton className="h-8 w-1/3 mx-auto" />
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Skeleton className="h-64 rounded-xl" />

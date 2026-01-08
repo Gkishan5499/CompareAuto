@@ -3,9 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { getBrands, getModel, getModelsByBrand, getVariants } from "@/lib/data";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { getBrands, getModelsByBrand, getVariants } from "@/lib/data";
 import { useBrands, useModelsByBrand, useVariants } from "@/lib/api-hooks";
-import { X } from "lucide-react";
+import { X, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface VariantPickerProps {
   slot: "A" | "B" | "C";
@@ -17,6 +20,8 @@ const VariantPicker = ({ slot, initialValue, onSelect }: VariantPickerProps) => 
   const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [selectedVariant, setSelectedVariant] = useState<string>("");
+  const [brandSearchOpen, setBrandSearchOpen] = useState(false);
+  const [variantSearchOpen, setVariantSearchOpen] = useState(false);
 
   const { data: apiBrands } = useBrands();
   const brands = apiBrands || getBrands();
@@ -50,6 +55,7 @@ const VariantPicker = ({ slot, initialValue, onSelect }: VariantPickerProps) => 
     setSelectedModel("");
     setSelectedVariant("");
     onSelect(null);
+    setBrandSearchOpen(false);
   };
 
   const handleModelChange = (value: string) => {
@@ -65,6 +71,7 @@ const VariantPicker = ({ slot, initialValue, onSelect }: VariantPickerProps) => 
     if (selectedVariantObj) {
       onSelect(selectedVariantObj.id);
     }
+    setVariantSearchOpen(false);
   };
 
   const handleClear = () => {
@@ -77,30 +84,62 @@ const VariantPicker = ({ slot, initialValue, onSelect }: VariantPickerProps) => 
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-lg">Slot {slot}</h3>
-        {(selectedBrand || selectedModel || selectedVariant) && (
-          <Button variant="ghost" size="sm" onClick={handleClear}>
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+        <h3 className="font-semibold text-lg"> Option {slot}</h3>
+        <div className="flex gap-2">
+          {(selectedBrand || selectedModel || selectedVariant) && (
+            <Button variant="ghost" size="sm" onClick={handleClear}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-4">
-        {/* Brand Select */}
+        {/* Brand Select with Search */}
         <div className="space-y-2">
           <Label>Brand</Label>
-          <Select value={selectedBrand} onValueChange={handleBrandChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select brand" />
-            </SelectTrigger>
-            <SelectContent>
-              {brands.map((brand) => (
-                <SelectItem key={brand.id} value={brand.slug}>
-                  {brand.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={brandSearchOpen} onOpenChange={setBrandSearchOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={brandSearchOpen}
+                className="w-full justify-between text-left font-normal"
+              >
+                <span className="truncate">
+                  {selectedBrand
+                    ? brands.find((brand) => brand.slug === selectedBrand)?.name
+                    : "Select brand..."}
+                </span>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search brand..." />
+                <CommandList>
+                  <CommandEmpty>No brand found.</CommandEmpty>
+                  <CommandGroup>
+                    {brands.map((brand) => (
+                      <CommandItem
+                        key={brand.id}
+                        value={brand.name}
+                        onSelect={() => handleBrandChange(brand.slug)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedBrand === brand.slug ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {brand.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Model Select */}
@@ -124,25 +163,52 @@ const VariantPicker = ({ slot, initialValue, onSelect }: VariantPickerProps) => 
           </Select>
         </div>
 
-        {/* Variant Select */}
+        {/* Variant Select with Search */}
         <div className="space-y-2">
           <Label>Variant</Label>
-          <Select
-            value={selectedVariant}
-            onValueChange={handleVariantChange}
-            disabled={!selectedModel}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select variant" />
-            </SelectTrigger>
-            <SelectContent>
-              {variants.map((variant) => (
-                <SelectItem key={variant.id} value={variant.slug}>
-                  {variant.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={variantSearchOpen} onOpenChange={setVariantSearchOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={variantSearchOpen}
+                className="w-full justify-between text-left font-normal"
+                disabled={!selectedModel}
+              >
+                <span className="truncate">
+                  {selectedVariant
+                    ? variants.find((variant) => variant.slug === selectedVariant)?.name
+                    : "Select variant..."}
+                </span>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search variant..." />
+                <CommandList>
+                  <CommandEmpty>No variant found.</CommandEmpty>
+                  <CommandGroup>
+                    {variants.map((variant) => (
+                      <CommandItem
+                        key={variant.id}
+                        value={variant.name}
+                        onSelect={() => handleVariantChange(variant.slug)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedVariant === variant.slug ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {variant.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </Card>

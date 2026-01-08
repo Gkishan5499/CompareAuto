@@ -22,7 +22,7 @@ const RecentModelsSlider = () => {
   if (!isLoading && recent.length === 0) return null;
 
   return (
-    <section className="py-16 md:py-20 bg-slate-50/50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-800">
+    <section className="pt-6 pb-12 md:pt-16 md:pb-20 bg-slate-50/50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-800">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="flex items-end justify-between mb-8">
           <div>

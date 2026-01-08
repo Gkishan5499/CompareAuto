@@ -11,8 +11,6 @@ import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import VariantTable from "@/components/model/VariantTable";
 import ColorSwatches from "@/components/model/ColorSwatches";
 import { PriceBreakupModal } from "@/components/model/PriceBreakupModal";
-import { PriceBreakupComponent } from "@/components/variant/PriceBreakupComponent";
-import { OnRoadPriceCalculator } from "@/components/pricing/OnRoadPriceCalculator";
 import { calculatePriceBreakdown, calculatePriceBreakdownWithConfig, getStateFromCity } from "@/lib/priceCalculations";
 import PhotoGallery from "@/components/model/PhotoGallery";
 import VideoEmbed from "@/components/model/VideoEmbed";
@@ -31,9 +29,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  Calculator, Plus, ChevronRight, Star, 
-  Fuel, Gauge, Settings, ShieldCheck, 
-  CheckCircle2, XCircle, MapPin, ArrowRight, Info 
+    Calculator, Plus, ChevronRight, ChevronLeft, Star, 
+    Fuel, Gauge, Settings, ShieldCheck, 
+    CheckCircle2, XCircle, MapPin, ArrowRight, Info 
 } from "lucide-react";
 import { getBrandLogo, getBrandInitial } from "@/lib/brandLogos";
 import AdSlot from "@/components/ads/AdSlot";
@@ -57,7 +55,7 @@ const ModelOverview = () => {
   const [selectedCity, setSelectedCity] = useState<string>(city || "Delhi NCR");
   const [selectedFuelType, setSelectedFuelType] = useState<string>("petrol");
   const [activeTab, setActiveTab] = useState<"overview" | "variants" | "specs" | "colors" | "photos" | "faq">("overview");
-  const [specs, setSpecs] = useState<any | null>(null);
+    const [specs, setSpecs] = useState<any | null>(null);
   const [cities, setCities] = useState<Array<{ id: string; name: string; state: string; slug: string }>>([]);
   const [loadingCities, setLoadingCities] = useState(false);
 
@@ -83,8 +81,16 @@ const ModelOverview = () => {
     spin360Url: undefined,
     spinFrames: undefined,
   };
+    const galleryImages = useMemo(() => {
+        const images = (modelData?.gallery && Array.isArray(modelData.gallery) ? modelData.gallery : mediaData.gallery || []).filter(Boolean);
+        // Fallback to model.image if no gallery images
+        if (images.length === 0 && modelData?.image) {
+            return [modelData.image];
+        }
+        return images;
+    }, [modelData?.gallery, modelData?.image, mediaData.gallery]);
 
-  const carImage = mediaData.hero || modelData?.image || DEFAULT_OG_IMAGE;
+    const carImage = galleryImages[0] || mediaData.hero || modelData?.image || DEFAULT_OG_IMAGE;
   const colors = variants?.[0]?.colors || ["White", "Black", "Silver", "Red", "Blue"];
 
   // Price Logic
@@ -242,10 +248,10 @@ const ModelOverview = () => {
       : undefined;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-background pb-12">
+    <div className="min-h-screen bg-background pb-12">
       
       {/* 1) HEADER & BREADCRUMBS */}
-      <div className="bg-white dark:bg-card border-b sticky top-0 z-40 shadow-sm">
+      <div className="bg-card border-b border-border sticky top-0 z-40 shadow-premium-sm">
         <div className="container max-w-7xl mx-auto px-4 py-3">
           <Breadcrumbs
             items={[
@@ -265,63 +271,56 @@ const ModelOverview = () => {
             {/* LEFT COLUMN: VISUALS & TABS (8 Cols) */}
             <div className="lg:col-span-8 space-y-8">
                 
-                {/* HERO CARD */}
-                <Card className="overflow-hidden border-0 shadow-lg ring-1 ring-slate-200 dark:ring-slate-800">
-                    <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center p-8">
+                {/* HERO CARD using shared PhotoGallery */}
+                <Card className="overflow-hidden border border-border shadow-premium-lg">
+                    <div className="relative bg-transparent p-0">
                         {/* Rating Badge */}
-                        {modelData.rating && (
-                            <div className="absolute top-4 left-4 z-10 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm text-sm font-semibold">
-                                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                        {/* {modelData.rating && (
+                            <div className="absolute top-4 left-4 z-10 bg-card/95 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1.5 shadow-premium-md text-sm font-semibold border border-border">
+                                <Star className="w-3.5 h-3.5 text-primary fill-primary" />
                                 <span>{modelData.rating.toFixed(1)}</span>
                                 <span className="text-muted-foreground font-normal text-xs">({modelData.reviews?.toLocaleString()} reviews)</span>
                             </div>
-                        )}
+                        )} */}
                         
-                        <img 
-                            src={carImage} 
-                            alt={`${modelData.brandName} ${modelData.name}`} 
-                            className="w-full h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
-                        />
-
-                        <div className="absolute bottom-4 right-4 text-xs font-medium text-slate-500 bg-white/80 px-2 py-1 rounded-md backdrop-blur-sm">
-                             Color shown: {selectedColor}
-                        </div>
+                        <PhotoGallery photos={galleryImages} modelName={modelData.name} brandName={modelData.brandName} mode="hero" />
                     </div>
 
-                    {/* Quick Specs Strip */}
-                    <div className="bg-white dark:bg-card border-t grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 dark:divide-slate-800">
+
+                                        {/* Quick Specs Strip */}
+                    <div className="bg-card border-t border-border grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
                         <div className="p-4 flex flex-col items-center justify-center text-center gap-1">
                              <Fuel className="w-5 h-5 text-primary" />
                              <span className="text-xs text-muted-foreground">Fuel Type</span>
-                             <span className="font-semibold text-sm">{variants?.[0]?.fuelType || "Petrol/Diesel"}</span>
+                             <span className="font-semibold text-sm text-primary">{variants?.[0]?.fuelType || "Petrol/Diesel"}</span>
                         </div>
                         <div className="p-4 flex flex-col items-center justify-center text-center gap-1">
-                             <Settings className="w-5 h-5 text-slate-500" />
+                             <Settings className="w-5 h-5 text-primary" />
                              <span className="text-xs text-muted-foreground">Transmission</span>
-                             <span className="font-semibold text-sm">Manual / Auto</span>
+                             <span className="font-semibold text-sm text-primary">Manual / Auto</span>
                         </div>
                         <div className="p-4 flex flex-col items-center justify-center text-center gap-1">
-                             <Gauge className="w-5 h-5 text-emerald-500" />
+                             <Gauge className="w-5 h-5 text-primary" />
                              <span className="text-xs text-muted-foreground">Mileage</span>
-                             <span className="font-semibold text-sm">{primaryMileage ? `${primaryMileage} km/l` : "TBA"}</span>
+                             <span className="font-semibold text-sm text-primary">{primaryMileage ? `${primaryMileage} km/l` : "TBA"}</span>
                         </div>
                         <div className="p-4 flex flex-col items-center justify-center text-center gap-1">
-                             <ShieldCheck className="w-5 h-5 text-orange-500" />
+                             <ShieldCheck className="w-5 h-5 text-primary" />
                              <span className="text-xs text-muted-foreground">Safety</span>
-                             <span className="font-semibold text-sm">Up to 6 Airbags</span>
+                             <span className="font-semibold text-sm text-primary">Up to 6 Airbags</span>
                         </div>
                     </div>
                 </Card>
 
                 {/* TABS NAVIGATION */}
-                <div className="sticky top-14 z-30 bg-slate-50/95 dark:bg-background/95 backdrop-blur-sm -mx-4 px-4 md:mx-0 md:px-0 py-2 border-b">
+                <div className="sticky top-14 z-30 bg-background/95 backdrop-blur-sm -mx-4 px-4 md:mx-0 md:px-0 py-2 border-b border-border">
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
                         <TabsList className="w-full justify-start h-auto bg-transparent p-0 gap-6 overflow-x-auto no-scrollbar">
                             {["Overview", "Variants", "Specs", "Colors", "Photos", "FAQ"].map((tab) => (
                                 <TabsTrigger 
                                     key={tab} 
                                     value={tab.toLowerCase()}
-                                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-2 py-3 text-base"
+                                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary px-2 py-3 text-base"
                                 >
                                     {tab}
                                 </TabsTrigger>
@@ -335,69 +334,95 @@ const ModelOverview = () => {
                     
                     {activeTab === "overview" && (
                         <div className="space-y-8 animate-in fade-in duration-300">
-                            {/* Pros & Cons */}
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <Card className="border-l-4 border-l-emerald-500 shadow-sm">
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-lg flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                                            <CheckCircle2 className="w-5 h-5" /> Pros
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <ul className="space-y-2 text-sm">
-                                            <li className="flex gap-2"><span className="text-emerald-500">✓</span> Spacious and premium cabin feel</li>
-                                            <li className="flex gap-2"><span className="text-emerald-500">✓</span> Smooth engine performance</li>
-                                            <li className="flex gap-2"><span className="text-emerald-500">✓</span> High safety rating</li>
-                                        </ul>
-                                    </CardContent>
-                                </Card>
-                                <Card className="border-l-4 border-l-rose-500 shadow-sm">
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-lg flex items-center gap-2 text-rose-700 dark:text-rose-400">
-                                            <XCircle className="w-5 h-5" /> Cons
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <ul className="space-y-2 text-sm">
-                                            <li className="flex gap-2"><span className="text-rose-500">✗</span> Pricey top-end variants</li>
-                                            <li className="flex gap-2"><span className="text-rose-500">✗</span> Firm ride quality on bumps</li>
-                                        </ul>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                            {/* Overview Section - Like CarDekho/CarWale */}
+                            <Card className="border-l-4 border-l-primary shadow-premium-md">
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+                                        {modelData.brandName} {modelData.name} Overview
+                                    </CardTitle>
+                                    <CardDescription className="text-base mt-2">
+                                        {specs?.overview?.summary || `Explore the ${modelData.brandName} ${modelData.name}, a premium ${modelData.bodyType} designed for modern drivers.`}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {/* Main Description */}
+                                    {(specs?.overview?.description || specs?.overview?.vehicle_overview) ? (
+                                        <div className="prose dark:prose-invert max-w-none">
+                                            <p className="text-foreground leading-relaxed whitespace-pre-line">
+                                                {specs.overview.description || specs.overview.vehicle_overview}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="prose dark:prose-invert max-w-none">
+                                            <p className="text-muted-foreground leading-relaxed">
+                                                The {modelData.brandName} {modelData.name} is a {modelData.bodyType?.toLowerCase()} that combines style, 
+                                                performance, and advanced features. With {variants.length} variant options available, it caters to diverse 
+                                                customer preferences. The model is equipped with modern technology and safety features, making it a 
+                                                competitive choice in its segment.
+                                            </p>
+                                        </div>
+                                    )}
 
-                            {/* Verdict */}
-                            <div className="prose dark:prose-invert max-w-none">
-                                <h3 className="text-xl font-bold mb-2">Verdict</h3>
-                                <p className="text-slate-600 dark:text-slate-300">
-                                    The {modelData.brandName} {modelData.name} positions itself as a strong contender in the {modelData.bodyType} segment. 
-                                    With its updated feature list including ADAS and a panoramic sunroof, it appeals to the modern buyer.
-                                </p>
-                            </div>
+                                    {/* Key Highlights Grid */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border">
+                                        <div className="text-center p-3 bg-muted rounded-lg">
+                                            <Fuel className="w-6 h-6 mx-auto mb-2 text-primary" />
+                                            <p className="text-xs text-muted-foreground mb-1">Fuel Type</p>
+                                            <p className="font-semibold text-sm text-primary">
+                                                {modelData.fuelTypes?.join("/") || variants?.[0]?.fuelType || "Petrol"}
+                                            </p>
+                                        </div>
+                                        <div className="text-center p-3 bg-muted rounded-lg">
+                                            <Settings className="w-6 h-6 mx-auto mb-2 text-primary" />
+                                            <p className="text-xs text-muted-foreground mb-1">Transmission</p>
+                                            <p className="font-semibold text-sm text-primary">
+                                                {[...new Set(variants.map(v => v.transmission))].join("/") || "Manual"}
+                                            </p>
+                                        </div>
+                                        <div className="text-center p-3 bg-muted rounded-lg">
+                                            <Gauge className="w-6 h-6 mx-auto mb-2 text-primary" />
+                                            <p className="text-xs text-muted-foreground mb-1">Mileage</p>
+                                            <p className="font-semibold text-sm text-primary">
+                                                {primaryMileage ? `${primaryMileage} km/l` : "Varies"}
+                                            </p>
+                                        </div>
+                                        <div className="text-center p-3 bg-muted rounded-lg">
+                                            <ShieldCheck className="w-6 h-6 mx-auto mb-2 text-primary" />
+                                            <p className="text-xs text-muted-foreground mb-1">Seating</p>
+                                            <p className="font-semibold text-sm text-primary">
+                                                {specs?.capacity?.seatingCapacity || "5 Seater"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
                             {/* Feature Highlights */}
-                            <div>
-                                <h3 className="text-xl font-bold mb-4">Key Features</h3>
-                                <div className="flex flex-wrap gap-3">
-                                    {["6 Airbags", "Sunroof", "Wireless CarPlay", "ADAS Level 2", "Ventilated Seats", "360° Camera"].map(feat => (
-                                        <Badge key={feat} variant="secondary" className="px-3 py-1.5 text-sm font-normal">
-                                            {feat}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* On-Road Price Calculator */}
-                            {displayPrice > 0 && (
-                                <div>
-                                    <OnRoadPriceCalculator
-                                        exShowroomPrice={displayPrice}
-                                        selectedCity={selectedCity}
-                                        fuelType={selectedFuelType}
-                                        onFuelTypeChange={setSelectedFuelType}
-                                    />
-                                </div>
+                            {specs?.features && Object.keys(specs.features).length > 0 && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Key Features & Equipment</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                            {Object.entries(specs.features)
+                                                .filter(([_, value]) => value && value !== "No" && value !== "N/A")
+                                                .slice(0, 12)
+                                                .map(([key, value]) => (
+                                                    <div key={key} className="flex items-center gap-2 p-2 bg-muted rounded-md border border-primary/20">
+                                                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                                                        <span className="text-sm text-foreground capitalize">
+                                                            {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                        </span>
+                                                    </div>
+                                                ))
+                                            }
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             )}
+
+                            {/* On-road price breakdown removed per request */}
                         </div>
                     )}
 
@@ -469,7 +494,7 @@ const ModelOverview = () => {
                             )}
                             <div>
                                  <h3 className="text-xl font-bold mb-4">Image Gallery</h3>
-                                 <PhotoGallery photos={mediaData.gallery} modelName={modelData.name} brandName={modelData.brandName} />
+                                 <PhotoGallery photos={galleryImages} modelName={modelData.name} brandName={modelData.brandName} />
                             </div>
                         </div>
                     )}
@@ -503,7 +528,7 @@ const ModelOverview = () => {
             <div className="lg:col-span-4 space-y-6">
                 
                 {/* 1) MODEL INFO CARD (Sticky Top) */}
-                <Card className="border-t-4 border-t-primary shadow-md">
+                <Card className="border-t-4 border-t-primary shadow-premium-lg">
                     <CardHeader className="pb-4">
                          <div className="flex items-center gap-3 mb-2">
                              {brandLogo ? (
@@ -546,18 +571,18 @@ const ModelOverview = () => {
                            </Select>
                          </div>
 
-                         <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-100 dark:border-slate-800 space-y-3">
+                         <div className="bg-muted rounded-xl p-4 border border-border space-y-3">
                              {/* Ex-Showroom Price */}
                              <div>
                                  <span className="text-xs text-muted-foreground font-medium uppercase">Ex-Showroom Price</span>
-                                 <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                                 <div className="text-2xl font-bold text-primary">
                                     {hasPrice ? priceLabel : "Price TBA"}
                                  </div>
                              </div>
 
                              {/* On-Road Price */}
                              {minPriceBreakdown && (
-                               <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                               <div className="pt-3 border-t border-border">
                                  <span className="text-xs text-muted-foreground font-medium uppercase">On-Road Price ({selectedCity})</span>
                                  <div className="text-2xl font-extrabold text-primary mt-1">
                                     {minPrice === maxPrice || !maxPrice || !maxPriceBreakdown
@@ -573,10 +598,9 @@ const ModelOverview = () => {
                          </div>
                     </CardHeader>
                     <CardContent className="space-y-3 pt-0">
-                         <Button size="lg" className="w-full font-semibold shadow-lg shadow-primary/20" onClick={() => handleCheckPrice(variants?.[0]?.id)}>
+                         <Button size="lg" className="w-full font-semibold bg-primary hover:bg-primary-light text-primary-foreground shadow-premium-md" onClick={() => handleCheckPrice(variants?.[0]?.id)}>
                             <Calculator className="w-4 h-4 mr-2" /> Check On-Road Price
                          </Button>
-                         {minPriceBreakdown && <PriceBreakupComponent breakdown={minPriceBreakdown} city={selectedCity} />}
                          <div className="grid grid-cols-2 gap-3">
                             <Button variant="outline" onClick={handleAddToCompare}>
                                 <Plus className="w-4 h-4 mr-2" /> Compare
@@ -589,8 +613,8 @@ const ModelOverview = () => {
                 </Card>
 
                 {/* 2) VARIANT PRICE LIST WIDGET (The Request) */}
-                <Card className="overflow-hidden shadow-sm flex flex-col max-h-[600px]">
-                    <CardHeader className="bg-slate-50 dark:bg-slate-900/50 py-3 border-b shrink-0">
+                <Card className="overflow-hidden shadow-premium-md flex flex-col max-h-[600px]">
+                    <CardHeader className="bg-muted py-3 border-b border-border shrink-0">
                         <CardTitle className="text-base flex items-center justify-between">
                             <span>Variants & Pricing</span>
                             <Badge variant="secondary" className="font-normal">{variants.length} Total</Badge>
@@ -598,9 +622,9 @@ const ModelOverview = () => {
                     </CardHeader>
                     <div className="overflow-y-auto p-0">
                         {variants.length > 0 ? (
-                            <div className="divide-y">
+                            <div className="divide-y divide-border">
                                 {variants.map((variant) => (
-                                    <div key={variant.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors group">
+                                    <div key={variant.id} className="p-4 hover:bg-muted transition-colors group">
                                         <div className="flex justify-between items-start mb-1">
                                             <div>
                                                 <h4 className="font-bold text-sm text-foreground">{variant.name}</h4>
@@ -633,7 +657,7 @@ const ModelOverview = () => {
                                             <Button 
                                                 variant="outline" 
                                                 size="sm" 
-                                                className="h-7 text-xs border-primary/20 hover:bg-primary/5 hover:text-primary"
+                                                className="h-7 text-xs border-primary/30 hover:bg-muted hover:text-primary hover:border-primary"
                                                 onClick={() => handleCheckPrice(variant.id)}
                                             >
                                                 On-Road Price <ChevronRight className="w-3 h-3 ml-1" />
@@ -652,21 +676,21 @@ const ModelOverview = () => {
                 </Card>
 
                 {/* 3) COMPETITORS WIDGET */}
-                <Card>
-                    <CardHeader className="pb-3 border-b">
+                <Card className="shadow-premium-sm">
+                    <CardHeader className="pb-3 border-b border-border">
                         <CardTitle className="text-base">Alternatives</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         {competitors.map((comp) => (
-                            <Link key={comp.id} to={`/${comp.brandId}/${comp.slug}`} className="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border-b last:border-0">
-                                <div className="w-12 h-8 bg-slate-100 rounded flex items-center justify-center">
-                                    <span className="text-[10px] font-bold text-slate-400">{getBrandInitial(comp.brandName)}</span>
+                            <Link key={comp.id} to={`/${comp.brandId}/${comp.slug}`} className="flex items-center gap-4 p-4 hover:bg-muted transition-colors border-b border-border last:border-0">
+                                <div className="w-12 h-8 bg-muted rounded flex items-center justify-center">
+                                    <span className="text-[10px] font-bold text-muted-foreground">{getBrandInitial(comp.brandName)}</span>
                                 </div>
                                 <div>
                                     <h4 className="font-semibold text-sm">{comp.brandName} {comp.name}</h4>
                                     <p className="text-xs text-muted-foreground">₹{(comp.priceRange?.min || 0)/100000}L Onwards</p>
                                 </div>
-                                <ArrowRight className="w-4 h-4 ml-auto text-slate-300" />
+                                <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
                             </Link>
                         ))}
                     </CardContent>

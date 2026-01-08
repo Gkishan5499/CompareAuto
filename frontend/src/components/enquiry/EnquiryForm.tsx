@@ -107,12 +107,12 @@ export const EnquiryForm = ({ context, modelName, pageType, onSuccess, inline = 
 
     setIsSubmitting(true);
     try {
-      const result = await apiOtpRequest(formData.mobile);
+      const result = await apiOtpRequest(formData.mobile, formData.email);
       if (result.success && result.txnId) {
         setTxnId(result.txnId);
         setStep("otp");
         setResendTimer(30);
-        toast.success("OTP sent to your mobile number");
+        toast.success("OTP sent to your email");
       } else {
         toast.error(result.error || "Failed to send OTP");
       }
@@ -179,7 +179,7 @@ export const EnquiryForm = ({ context, modelName, pageType, onSuccess, inline = 
     if (resendTimer > 0) return;
     setIsSubmitting(true);
     try {
-      const result = await apiOtpRequest(formData.mobile);
+      const result = await apiOtpRequest(formData.mobile, formData.email);
       if (result.success && result.txnId) {
         setTxnId(result.txnId);
         setOtpCode("");
@@ -339,7 +339,7 @@ export const EnquiryForm = ({ context, modelName, pageType, onSuccess, inline = 
           <div>
             <h3 className="text-xl font-semibold mb-2">Verify OTP</h3>
             <p className="text-sm text-muted-foreground">
-              Enter the 6-digit code sent to {formData.mobile}
+              Enter the 6-digit code sent to {formData.email}
             </p>
           </div>
 

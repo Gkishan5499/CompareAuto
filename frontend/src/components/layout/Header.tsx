@@ -30,7 +30,7 @@ const Header = () => {
     { to: "/", label: "Home" },
     { to: "/brands", label: "Brands" },
     { to: "/compare", label: "Compare" },
-    { to: "/used-cars", label: "Used Cars" },
+    // { to: "/used-cars", label: "Used Cars" },
     { to: "/news", label: "News" },
     { to: "/contact", label: "Contact" },
   ];

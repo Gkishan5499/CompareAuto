@@ -78,7 +78,7 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                       <TableHead className="sticky left-0 bg-background z-10">Price Component</TableHead>
                       {variants.map((variant, idx) => (
                         <TableHead key={idx} className="text-center">
-                          {variant ? `Variant ${String.fromCharCode(65 + idx)}` : "—"}
+                          {variant ? variant.name : "—"}
                         </TableHead>
                       ))}
                     </TableRow>
@@ -221,16 +221,20 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.safety) && Object.entries(specsData[0]?.safety || {}).map(([key]) => (
-                          <TableRow key={key}>
-                            <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
-                            {specsData.map((spec, idx) => {
-                              const value = spec?.safety?.[key as keyof typeof spec.safety];
-                              const values = specsData.map(s => s?.safety?.[key as any]);
-                              return renderCell(value, values);
-                            })}
-                          </TableRow>
-                        ))}
+                        {specsData.some(s => s?.safety) && Object.entries(specsData[0]?.safety || {}).map(([key]) => {
+                          const values = specsData.map(s => s?.safety?.[key as any]);
+                          // Only show if there are differences
+                          if (!hasDifference(values)) return null;
+                          return (
+                            <TableRow key={key}>
+                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
+                              {specsData.map((spec, idx) => {
+                                const value = spec?.safety?.[key as keyof typeof spec.safety];
+                                return renderCell(value, values);
+                              })}
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -246,16 +250,20 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.exterior) && Object.entries(specsData[0]?.exterior || {}).map(([key]) => (
-                          <TableRow key={key}>
-                            <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
-                            {specsData.map((spec, idx) => {
-                              const value = spec?.exterior?.[key as keyof typeof spec.exterior];
-                              const values = specsData.map(s => s?.exterior?.[key as any]);
-                              return renderCell(value, values);
-                            })}
-                          </TableRow>
-                        ))}
+                        {specsData.some(s => s?.exterior) && Object.entries(specsData[0]?.exterior || {}).map(([key]) => {
+                          const values = specsData.map(s => s?.exterior?.[key as any]);
+                          // Only show if there are differences
+                          if (!hasDifference(values)) return null;
+                          return (
+                            <TableRow key={key}>
+                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
+                              {specsData.map((spec, idx) => {
+                                const value = spec?.exterior?.[key as keyof typeof spec.exterior];
+                                return renderCell(value, values);
+                              })}
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -271,16 +279,20 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.interior) && Object.entries(specsData[0]?.interior || {}).map(([key]) => (
-                          <TableRow key={key}>
-                            <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
-                            {specsData.map((spec, idx) => {
-                              const value = spec?.interior?.[key as keyof typeof spec.interior];
-                              const values = specsData.map(s => s?.interior?.[key as any]);
-                              return renderCell(value, values);
-                            })}
-                          </TableRow>
-                        ))}
+                        {specsData.some(s => s?.interior) && Object.entries(specsData[0]?.interior || {}).map(([key]) => {
+                          const values = specsData.map(s => s?.interior?.[key as any]);
+                          // Only show if there are differences
+                          if (!hasDifference(values)) return null;
+                          return (
+                            <TableRow key={key}>
+                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
+                              {specsData.map((spec, idx) => {
+                                const value = spec?.interior?.[key as keyof typeof spec.interior];
+                                return renderCell(value, values);
+                              })}
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -296,16 +308,20 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.comfort) && Object.entries(specsData[0]?.comfort || {}).map(([key]) => (
-                          <TableRow key={key}>
-                            <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
-                            {specsData.map((spec, idx) => {
-                              const value = spec?.comfort?.[key as keyof typeof spec.comfort];
-                              const values = specsData.map(s => s?.comfort?.[key as any]);
-                              return renderCell(value, values);
-                            })}
-                          </TableRow>
-                        ))}
+                        {specsData.some(s => s?.comfort) && Object.entries(specsData[0]?.comfort || {}).map(([key]) => {
+                          const values = specsData.map(s => s?.comfort?.[key as any]);
+                          // Only show if there are differences
+                          if (!hasDifference(values)) return null;
+                          return (
+                            <TableRow key={key}>
+                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
+                              {specsData.map((spec, idx) => {
+                                const value = spec?.comfort?.[key as keyof typeof spec.comfort];
+                                return renderCell(value, values);
+                              })}
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -321,16 +337,20 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.infotainment) && Object.entries(specsData[0]?.infotainment || {}).map(([key]) => (
-                          <TableRow key={key}>
-                            <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
-                            {specsData.map((spec, idx) => {
-                              const value = spec?.infotainment?.[key as keyof typeof spec.infotainment];
-                              const values = specsData.map(s => s?.infotainment?.[key as any]);
-                              return renderCell(value, values);
-                            })}
-                          </TableRow>
-                        ))}
+                        {specsData.some(s => s?.infotainment) && Object.entries(specsData[0]?.infotainment || {}).map(([key]) => {
+                          const values = specsData.map(s => s?.infotainment?.[key as any]);
+                          // Only show if there are differences
+                          if (!hasDifference(values)) return null;
+                          return (
+                            <TableRow key={key}>
+                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
+                              {specsData.map((spec, idx) => {
+                                const value = spec?.infotainment?.[key as keyof typeof spec.infotainment];
+                                return renderCell(value, values);
+                              })}
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>

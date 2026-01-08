@@ -8,6 +8,7 @@ export default function ImportIndex() {
         <Link to="/brands/import" className="block p-3 bg-white rounded shadow">Import Brands</Link>
         <Link to="/models/import" className="block p-3 bg-white rounded shadow">Import Models</Link>
         <Link to="/variants/import" className="block p-3 bg-white rounded shadow">Import Variants</Link>
+        <Link to="/upcoming/import" className="block p-3 bg-white rounded shadow">Import Upcoming Cars</Link>
       </div>
     </div>
   );

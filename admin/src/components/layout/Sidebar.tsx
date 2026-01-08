@@ -1,21 +1,21 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CarFront, Layers, Settings, FileSpreadsheet, MapPin, Users, Database, DollarSign, Image, Mail, FileText, MessageSquare, Palette, PrinterCheck, TextAlignEnd } from "lucide-react";
+import { LayoutDashboard, CarFront, Layers, Settings, FileSpreadsheet, MapPin, Database, Image, Mail, FileText, MessageSquare, Palette, TextAlignEnd, CalendarClock } from "lucide-react";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/brands", label: "Brands", icon: CarFront },
   { to: "/models", label: "Models", icon: Layers },
   { to: "/variants", label: "Variants", icon: Layers },
-  { to: "/specs", label: "Specs", icon: Database },
+  { to: "/specs", label: "Car Specs", icon: Database },
   { to: "/pricing", label: "Pricing & Taxes", icon: TextAlignEnd },
   { to: "/hero-carousel", label: "Hero Carousel", icon: Image },
   { to: "/enquiries", label: "Enquiries", icon: Mail },
   { to: "/articles", label: "Articles", icon: FileText },
   { to: "/comments", label: "Comments", icon: MessageSquare },
   { to: "/used-cars", label: "Used Cars", icon: CarFront },
+  { to: "/upcoming", label: "Upcoming Cars", icon: CalendarClock },
   { to: "/dealers", label: "Dealers", icon: MapPin },
   { to: "/branding", label: "Branding", icon: Palette },
-  { to: "/users", label: "Users", icon: Users },
   { to: "/import", label: "Import CSV", icon: FileSpreadsheet },
   { to: "/settings", label: "Settings", icon: Settings },
 ];

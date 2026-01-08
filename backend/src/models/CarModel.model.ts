@@ -7,6 +7,7 @@ export interface ICarModel extends Document {
   brandName: string;
   slug: string;
   image: string;
+  gallery: string[];
   bodyType: string;
   fuelTypes: string[];
   priceRange: {
@@ -27,6 +28,7 @@ const CarModelSchema = new Schema<ICarModel>(
     brandName: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     image: { type: String, default: "/cars/placeholder.png" },
+    gallery: { type: [String], default: [] },
     bodyType: { type: String },
     fuelTypes: { type: [String], default: [] },
     priceRange: {

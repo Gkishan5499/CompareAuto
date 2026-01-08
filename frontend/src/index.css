@@ -13,105 +13,135 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Base colors */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    /* ================================
+       PREMIUM COLOR SYSTEM - 60-30-10 RULE
+       60% Neutral Base (Canvas)
+       30% Dominant Premium (Mood)
+       10% Metallic/Jewel Accent (Highlight)
+       ================================ */
 
-    /* Card surfaces */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    /* 60% - NEUTRAL BASE (The Canvas) - Cream/Off-White */
+    --background: 40 20% 97%; /* Soft cream white */
+    --foreground: 220 25% 15%; /* Deep charcoal for readability */
 
-    /* Popover */
+    /* Card surfaces - Part of neutral base */
+    --card: 0 0% 100%; /* Pure white for cards to pop */
+    --card-foreground: 220 25% 15%;
+
+    /* Popover - Part of neutral base */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 220 25% 15%;
 
-    /* Primary - Brand Red (#B71F25) */
-    --primary: 358 71% 42%;
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 358 71% 52%;
-    --primary-dark: 358 71% 32%;
+    /* 30% - DOMINANT PREMIUM (The Mood) - Navy/Charcoal */
+    --primary: 220 40% 20%; /* Deep navy blue - sophisticated */
+    --primary-foreground: 40 20% 97%; /* Cream text on navy */
+    --primary-light: 220 35% 30%;
+    --primary-dark: 220 45% 12%;
 
-    /* Secondary - Brand Gray (#737671) */
-    --secondary: 96 2% 45%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-light: 96 2% 55%;
+    /* Secondary - Charcoal variation */
+    --secondary: 0 0% 25%; /* Deep charcoal gray */
+    --secondary-foreground: 40 20% 97%;
+    --secondary-light: 0 0% 35%;
 
-    /* Muted - Subtle backgrounds */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    /* Muted - Subtle neutral backgrounds */
+    --muted: 40 15% 94%; /* Very light cream/beige */
+    --muted-foreground: 220 15% 40%; /* Medium gray-blue */
 
-    /* Accent - Highlights */
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    /* 10% - METALLIC/JEWEL ACCENT (The Highlight) - Gold */
+    --accent: 45 100% 51%; /* Rich gold - luxury accent */
+    --accent-foreground: 220 40% 20%; /* Navy text on gold */
+    
+    /* Accent variations for different uses */
+    --accent-light: 45 100% 60%; /* Lighter gold for hovers */
+    --accent-dark: 45 100% 42%; /* Deeper gold for active states */
+    --accent-muted: 45 70% 85%; /* Soft gold for backgrounds */
 
-    /* Semantic colors */
-    --success: 142 76% 36%;
+    /* Semantic colors - Updated for premium feel */
+    --success: 158 64% 35%; /* Deep emerald green */
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --warning: 38 92% 50%; /* Warm amber */
+    --warning-foreground: 220 40% 20%;
+    --destructive: 0 70% 45%; /* Muted burgundy red */
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders and inputs */
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 358 71% 42%;
+    /* Borders and inputs - Refined */
+    --border: 40 15% 88%; /* Soft neutral border */
+    --input: 40 15% 88%;
+    --ring: 45 100% 51%; /* Gold focus ring for premium feel */
 
-    /* Neutral scale for automotive sophistication */
-    --neutral-50: 210 40% 98%;
-    --neutral-100: 210 40% 96%;
-    --neutral-200: 214 32% 91%;
-    --neutral-300: 213 27% 84%;
-    --neutral-400: 215 20% 65%;
-    --neutral-500: 215 16% 47%;
-    --neutral-600: 215 19% 35%;
-    --neutral-700: 215 25% 27%;
-    --neutral-800: 217 33% 17%;
-    --neutral-900: 222 47% 11%;
+    /* Extended neutral scale - Premium grays with warm undertone */
+    --neutral-50: 40 20% 98%;
+    --neutral-100: 40 18% 95%;
+    --neutral-200: 40 15% 88%;
+    --neutral-300: 40 10% 78%;
+    --neutral-400: 30 5% 60%;
+    --neutral-500: 20 4% 45%;
+    --neutral-600: 15 5% 32%;
+    --neutral-700: 220 15% 25%;
+    --neutral-800: 220 20% 18%;
+    --neutral-900: 220 25% 15%;
 
     /* Spacing and sizing */
     --radius: 0.5rem;
     --radius-lg: 1rem;
     --radius-xl: 1.5rem;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    /* Premium Shadows - Softer, more elegant */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -1px rgb(0 0 0 / 0.04);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -2px rgb(0 0 0 / 0.03);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 10px 10px -5px rgb(0 0 0 / 0.02);
+    --shadow-gold: 0 4px 12px -2px rgb(245 158 11 / 0.2); /* Gold glow for accents */
 
     /* Transitions */
     --transition-base: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar - Premium navy theme */
+    --sidebar-background: 220 40% 18%; /* Deep navy */
+    --sidebar-foreground: 40 20% 95%; /* Cream text */
+    --sidebar-primary: 45 100% 51%; /* Gold accent */
+    --sidebar-primary-foreground: 220 40% 18%; /* Navy on gold */
+    --sidebar-accent: 220 35% 25%; /* Lighter navy for hover */
+    --sidebar-accent-foreground: 40 20% 95%;
+    --sidebar-border: 220 30% 25%;
+    --sidebar-ring: 45 100% 51%; /* Gold focus */
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 358 71% 42%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 96 2% 45%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 358 71% 42%;
+    /* Dark mode - Inverted premium scheme */
+    --background: 220 25% 15%; /* Deep charcoal */
+    --foreground: 40 20% 95%; /* Cream */
+    --card: 220 20% 18%; /* Slightly lighter charcoal */
+    --card-foreground: 40 20% 95%;
+    --popover: 220 20% 18%;
+    --popover-foreground: 40 20% 95%;
+    
+    --primary: 220 40% 65%; /* Lighter navy for dark mode */
+    --primary-foreground: 220 25% 15%;
+    --primary-light: 220 35% 75%;
+    --primary-dark: 220 45% 55%;
+    
+    --secondary: 0 0% 70%; /* Light gray */
+    --secondary-foreground: 220 25% 15%;
+    --secondary-light: 0 0% 80%;
+    
+    --muted: 220 20% 22%; /* Dark muted */
+    --muted-foreground: 40 10% 65%;
+    
+    --accent: 45 100% 55%; /* Brighter gold for dark mode */
+    --accent-foreground: 220 25% 15%;
+    
+    --border: 220 15% 25%;
+    --input: 220 15% 25%;
+    --ring: 45 100% 55%;
+    
+    --sidebar-background: 220 30% 12%;
+    --sidebar-foreground: 40 20% 95%;
+    --sidebar-primary: 45 100% 55%;
+    --sidebar-primary-foreground: 220 30% 12%;
+    --sidebar-accent: 220 25% 20%;
+    --sidebar-accent-foreground: 40 20% 95%;
   }
 }
 

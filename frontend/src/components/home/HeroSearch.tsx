@@ -201,12 +201,12 @@ const HeroSearch = () => {
   const displayImages = heroImages.length > 0 ? heroImages : FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` }));
 
   return (
-    <section className="relative w-full  pb-20">
+    <section className="relative w-full pb-8 md:pb-16 bg-background">
       
       {/* ----------------------------------------------------------------------- */}
       {/* 1. HERO BANNER AREA (Image Only - Clean Modern Design) */}
       {/* ----------------------------------------------------------------------- */}
-      <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden"> 
+      <div className="relative w-full h-[420px] sm:h-[500px] md:h-[600px] overflow-hidden"> 
         
         {/* Background Carousel */}
         <Carousel
@@ -243,30 +243,30 @@ const HeroSearch = () => {
       {/* 2. SEARCH WIDGET (Overlapping Bottom) */}
       {/* ----------------------------------------------------------------------- */}
       <div className="container max-w-4xl mx-auto px-4 relative z-20 -mt-24" ref={searchRef}>
-        <div className="bg-white rounded-lg border border-gray-200 p-6 md:p-8 max-w-5xl mx-auto shadow-md">
+        <div className="bg-card rounded-lg border border-border p-6 md:p-8 max-w-5xl mx-auto shadow-premium-lg">
             
             {/* Header: Title + Location */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-gray-100 pb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Find Your Right Car</h2>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-border pb-4">
+                <h2 className="text-2xl font-bold text-primary">Find Your Right Car</h2>
                 <div className="relative">
                   <button
                     onClick={() => setShowCityDropdown(!showCityDropdown)}
-                    className="flex items-center gap-2 text-gray-600 mt-2 md:mt-0 cursor-pointer hover:text-gray-900 group"
+                    className="flex items-center gap-2 text-muted-foreground mt-2 md:mt-0 cursor-pointer hover:text-primary group transition-colors"
                   >
-                    <span className="text-sm font-medium border-b border-dotted border-gray-400 group-hover:border-gray-900">{city}</span>
+                    <span className="text-sm font-medium border-b border-dotted border-muted-foreground group-hover:border-primary transition-colors">{city}</span>
                     <ChevronDown className="h-4 w-4" />
                   </button>
                   
                   {/* City Dropdown */}
                   {showCityDropdown && cities.length > 0 && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 max-h-80 overflow-y-auto z-50">
+                    <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-premium-xl border border-border max-h-80 overflow-y-auto z-50">
                       {cities.map((cityItem) => (
                         <div
                           key={cityItem.id || cityItem.name}
                           onClick={() => handleCitySelect(cityItem.name)}
                           className={cn(
-                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 cursor-pointer",
-                            city === cityItem.name && "bg-teal-50 text-teal-700 font-medium"
+                            "w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0 cursor-pointer",
+                            city === cityItem.name && "bg-accent-muted text-primary font-medium border-l-4 border-l-accent"
                           )}
                         >
                           <div className="flex items-center gap-2">
@@ -282,18 +282,18 @@ const HeroSearch = () => {
 
             {/* Search Input Area */}
             <form onSubmit={handleSearch} className="relative">
-                <div className="flex flex-col md:flex-row items-center border border-gray-300 rounded-full bg-white p-1.5 focus-within:ring-2 focus-within:ring-teal-500/20 transition-all shadow-sm">
+                <div className="flex flex-col md:flex-row items-center border border-border rounded-full bg-card p-1.5 focus-within:ring-2 focus-within:ring-accent/30 transition-all shadow-premium-sm">
                     
                     {/* Toggle Switch */}
-                    <div className="flex bg-gray-100 rounded-full p-1 w-full md:w-auto mb-2 md:mb-0">
+                    <div className="flex bg-muted rounded-full p-1 w-full md:w-auto mb-2 md:mb-0">
                         <button
                             type="button"
                             onClick={() => setActiveTab("new")}
                             className={cn(
                                 "flex-1 md:flex-none px-6 py-2 rounded-full text-sm font-bold transition-all duration-300",
                                 activeTab === "new"
-                                    ? "bg-[#B71F25] text-white shadow-md"
-                                    : "text-gray-500 hover:text-gray-800"
+                                    ? "bg-primary text-primary-foreground shadow-premium-md"
+                                    : "text-muted-foreground hover:text-primary"
                             )}
                         >
                             New
@@ -304,8 +304,8 @@ const HeroSearch = () => {
                             className={cn(
                                 "flex-1 md:flex-none px-6 py-2 rounded-full text-sm font-bold transition-all duration-300",
                                 activeTab === "used"
-                                    ? "bg-[#B71F25] text-white shadow-md"
-                                    : "text-gray-500 hover:text-gray-800"
+                                    ? "bg-primary text-primary-foreground shadow-premium-md"
+                                    : "text-muted-foreground hover:text-primary"
                             )}
                         >
                             Used
@@ -317,7 +317,7 @@ const HeroSearch = () => {
                         <Input 
                             type="text"
                             placeholder={activeTab === "new" ? "Search by brand or model name" : "Search used cars"}
-                            className="border-0 shadow-none focus-visible:ring-0 text-base h-10 px-0 placeholder:text-gray-400"
+                            className="border-0 shadow-none focus-visible:ring-0 text-base h-10 px-0 placeholder:text-muted-foreground"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => searchQuery.length > 1 && setShowSuggestions(true)}
@@ -325,23 +325,23 @@ const HeroSearch = () => {
                         
                         {/* Suggestions Dropdown */}
                         {showSuggestions && suggestions.length > 0 && (
-                          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 max-h-96 overflow-y-auto z-50">
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-lg shadow-premium-xl border border-border max-h-96 overflow-y-auto z-50">
                             {suggestions.map((suggestion, index) => (
                               <button
                                 key={index}
                                 type="button"
                                 onClick={() => handleSuggestionClick(suggestion)}
-                                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-center gap-3"
+                                className="w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0 flex items-center gap-3"
                               >
                                 <div className="flex-1">
-                                  <div className="font-medium text-gray-900 text-base">
+                                  <div className="font-medium text-primary text-base">
                                     {suggestion.name}
                                   </div>
                                   {suggestion.type === "brand" && (
-                                    <div className="text-xs text-gray-500 mt-0.5">View all models</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">View all models</div>
                                   )}
                                   {suggestion.type === "model" && suggestion.bodyType && (
-                                    <div className="text-xs text-gray-500 mt-0.5">{suggestion.bodyType}</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">{suggestion.bodyType}</div>
                                   )}
                                 </div>
                                 {suggestion.type && (
@@ -359,15 +359,15 @@ const HeroSearch = () => {
                     <Button 
                         type="submit"
                         size="icon"
-                        className="rounded-full bg-transparent hover:bg-gray-100 text-gray-600 w-10 h-10 md:w-12 md:h-12 shrink-0 hidden md:flex"
+                        className="rounded-full bg-transparent hover:bg-muted text-muted-foreground hover:text-primary w-10 h-10 md:w-12 md:h-12 shrink-0 hidden md:flex transition-colors"
                     >
                         <Search className="h-5 w-5" />
                     </Button>
                     
-                    {/* Mobile Search Button (Full width) */}
+                    {/* Mobile Search Button (Full width) - Premium Gold Accent */}
                     <Button 
                         type="submit"
-                        className="w-full rounded-full bg-[#B71F25] hover:bg-[#B71F25] text-white mt-2 md:hidden"
+                        className="w-full rounded-full bg-accent hover:bg-accent-light text-accent-foreground shadow-gold mt-2 md:hidden transition-all"
                     >
                         Search
                     </Button>
@@ -375,7 +375,7 @@ const HeroSearch = () => {
             </form>
 
             {/* Filter Options Row */}
-            <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-gray-100">
+            <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-border">
                 
                 {/* Budget Filter */}
                 <div className="relative">
@@ -384,8 +384,8 @@ const HeroSearch = () => {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
                       selectedFilters.budget
-                        ? "bg-teal-50 border-teal-300 text-teal-700"
-                        : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                        ? "bg-accent-muted border-accent text-primary shadow-gold"
+                        : "bg-card border-border text-foreground hover:border-primary"
                     )}
                   >
                     <DollarSign className="h-4 w-4" />
@@ -393,7 +393,7 @@ const HeroSearch = () => {
                     <ChevronDown className="h-4 w-4" />
                   </button>
                   {showFilters.budget && (
-                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="absolute left-0 mt-2 w-56 bg-card rounded-lg shadow-premium-xl border border-border z-50">
                       {BUDGET_OPTIONS.map((option) => (
                         <button
                           key={option}
@@ -403,8 +403,8 @@ const HeroSearch = () => {
                             toggleFilterDropdown("budget");
                           }}
                           className={cn(
-                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
-                            selectedFilters.budget === option && "bg-teal-50 text-teal-700 font-medium"
+                            "w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0",
+                            selectedFilters.budget === option && "bg-accent-muted text-primary font-medium border-l-4 border-l-accent"
                           )}
                         >
                           {option}
@@ -421,8 +421,8 @@ const HeroSearch = () => {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
                       selectedFilters.bodyType
-                        ? "bg-teal-50 border-teal-300 text-teal-700"
-                        : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                        ? "bg-accent-muted border-accent text-primary shadow-gold"
+                        : "bg-card border-border text-foreground hover:border-primary"
                     )}
                   >
                     <Users className="h-4 w-4" />
@@ -430,7 +430,7 @@ const HeroSearch = () => {
                     <ChevronDown className="h-4 w-4" />
                   </button>
                   {showFilters.bodyType && (
-                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="absolute left-0 mt-2 w-56 bg-card rounded-lg shadow-premium-xl border border-border z-50">
                       {BODY_TYPE_OPTIONS.map((option) => (
                         <button
                           key={option}
@@ -440,8 +440,8 @@ const HeroSearch = () => {
                             toggleFilterDropdown("bodyType");
                           }}
                           className={cn(
-                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
-                            selectedFilters.bodyType === option && "bg-teal-50 text-teal-700 font-medium"
+                            "w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0",
+                            selectedFilters.bodyType === option && "bg-accent-muted text-primary font-medium border-l-4 border-l-accent"
                           )}
                         >
                           {option}
@@ -458,8 +458,8 @@ const HeroSearch = () => {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
                       selectedFilters.fuelType
-                        ? "bg-teal-50 border-teal-300 text-teal-700"
-                        : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                        ? "bg-accent-muted border-accent text-primary shadow-gold"
+                        : "bg-card border-border text-foreground hover:border-primary"
                     )}
                   >
                     <Zap className="h-4 w-4" />
@@ -467,7 +467,7 @@ const HeroSearch = () => {
                     <ChevronDown className="h-4 w-4" />
                   </button>
                   {showFilters.fuelType && (
-                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="absolute left-0 mt-2 w-56 bg-card rounded-lg shadow-premium-xl border border-border z-50">
                       {FUEL_TYPE_OPTIONS.map((option) => (
                         <button
                           key={option}
@@ -477,8 +477,8 @@ const HeroSearch = () => {
                             toggleFilterDropdown("fuelType");
                           }}
                           className={cn(
-                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
-                            selectedFilters.fuelType === option && "bg-teal-50 text-teal-700 font-medium"
+                            "w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0",
+                            selectedFilters.fuelType === option && "bg-accent-muted text-primary font-medium border-l-4 border-l-accent"
                           )}
                         >
                           {option}
@@ -495,8 +495,8 @@ const HeroSearch = () => {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
                       selectedFilters.transmission
-                        ? "bg-teal-50 border-teal-300 text-teal-700"
-                        : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+                        ? "bg-accent-muted border-accent text-primary shadow-gold"
+                        : "bg-card border-border text-foreground hover:border-primary"
                     )}
                   >
                     <Cog className="h-4 w-4" />
@@ -504,7 +504,7 @@ const HeroSearch = () => {
                     <ChevronDown className="h-4 w-4" />
                   </button>
                   {showFilters.transmission && (
-                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="absolute left-0 mt-2 w-56 bg-card rounded-lg shadow-premium-xl border border-border z-50">
                       {TRANSMISSION_OPTIONS.map((option) => (
                         <button
                           key={option}
@@ -514,8 +514,8 @@ const HeroSearch = () => {
                             toggleFilterDropdown("transmission");
                           }}
                           className={cn(
-                            "w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0",
-                            selectedFilters.transmission === option && "bg-teal-50 text-teal-700 font-medium"
+                            "w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0",
+                            selectedFilters.transmission === option && "bg-accent-muted text-primary font-medium border-l-4 border-l-accent"
                           )}
                         >
                           {option}
@@ -527,7 +527,7 @@ const HeroSearch = () => {
 
                 {/* All Filters Button */}
                 <button
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 transition-all"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-all"
                 >
                   <Search className="h-4 w-4" />
                   <span>All Filters</span>

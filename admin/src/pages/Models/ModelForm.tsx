@@ -1,15 +1,17 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
 import client from "../../api/client";
 import { useApiCreate, useApiUpdate } from "../../hooks/useapi";
+import CloudinaryUpload from "../../components/CloudinaryUpload";
 
 export default function ModelForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { register, handleSubmit, reset, watch } = useForm();
+  const [gallery, setGallery] = useState<string[]>([]);
 
   const { data: model } = useQuery({
     queryKey: ["model", id],
@@ -19,7 +21,10 @@ export default function ModelForm() {
 
   // Ensure form fields are populated when model data arrives
   useEffect(() => {
-    if (model) reset(model);
+    if (model) {
+      reset(model);
+      setGallery(model.gallery || []);
+    }
   }, [model, reset]);
   
 
@@ -52,6 +57,12 @@ export default function ModelForm() {
       form.image = uploadRes.data.url;
     }
 
+    // attach gallery from Cloudinary uploads
+    form.gallery = gallery;
+    if (!form.image && gallery.length > 0) {
+      form.image = gallery[0];
+    }
+
     delete form.imageFile;
 
     if (id) updateModel.mutate(form);
@@ -75,6 +86,12 @@ export default function ModelForm() {
         <input {...register("brandName")} placeholder="Brand Name" className="border p-2 w-full" />
 
         <input {...register("bodyType")} placeholder="Body Type" className="border p-2 w-full" />
+
+        {/* Gallery Upload */}
+        <div className="border rounded p-3">
+          <CloudinaryUpload value={gallery} onChange={setGallery} maxFiles={12} />
+          <p className="text-xs text-gray-500 mt-2">First image becomes the hero image on the site.</p>
+        </div>
 
         <input type="file" {...register("imageFile")} />
         {imagePreview && <img src={imagePreview} alt="image preview" className="h-24 mt-2 rounded" />}

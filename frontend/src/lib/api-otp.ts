@@ -27,8 +27,8 @@ const postJson = async <T>(endpoint: string, body: any): Promise<T> => {
   return json as T;
 };
 
-export const apiOtpRequest = async (mobile: string): Promise<{ success: boolean; txnId?: string; error?: string; ttl?: number }> => {
-  return postJson("/enquiries/otp/request", { mobile });
+export const apiOtpRequest = async (mobile: string, email: string): Promise<{ success: boolean; txnId?: string; error?: string; ttl?: number }> => {
+  return postJson("/enquiries/otp/request", { mobile, email });
 };
 
 export const apiOtpVerify = async (txnId: string, code: string): Promise<{ success: boolean; error?: string }> => {

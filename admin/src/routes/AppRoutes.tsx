@@ -12,6 +12,7 @@ import VariantList from "../pages/Variants/VariantList";
 import VariantForm from "../pages/Variants/VariantForm";
 import VariantCSVImport from "../pages/Variants/VariantCSVImport";
 import HeroCarouselManager from "../pages/HeroCarousel/HeroCarouselManager";
+import UpcomingCSVImport from "../pages/Upcoming/UpcomingCSVImport";
 
 export default function AppRoutes() {
   return (
@@ -76,6 +77,11 @@ export default function AppRoutes() {
       <Route
         path="/hero-carousel"
         element={<ProtectedRoute><HeroCarouselManager /></ProtectedRoute>}
+      />
+
+      <Route
+        path="/upcoming/import"
+        element={<ProtectedRoute><UpcomingCSVImport /></ProtectedRoute>}
       />
     </Routes>
   );

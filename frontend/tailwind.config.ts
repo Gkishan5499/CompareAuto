@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -41,6 +42,9 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          light: "hsl(var(--accent-light))",
+          dark: "hsl(var(--accent-dark))",
+          muted: "hsl(var(--accent-muted))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -80,6 +84,24 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Premium color palette shortcuts
+        premium: {
+          navy: "hsl(220 40% 20%)", // 30% - Dominant
+          charcoal: "hsl(0 0% 25%)", // 30% - Alternative dominant
+          cream: "hsl(40 20% 97%)", // 60% - Neutral base
+          white: "hsl(0 0% 100%)", // 60% - Pure neutral
+          gold: "hsl(45 100% 51%)", // 10% - Accent
+          "gold-light": "hsl(45 100% 60%)", // 10% - Accent variation
+          "gold-dark": "hsl(45 100% 42%)", // 10% - Accent variation
+          emerald: "hsl(158 64% 35%)", // Jewel accent alternative
+        },
+      },
+      boxShadow: {
+        'gold': 'var(--shadow-gold)',
+        'premium-sm': 'var(--shadow-sm)',
+        'premium-md': 'var(--shadow-md)',
+        'premium-lg': 'var(--shadow-lg)',
+        'premium-xl': 'var(--shadow-xl)',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -136,5 +158,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

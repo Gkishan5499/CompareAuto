@@ -37,6 +37,9 @@ import ArticleList from "./pages/Articles/ArticleList";
 import ArticleForm from "./pages/Articles/ArticleForm";
 import CommentList from "./pages/Comments/CommentList";
 import BrandingSettings from "./pages/Branding/BrandingSettings";
+import UpcomingCSVImport from "./pages/Upcoming/UpcomingCSVImport";
+import UpcomingCarList from "./pages/Upcoming/UpcomingCarList";
+import UpcomingCarForm from "./pages/Upcoming/UpcomingCarForm";
 
 const queryClient = new QueryClient();
 
@@ -420,6 +423,48 @@ export default function App() {
               <ProtectedRoute>
                 <DashboardLayout>
                   <CommentList />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Upcoming Cars Routes */}
+          <Route
+            path="/upcoming"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <UpcomingCarList />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/upcoming/new"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <UpcomingCarForm />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/upcoming/:id/edit"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <UpcomingCarForm />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/upcoming/import"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <UpcomingCSVImport />
                 </DashboardLayout>
               </ProtectedRoute>
             }

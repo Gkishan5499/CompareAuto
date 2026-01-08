@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
 import nodemailer from "nodemailer";
 import EnquiryModel from "../models/Enquiry.model";
+import fast2SmsService from "../services/fast2sms.service";
 
 // In-memory OTP store (per txnId)
 const otpStore = new Map<string, { code: string; mobile: string; expiresAt: number }>();
+
+const FAST2SMS_API_KEY = process.env.FAST2SMS_API_KEY;
 
 const generateRef = () => {
   const date = new Date().toISOString().split("T")[0].replace(/-/g, "");
@@ -13,62 +16,152 @@ const generateRef = () => {
 
 const transporter = (() => {
   const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
+  const port = process.env.SMTP_PORT
+    ? Number(process.env.SMTP_PORT)
+    : undefined;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
-  if (!host || !port || !user || !pass) return null;
+  if (!host || !port || !user || !pass) {
+    console.warn("⚠️ SMTP not configured properly");
+    return null;
+  }
 
   return nodemailer.createTransport({
     host,
     port,
-    auth: { user, pass },
+    secure: false, // IMPORTANT for Gmail (587)
+    auth: {
+      user,
+      pass, // App Password (no spaces)
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
   });
 })();
 
-const sendEmail = async (subject: string, html: string) => {
-  const to = process.env.NOTIFY_EMAIL_TO || process.env.SMTP_USER;
+
+
+const sendEmail = async (
+  subject: string,
+  html: string,
+  userEmail?: string
+) => {
+  const to =
+    userEmail || process.env.NOTIFY_EMAIL_TO || process.env.SMTP_USER;
+
   if (!transporter || !to) {
-    console.warn("Email transport not configured; skipping email send.");
-    return;
+    console.warn("Email transporter missing, skipping email send.");
+    return false;
   }
-  await transporter.sendMail({
-    from: process.env.NOTIFY_EMAIL_FROM || process.env.SMTP_USER,
-    to,
-    subject,
-    html,
-  });
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to,
+      subject,
+      html,
+    });
+    return true;
+  } catch (err) {
+    console.error("❌ Failed to send email:", err);
+    return false;
+  }
 };
 
 export const requestOtp = async (req: Request, res: Response) => {
-  const { mobile } = req.body as { mobile?: string };
+  const { mobile, email } = req.body as {
+    mobile?: string;
+    email?: string;
+  };
+
   if (!mobile || !/^\d{10}$/.test(mobile)) {
-    return res.status(400).json({ success: false, error: "Invalid mobile number" });
+    return res
+      .status(400)
+      .json({ success: false, error: "Invalid mobile number" });
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Invalid email address" });
   }
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const txnId = `TXN${Date.now()}${Math.random().toString(36).slice(2, 7)}`;
+  const txnId = `TXN${Date.now()}${Math.random()
+    .toString(36)
+    .slice(2, 7)}`;
   const expiresAt = Date.now() + 2 * 60 * 1000;
+
   otpStore.set(txnId, { code, mobile, expiresAt });
 
-  // In production, send via SMS provider. For now, log for visibility.
-  console.log(`[OTP] Mobile: ${mobile}, Code: ${code}, TxnId: ${txnId}`);
+  console.log(`📧 OTP Generated - Mobile: ${mobile}, Email: ${email}, Code: ${code}, TxnId: ${txnId}`);
 
-  return res.json({ success: true, txnId, ttl: 120 });
+  const otpEmailHtml = `
+    <div style="font-family: Arial; padding:20px;">
+      <h2>Your OTP Code</h2>
+      <p>Your OTP is:</p>
+      <h1 style="letter-spacing:5px;">${code}</h1>
+      <p>This OTP is valid for 2 minutes.</p>
+      <p style="font-size:12px;color:#777;">
+        Do not share this code with anyone.
+      </p>
+    </div>
+  `;
+
+  const emailSent = await sendEmail(
+    `Your OTP Code`,
+    otpEmailHtml,
+    email
+  );
+
+  console.log(`📧 Email sent status: ${emailSent ? "✅ Success" : "❌ Failed"}`);
+
+  return res.json({
+    success: true,
+    txnId,
+    ttl: 120,
+    message: emailSent
+      ? "OTP sent to your email"
+      : "OTP generated. Please check spam folder.",
+  });
 };
+
 
 export const verifyOtp = async (req: Request, res: Response) => {
   const { txnId, code } = req.body as { txnId?: string; code?: string };
-  const record = txnId ? otpStore.get(txnId) : null;
+  
+  // Validation
+  if (!txnId || !code) {
+    console.error("❌ Missing txnId or code", { txnId, code });
+    return res.status(400).json({ success: false, error: "Missing txnId or OTP code" });
+  }
 
-  if (!record) return res.status(400).json({ success: false, error: "Invalid transaction" });
+  const record = otpStore.get(txnId);
+
+  if (!record) {
+    console.error("❌ Invalid transaction ID:", txnId);
+    return res.status(400).json({ success: false, error: "Invalid transaction" });
+  }
+
   if (Date.now() > record.expiresAt) {
-    otpStore.delete(txnId!);
+    otpStore.delete(txnId);
+    console.error("❌ OTP expired for txnId:", txnId);
     return res.status(400).json({ success: false, error: "OTP expired" });
   }
-  if (record.code !== code) return res.status(400).json({ success: false, error: "Invalid OTP" });
 
-  otpStore.delete(txnId!);
+  // Convert code to string for comparison
+  const codeStr = String(code).trim();
+  const storedCodeStr = String(record.code).trim();
+
+  if (codeStr !== storedCodeStr) {
+    console.error("❌ Invalid OTP code", { provided: codeStr, stored: storedCodeStr });
+    return res.status(400).json({ success: false, error: "Invalid OTP" });
+  }
+
+  otpStore.delete(txnId);
+  console.log("✅ OTP verified successfully for txnId:", txnId);
   return res.json({ success: true });
 };
 
@@ -121,7 +214,7 @@ export const submitEnquiry = async (req: Request, res: Response) => {
     `;
 
     try {
-      await sendEmail(`New enquiry ${ref}`, summary);
+      await sendEmail(`New enquiry ${ref}`, summary, process.env.NOTIFY_EMAIL_TO || process.env.SMTP_USER);
     } catch (err) {
       console.error("Failed to send enquiry email", err);
     }

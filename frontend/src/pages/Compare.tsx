@@ -8,7 +8,7 @@ import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import VariantPicker from "@/components/compare/VariantPicker";
 import CompareTable from "@/components/compare/CompareTable";
 import { getTrendingComparisons } from "@/lib/data";
-import { variantsApi, modelsApi, getOnRoadPrice } from "@/lib/api";
+import { variantsApi, modelsApi, getOnRoadPrice, citiesApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { Share2, ArrowRight, Trophy, Banknote, Zap, Plus, CarFront, Trash2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -33,13 +33,31 @@ const Compare = () => {
   const [selectedCity, setSelectedCity] = useState("delhi");
   const [onRoadPrices, setOnRoadPrices] = useState<(number | null)[]>([null, null, null]);
   const [showPrices, setShowPrices] = useState(false);
+  const [cities, setCities] = useState<Array<{ id: string; name: string; state: string; slug: string }>>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [showCompareTable, setShowCompareTable] = useState(false);
 
-  const cities = [
-    { value: "delhi", label: "New Delhi" },
-    { value: "mumbai", label: "Mumbai" },
-    { value: "bangalore", label: "Bangalore" },
-    { value: "hyderabad", label: "Hyderabad" },
-  ];
+  // Fetch cities from backend (single source of truth)
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setLoadingCities(true);
+        const allCities = await citiesApi.getAll();
+        setCities(allCities || []);
+        // Set default to first city if available
+        if (allCities && allCities.length > 0) {
+          setSelectedCity(allCities[0].slug);
+        }
+      } catch (error) {
+        console.error("Failed to fetch cities for compare:", error);
+        setCities([]);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+
+    fetchCities();
+  }, []);
 
   // Get variant data
   const [variantDataList, setVariantDataList] = useState<(any|null)[]>([null, null, null]);
@@ -241,11 +259,30 @@ const Compare = () => {
                                             <XCircle className="w-4 h-4" />
                                         </Button>
 
-                                        <div className="w-16 h-16 bg-white dark:bg-black rounded-full flex items-center justify-center shadow-sm p-3 mb-3 ring-1 ring-slate-100 dark:ring-slate-800">
+                                        {/* Model Image */}
+                                        <div className="w-full h-32 flex items-center justify-center mb-4 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden">
+                                            {model.image ? (
+                                                <img 
+                                                    src={model.image} 
+                                                    alt={`${model.brandName} ${model.name}`} 
+                                                    className="w-full h-full object-contain p-2"
+                                                />
+                                            ) : model.gallery && model.gallery.length > 0 ? (
+                                                <img 
+                                                    src={model.gallery[0]} 
+                                                    alt={`${model.brandName} ${model.name}`} 
+                                                    className="w-full h-full object-contain p-2"
+                                                />
+                                            ) : (
+                                                <div className="w-12 h-12 bg-slate-300 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-muted-foreground">No Image</div>
+                                            )}
+                                        </div>
+
+                                        <div className="w-12 h-12 bg-white dark:bg-black rounded-full flex items-center justify-center shadow-sm p-2 mb-3 ring-1 ring-slate-100 dark:ring-slate-800">
                                             {brandLogo ? (
                                                 <img src={brandLogo} alt={model.brandName} className="w-full h-full object-contain" />
                                             ) : (
-                                                <span className="text-xl font-bold">{brandInitial}</span>
+                                                <span className="text-sm font-bold">{brandInitial}</span>
                                             )}
                                         </div>
                                         
@@ -279,6 +316,23 @@ const Compare = () => {
                     );
                 })}
             </div>
+
+            {/* Final Compare Button */}
+            {selectedCount === 3 && (
+                <div className="mt-8 flex justify-center">
+                    <Button
+                        onClick={() => {
+                            setShowCompareTable(true);
+                            setTimeout(() => {
+                                document.getElementById("comparison-table")?.scrollIntoView({ behavior: "smooth" });
+                            }, 100);
+                        }}
+                        className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-12 text-lg rounded-lg shadow-lg hover:shadow-xl transition-all"
+                    >
+                        Compare All Vehicles
+                    </Button>
+                </div>
+            )}
         </section>
 
         {/* 3) EMPTY STATE / TRENDING */}
@@ -316,7 +370,7 @@ const Compare = () => {
         )}
 
         {/* 4) DATA TABLES & RECOMMENDATIONS */}
-        {selectedCount >= 2 && (
+        {showCompareTable && (
             <>
                 {/* City Selector */}
                 <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -330,15 +384,21 @@ const Compare = () => {
                         </div>
                      </div>
                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <Select value={selectedCity} onValueChange={setSelectedCity}>
+                        <Select value={selectedCity} onValueChange={setSelectedCity} disabled={loadingCities}>
                             <SelectTrigger className="w-full sm:w-[180px] bg-white dark:bg-background">
-                                <SelectValue />
+                                <SelectValue placeholder="Select city..." />
                             </SelectTrigger>
                             <SelectContent>
-                                {cities.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                                {loadingCities ? (
+                                    <div className="p-4 text-center text-sm text-muted-foreground">Loading cities...</div>
+                                ) : cities.length > 0 ? (
+                                    cities.map(c => <SelectItem key={c.slug} value={c.slug}>{c.name}</SelectItem>)
+                                ) : (
+                                    <div className="p-4 text-center text-sm text-muted-foreground">No cities available</div>
+                                )}
                             </SelectContent>
                         </Select>
-                        <Button onClick={handleShowPrices}>Update</Button>
+                        <Button onClick={handleShowPrices} disabled={loadingCities || cities.length === 0}>Update</Button>
                      </div>
                 </div>
 
@@ -396,7 +456,7 @@ const Compare = () => {
                 )}
 
                 {/* The Big Table */}
-                <Card className="overflow-hidden border-t-4 border-t-primary shadow-md">
+                <Card className="overflow-hidden border-t-4 border-t-primary shadow-md" id="comparison-table">
                     <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b">
                         <CardTitle>Detailed Specification Comparison</CardTitle>
                     </CardHeader>
