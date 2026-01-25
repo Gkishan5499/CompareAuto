@@ -7,6 +7,41 @@ import CarSpecs from "../../models/carSpace/CarSpecs.model";
  */
 
 /* ============================================
+   HELPER: Convert boolean values to "Yes"/"No"
+   Transforms stored boolean values AND string "true"/"false" to match CSV format (Yes/No)
+============================================ */
+function transformBooleansToYesNo(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  
+  // Handle boolean values
+  if (typeof obj === "boolean") {
+    return obj ? "Yes" : "No";
+  }
+  
+  // Handle string "true"/"false" values (case-insensitive)
+  if (typeof obj === "string") {
+    const lowerStr = obj.toLowerCase().trim();
+    if (lowerStr === "true") return "Yes";
+    if (lowerStr === "false") return "No";
+    return obj; // Return original string if not true/false
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => transformBooleansToYesNo(item));
+  }
+  
+  if (typeof obj === "object") {
+    const transformed: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      transformed[key] = transformBooleansToYesNo(value);
+    }
+    return transformed;
+  }
+  
+  return obj;
+}
+
+/* ============================================
    GET SPECS BY VARIANT ID
 ============================================ */
 export const getSpecsByVariant = async (req: Request, res: Response) => {
@@ -19,9 +54,12 @@ export const getSpecsByVariant = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Specifications not found" });
     }
 
+    // Transform boolean values to "Yes"/"No" for display
+    const transformedSpecs = transformBooleansToYesNo(specs);
+
     return res.json({
       success: true,
-      data: specs,
+      data: transformedSpecs,
     });
   } catch (err) {
     console.error("getSpecsByVariant:", err);
@@ -52,10 +90,13 @@ export const createSpecs = async (req: any, res: Response) => {
       await req.logActivity("create", "specs", created.variantId, payload);
     }
 
+    // Transform boolean values to "Yes"/"No" for display
+    const transformedCreated = transformBooleansToYesNo(created.toObject ? created.toObject() : created);
+
     return res.json({
       success: true,
       message: "Specs created",
-      data: created,
+      data: transformedCreated,
     });
   } catch (err) {
     console.error("createSpecs:", err);
@@ -81,10 +122,13 @@ export const updateSpecs = async (req: any, res: Response) => {
       await req.logActivity("update", "specs", variantId, payload);
     }
 
+    // Transform boolean values to "Yes"/"No" for display
+    const transformedUpdated = transformBooleansToYesNo(updated.toObject ? updated.toObject() : updated);
+
     return res.json({
       success: true,
       message: "Specs updated",
-      data: updated,
+      data: transformedUpdated,
     });
   } catch (err) {
     console.error("updateSpecs:", err);
@@ -133,12 +177,15 @@ export const listSpecs = async (req: Request, res: Response) => {
       CarSpecs.countDocuments(),
     ]);
 
+    // Transform boolean values to "Yes"/"No" for display
+    const transformedItems = items.map(item => transformBooleansToYesNo(item));
+
     return res.json({
       success: true,
       page,
       limit,
       total,
-      items,
+      items: transformedItems,
     });
   } catch (err) {
     console.error("listSpecs:", err);
@@ -185,11 +232,17 @@ export const bulkCreateSpecs = async (req: any, res: Response) => {
       await req.logActivity("bulk-upsert", "specs", "bulk", { count: upserted });
     }
 
+    // Transform invalid rows for consistency
+    const transformedInvalidRows = invalid.map((row: any) => ({
+      ...row,
+      row: transformBooleansToYesNo(row.row),
+    }));
+
     return res.json({
       success: true,
       upsertedCount: upserted,
-      invalidCount: invalid.length,
-      invalidRows: invalid,
+      invalidCount: transformedInvalidRows.length,
+      invalidRows: transformedInvalidRows,
     });
   } catch (err) {
     console.error("bulkCreateSpecs:", err);

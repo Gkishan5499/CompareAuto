@@ -68,16 +68,19 @@ export function mapRowToSpecs(
  * Smart value converter:
  *  - `12` → number
  *  - `12.5` → float
- *  - `yes/no` → boolean
- *  - `true/false` → boolean
+ *  - `Yes/No` → kept as strings (exact CSV data)
+ *  - `true/false` → boolean (for programmatic values only)
  *  - `val1,val2,val3` → array
  */
 function smartConvert(val: string): any {
   const s = val.trim();
 
-  // Boolean detection
-  if (/^(yes|true|y)$/i.test(s)) return true;
-  if (/^(no|false|n)$/i.test(s)) return false;
+  // Keep Yes/No as strings (exact CSV data - don't convert to boolean)
+  if (/^(yes|no)$/i.test(s)) return s;
+
+  // Boolean detection (true/false only - not yes/no)
+  if (/^true$/i.test(s)) return true;
+  if (/^false$/i.test(s)) return false;
 
   // Array detection (gallery, features)
   if (s.includes(",") || s.includes(";") || s.includes("|")) {

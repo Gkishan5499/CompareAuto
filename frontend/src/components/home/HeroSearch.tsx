@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, MapPin, ChevronDown, DollarSign, Zap, Cog, Users } from "lucide-react";
+import { Search, MapPin, ChevronDown, DollarSign, Zap, Cog, Users, IndianRupee } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -298,7 +298,7 @@ const HeroSearch = () => {
                         >
                             New
                         </button>
-                        <button
+                        {/* <button
                             type="button"
                             onClick={() => setActiveTab("used")}
                             className={cn(
@@ -309,7 +309,7 @@ const HeroSearch = () => {
                             )}
                         >
                             Used
-                        </button>
+                        </button> */}
                     </div>
 
                     {/* Text Input */}
@@ -388,7 +388,7 @@ const HeroSearch = () => {
                         : "bg-card border-border text-foreground hover:border-primary"
                     )}
                   >
-                    <DollarSign className="h-4 w-4" />
+                    <IndianRupee className="h-4 w-4" />
                     <span>Budget</span>
                     <ChevronDown className="h-4 w-4" />
                   </button>
