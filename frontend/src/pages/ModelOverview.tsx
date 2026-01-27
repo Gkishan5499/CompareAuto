@@ -21,6 +21,7 @@ import { specsApi, citiesApi } from "@/lib/api";
 import { updateMetaTags, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { formatINR, parseINRToRupees } from "@/lib/guards";
 import { useCity } from "@/contexts/CityContext";
+import { Variant } from "@/lib/data";
 import {
   Select,
   SelectContent,
@@ -129,6 +130,15 @@ const ModelOverview = () => {
       ogImage: DEFAULT_OG_IMAGE,
     });
   }, [modelData, brand, modelSlug]);
+
+
+
+  interface VariantTableProps {
+    variants: Variant[];
+    brandSlug: string;
+    modelSlug: string;
+  }
+  
 
   // Fetch cities from backend
   useEffect(() => {
@@ -647,13 +657,14 @@ const ModelOverview = () => {
                                             </div>
                                         </div>
                                         <div className="mt-3 flex items-center justify-between">
+                                           <Link to={`/${brand}/${modelSlug}/${variant.slug}`}>
                                             <Button 
                                                 variant="link" 
                                                 className="h-auto p-0 text-xs text-muted-foreground hover:text-primary"
-                                                onClick={() => setActiveTab("specs")}
                                             >
                                                 View Specs
                                             </Button>
+                                         </Link>
                                             <Button 
                                                 variant="outline" 
                                                 size="sm" 
