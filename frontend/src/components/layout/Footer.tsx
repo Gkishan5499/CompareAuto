@@ -175,8 +175,8 @@ const Footer = () => {
          <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
             <p>&copy; {new Date().getFullYear()} CompareAuto.in. All rights reserved.</p>
             <div className="flex gap-6">
-               <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-               <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+               <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+               <Link to="/terms-condition" className="hover:text-primary transition-colors">Terms of Service</Link>
                <Link to="/sitemap" className="hover:text-primary transition-colors">Sitemap</Link>
             </div>
          </div>

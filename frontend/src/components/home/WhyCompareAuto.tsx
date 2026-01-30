@@ -6,42 +6,42 @@ const WhyCompareAuto = () => {
     {
       icon: Calculator,
       title: "Accurate Pricing",
-      description: "City-wise on-road prices with complete breakdown of taxes and fees",
+      description: "City-wise on-road price estimates with a clear breakup of taxes and registration charges",
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
       icon: TrendingUp,
       title: "Variant Comparison",
-      description: "Compare every variant side-by-side with detailed specifications",
+      description: "Compare different variants side-by-side using detailed specifications and feature information",
       color: "text-green-600",
       bgColor: "bg-green-500/10",
     },
     {
       icon: MapPin,
       title: "Location-Based",
-      description: "Get accurate prices and dealer information for your city",
+      description: "View pricing details and relevant information based on your selected city",
       color: "text-purple-600",
       bgColor: "bg-purple-500/10",
     },
     {
       icon: Shield,
       title: "Trusted Information",
-      description: "Verified data from official sources and expert reviews",
+      description: "Car specifications and pricing information from publicly available and official sources",
       color: "text-orange-600",
       bgColor: "bg-orange-500/10",
     },
     {
       icon: Star,
-      title: "User Reviews",
-      description: "Real owner reviews and ratings to help you decide",
+      title: "Reviews & Insights",
+      description: "Model insights and feedback to help you evaluate your options better",
       color: "text-yellow-600",
       bgColor: "bg-yellow-500/10",
     },
     {
       icon: CheckCircle2,
       title: "Easy Tools",
-      description: "EMI calculator, fuel cost estimator, and more helpful tools",
+      description: "Useful tools such as EMI calculators, fuel cost estimators, and other planning utilities",
       color: "text-pink-600",
       bgColor: "bg-pink-500/10",
     },
@@ -89,27 +89,28 @@ const WhyCompareAuto = () => {
           <div className="bg-gradient-to-br from-card to-card/50 rounded-3xl p-8 md:p-12 border border-border/50 shadow-xl">
             <div className="space-y-4 text-muted-foreground leading-relaxed text-base md:text-lg">
               <p>
-                <strong className="text-foreground">CompareAuto.in</strong> is India's most comprehensive 
-                car comparison platform designed to help you make informed decisions when buying your next vehicle. 
-                We understand that choosing a car is more than just picking a brand or model—it's about finding 
-                the perfect variant that matches your budget, lifestyle, and preferences. That's why we offer 
-                detailed variant-by-variant comparisons, allowing you to explore every specification, feature, 
-                and price point across multiple models.
+                <strong className="text-foreground">CompareAuto.in</strong> is a comprehensive car comparison platform built 
+                for Indian car buyers who want clear, practical information before making a purchase. Choosing a car today is 
+                not just about selecting a brand or model—it’s about finding the right variant that fits your budget, daily usage,
+                and personal preferences. CompareAuto.in simplifies this process by offering detailed, variant-wise comparisons across 
+                specifications, features, and pricing.
               </p>
               
               <p>
-                Our platform provides accurate, city-wise on-road prices for cars across India, ensuring you 
-                know exactly what you'll pay in your location. Beyond pricing, we offer powerful tools including 
-                an EMI calculator to plan your monthly payments, a fuel cost estimator to understand long-term 
-                running expenses, and an on-road price calculator that factors in all taxes and registration fees. 
-                Whether you're comparing hatchbacks, sedans, SUVs, or electric vehicles, we've got you covered.
+                Our platform provides city-wise on-road price estimates across India, so you can 
+                understand what a car will actually cost in your city. Along with pricing details,
+                CompareAuto.in offers useful tools such as an EMI calculator to plan monthly payments,
+                a fuel cost estimator to assess running expenses, and an on-road price calculator that 
+                includes applicable taxes and registration charges.
+
               </p>
               
               <p>
-                Built specifically for Indian car buyers, CompareAuto.in brings together everything you need—from 
-                expert reviews and owner ratings to detailed specifications and high-quality images. Our goal is 
-                to simplify your car-buying journey by providing transparent information and easy-to-use comparison 
-                tools, so you can confidently choose the car that's right for you.
+                Created specifically for Indian car buyers, CompareAuto.in brings together detailed specifications,
+                comparison tools, and informative content in one place. Whether you are comparing hatchbacks, sedans,
+                SUVs, or electric cars, our aim is to make car research simple, transparent, and easy to understand—helping 
+                you choose the right car with confidence.
+
               </p>
             </div>
           </div>

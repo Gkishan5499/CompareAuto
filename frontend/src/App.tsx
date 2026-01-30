@@ -41,6 +41,8 @@ import AdminImportReport from "./pages/AdminImportReport";
 import AdminContentGuide from "./pages/AdminContentGuide";
 import DataLoader from "./components/DataLoader";
 import ScrollToTop from "./components/ScrollToTop";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +91,8 @@ const App = () => (
                   <Route path="/:brand" element={<BrandModels />} />
                   <Route path="/:brand/:model" element={<ModelOverview />} />
                   <Route path="/:brand/:model/:variant" element={<VariantDetail />} />
+                  <Route path="/terms-condition" element={<Terms />} />
+                  <Route path="/privacy-policy" element={<Privacy />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
