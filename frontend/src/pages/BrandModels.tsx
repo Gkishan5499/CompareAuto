@@ -11,7 +11,9 @@ import { useBrandBySlug, useModelsByBrand, useBrands } from "@/lib/api-hooks";
 import { modelsApi, variantsApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
-import { formatINR } from "@/lib/guards";
+import { formatINR, parseINRToRupees } from "@/lib/guards";
+import { useCity } from "@/contexts/CityContext";
+import { getStateFromCity } from "@/lib/priceCalculations";
 import AdSlot from "@/components/ads/AdSlot";
 import { getBrandLogo, getBrandInitial } from "@/lib/brandLogos";
 import { 
@@ -27,11 +29,14 @@ const BrandModels = () => {
   const { data: brandData, isLoading: brandLoading } = useBrandBySlug(brand || "");
   const { data: allModels = [], isLoading: modelsLoading } = useModelsByBrand(brand || "");
   const { data: allBrands = [] } = useBrands();
+  const { city } = useCity();
   const brandLogo = getBrandLogo(brandData?.name);
   const brandInitial = getBrandInitial(brandData?.name);
 
   const [sort, setSort] = useState<string>(searchParams.get("sort") || "popular");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [spotlightOnRoadPrice, setSpotlightOnRoadPrice] = useState<{ min: number; max: number } | null>(null);
+  const [spotlightVariantPriceRange, setSpotlightVariantPriceRange] = useState<{ min: number; max: number } | null>(null);
   
   // API Queries (New/Upcoming/Variants)
   const { data: newModels = [] } = useQuery({
@@ -120,7 +125,29 @@ const BrandModels = () => {
     });
   }, [allModels, allVariants, selectedBodyType, selectedFuel, selectedTransmission, selectedPriceRange]);
 
-  const spotlightModel = filteredModels.length > 0 ? filteredModels[0] : allModels[0];
+  const spotlightModel = useMemo(() => {
+    const modelsToUse = filteredModels.length > 0 ? filteredModels : allModels;
+    
+    // Try to find a non-upcoming model with valid price
+    let selectedModel = modelsToUse.find((m: any) => m.status !== "upcoming" && m.priceRange?.min > 0);
+    
+    // If not found, look for one with variants that have prices
+    if (!selectedModel) {
+      selectedModel = modelsToUse.find((m: any) => {
+        if (m.status === "upcoming") return false;
+        const modelVariants = allVariants.filter((v: any) => v.modelId === m.id);
+        return modelVariants.some((v: any) => v.price && parseINRToRupees(v.price) > 0);
+      });
+    }
+    
+    // Fallback to first non-upcoming model
+    if (!selectedModel) {
+      selectedModel = modelsToUse.find((m: any) => m.status !== "upcoming");
+    }
+    
+    // Last resort: return first model
+    return selectedModel || modelsToUse[0];
+  }, [filteredModels, allModels, allVariants]);
   const relatedBrands = allBrands.filter((b: any) => b.slug !== brand).slice(0, 6);
 
   // URL Updates
@@ -161,6 +188,99 @@ const BrandModels = () => {
       // ... structured data logic
     }
   }, [brandData, brand, filteredModels]);
+
+  // Fetch variant prices for spotlight model
+  useEffect(() => {
+    const fetchSpotlightVariantPrices = async () => {
+      if (!spotlightModel || spotlightModel.status === "upcoming") {
+        setSpotlightVariantPriceRange(null);
+        return;
+      }
+
+      try {
+        const variants = await variantsApi.getByModel(spotlightModel.id);
+        
+        if (variants && variants.length > 0) {
+          const prices = variants
+            .map((v: any) => parseINRToRupees(v?.price))
+            .filter((p) => p && p > 0) as number[];
+          
+          if (prices.length > 0) {
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            setSpotlightVariantPriceRange({ min, max });
+          } else {
+            setSpotlightVariantPriceRange(null);
+          }
+        } else {
+          setSpotlightVariantPriceRange(null);
+        }
+      } catch (error) {
+        // Fallback to model price range
+        if (spotlightModel.priceRange) {
+          setSpotlightVariantPriceRange(spotlightModel.priceRange);
+        }
+      }
+    };
+
+    fetchSpotlightVariantPrices();
+  }, [spotlightModel]);
+
+  // Calculate on-road price for spotlight model
+  useEffect(() => {
+    const calculateSpotlightOnRoadPrice = async () => {
+      if (!spotlightModel || spotlightModel.status === "upcoming") {
+        setSpotlightOnRoadPrice(null);
+        return;
+      }
+
+      const minExShowroom = spotlightVariantPriceRange?.min || spotlightModel.priceRange?.min || 0;
+      const maxExShowroom = spotlightVariantPriceRange?.max || spotlightModel.priceRange?.max || 0;
+
+      if (minExShowroom === 0) {
+        setSpotlightOnRoadPrice(null);
+        return;
+      }
+
+      try {
+        const state = getStateFromCity(city);
+
+        // Calculate min on-road price
+        const minResp = await fetch(`/api/pricing/calc`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ exShowroomPrice: minExShowroom, state }),
+        });
+
+        let minOnRoad = minExShowroom;
+        if (minResp.ok) {
+          const minData = await minResp.json();
+          minOnRoad = minData.breakdown.onRoadPrice;
+        }
+
+        // Calculate max on-road price if different from min
+        let maxOnRoad = minOnRoad;
+        if (maxExShowroom > 0 && maxExShowroom !== minExShowroom) {
+          const maxResp = await fetch(`/api/pricing/calc`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ exShowroomPrice: maxExShowroom, state }),
+          });
+
+          if (maxResp.ok) {
+            const maxData = await maxResp.json();
+            maxOnRoad = maxData.breakdown.onRoadPrice;
+          }
+        }
+
+        setSpotlightOnRoadPrice({ min: minOnRoad, max: maxOnRoad });
+      } catch (error) {
+        setSpotlightOnRoadPrice(null);
+      }
+    };
+
+    calculateSpotlightOnRoadPrice();
+  }, [spotlightModel, spotlightVariantPriceRange, city]);
 
   const handleClearAll = () => {
     setSelectedBodyType("All");
@@ -349,9 +469,28 @@ const BrandModels = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
                                 <p className="text-xs text-slate-400 uppercase">Starting At</p>
-                                <p className="text-xl font-bold">
-                                    ₹{((spotlightModel.status === "upcoming" ? spotlightModel.expectedPriceMin || 0 : spotlightModel.priceRange?.min || 0) / 100000).toFixed(2)}L
-                                </p>
+                                {spotlightOnRoadPrice ? (
+                                    <>
+                                        <p className="text-xl font-bold">
+                                            {spotlightOnRoadPrice.min === spotlightOnRoadPrice.max
+                                             ? `Rs. ${(spotlightOnRoadPrice.min / 100000).toFixed(2)} Lakh`
+                                             : `Rs. ${(spotlightOnRoadPrice.min / 100000).toFixed(2)} - ${(spotlightOnRoadPrice.max / 100000).toFixed(2)} Lakh`
+                                                // ? `₹${formatINR(spotlightOnRoadPrice.min, true)}`
+                                                // : `₹${formatINR(spotlightOnRoadPrice.min, true)} - ${formatINR(spotlightOnRoadPrice.max, true)}`
+                                            }
+                                        </p>
+                                        <p className="text-xs text-slate-400 mt-1">On-Road Price in {city}</p>
+                                    </>
+                                ) : spotlightModel.priceRange?.min && spotlightModel.priceRange.min > 0 ? (
+                                    <>
+                                        <p className="text-xl font-bold">
+                                            ₹{formatINR(spotlightModel.priceRange.min, true)}
+                                        </p>
+                                        <p className="text-xs text-slate-400 mt-1">Ex-Showroom Price</p>
+                                    </>
+                                ) : (
+                                    <p className="text-xl font-bold">Price TBA</p>
+                                )}
                             </div>
                             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
                                 <p className="text-xs text-slate-400 uppercase">Variants</p>
