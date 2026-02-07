@@ -38,9 +38,31 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
     fetchSpecs();
   }, [variants]);
 
+  const isDefinedValue = (value: string | number | undefined | null) => {
+    return value !== undefined && value !== null && value !== "";
+  };
+
+  const formatLabel = (key: string) => {
+    return key
+      .replace(/_/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .trim();
+  };
+
+  const getSectionKeys = (section: string) => {
+    const keys = new Set<string>();
+    specsData.forEach((spec) => {
+      const sectionData = spec?.[section];
+      if (sectionData && typeof sectionData === "object" && !Array.isArray(sectionData)) {
+        Object.keys(sectionData).forEach((key) => keys.add(key));
+      }
+    });
+    return Array.from(keys);
+  };
+
   // Helper to check if values differ
   const hasDifference = (values: (string | number | undefined)[]) => {
-    const uniqueValues = new Set(values.filter(v => v !== undefined && v !== null && v !== ""));
+    const uniqueValues = new Set(values.filter((value) => isDefinedValue(value)));
     return uniqueValues.size > 1;
   };
 
@@ -196,16 +218,20 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.overview?.summary) && (
-                          <TableRow>
-                            <TableCell className="sticky left-0 bg-background font-medium">Summary</TableCell>
-                            {specsData.map((spec, idx) => (
-                              <TableCell key={idx} className="text-sm">
-                                {spec?.overview?.summary || "—"}
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        )}
+                        {getSectionKeys("overview").map((key) => {
+                          const values = specsData.map((spec) => spec?.overview?.[key as any]);
+                          if (!values.some((value) => isDefinedValue(value))) return null;
+                          return (
+                            <TableRow key={key}>
+                              <TableCell className="sticky left-0 bg-background font-medium">{formatLabel(key)}</TableCell>
+                              {specsData.map((spec, idx) => (
+                                <TableCell key={idx} className="text-sm">
+                                  {spec?.overview?.[key as any] || "—"}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -221,13 +247,12 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.safety) && Object.entries(specsData[0]?.safety || {}).map(([key]) => {
-                          const values = specsData.map(s => s?.safety?.[key as any]);
-                          // Only show if there are differences
-                          if (!hasDifference(values)) return null;
+                        {getSectionKeys("safety").map((key) => {
+                          const values = specsData.map((spec) => spec?.safety?.[key as any]);
+                          if (!values.some((value) => isDefinedValue(value))) return null;
                           return (
                             <TableRow key={key}>
-                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
+                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{formatLabel(key)}</TableCell>
                               {specsData.map((spec, idx) => {
                                 const value = spec?.safety?.[key as keyof typeof spec.safety];
                                 return renderCell(value, values);
@@ -250,13 +275,12 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.exterior) && Object.entries(specsData[0]?.exterior || {}).map(([key]) => {
-                          const values = specsData.map(s => s?.exterior?.[key as any]);
-                          // Only show if there are differences
-                          if (!hasDifference(values)) return null;
+                        {getSectionKeys("exterior").map((key) => {
+                          const values = specsData.map((spec) => spec?.exterior?.[key as any]);
+                          if (!values.some((value) => isDefinedValue(value))) return null;
                           return (
                             <TableRow key={key}>
-                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
+                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{formatLabel(key)}</TableCell>
                               {specsData.map((spec, idx) => {
                                 const value = spec?.exterior?.[key as keyof typeof spec.exterior];
                                 return renderCell(value, values);
@@ -279,13 +303,12 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.interior) && Object.entries(specsData[0]?.interior || {}).map(([key]) => {
-                          const values = specsData.map(s => s?.interior?.[key as any]);
-                          // Only show if there are differences
-                          if (!hasDifference(values)) return null;
+                        {getSectionKeys("interior").map((key) => {
+                          const values = specsData.map((spec) => spec?.interior?.[key as any]);
+                          if (!values.some((value) => isDefinedValue(value))) return null;
                           return (
                             <TableRow key={key}>
-                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
+                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{formatLabel(key)}</TableCell>
                               {specsData.map((spec, idx) => {
                                 const value = spec?.interior?.[key as keyof typeof spec.interior];
                                 return renderCell(value, values);
@@ -308,13 +331,12 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.comfort) && Object.entries(specsData[0]?.comfort || {}).map(([key]) => {
-                          const values = specsData.map(s => s?.comfort?.[key as any]);
-                          // Only show if there are differences
-                          if (!hasDifference(values)) return null;
+                        {getSectionKeys("comfort").map((key) => {
+                          const values = specsData.map((spec) => spec?.comfort?.[key as any]);
+                          if (!values.some((value) => isDefinedValue(value))) return null;
                           return (
                             <TableRow key={key}>
-                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
+                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{formatLabel(key)}</TableCell>
                               {specsData.map((spec, idx) => {
                                 const value = spec?.comfort?.[key as keyof typeof spec.comfort];
                                 return renderCell(value, values);
@@ -328,29 +350,37 @@ const CompareTable = ({ variants, models, onRoadPrices }: CompareTableProps) => 
                 </AccordionContent>
               </AccordionItem>
 
-              {/* Infotainment */}
+              {/* Tech & Infotainment */}
               <AccordionItem value="infotainment">
                 <AccordionTrigger className="px-6 py-4 bg-primary/5 hover:bg-primary/10">
-                  <span className="font-semibold">Infotainment</span>
+                  <span className="font-semibold">Tech & Infotainment</span>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="overflow-x-auto">
                     <Table>
                       <TableBody>
-                        {specsData.some(s => s?.infotainment) && Object.entries(specsData[0]?.infotainment || {}).map(([key]) => {
-                          const values = specsData.map(s => s?.infotainment?.[key as any]);
-                          // Only show if there are differences
-                          if (!hasDifference(values)) return null;
-                          return (
-                            <TableRow key={key}>
-                              <TableCell className="sticky left-0 bg-background font-medium capitalize">{key.replace(/_/g, " ")}</TableCell>
-                              {specsData.map((spec, idx) => {
-                                const value = spec?.infotainment?.[key as keyof typeof spec.infotainment];
-                                return renderCell(value, values);
-                              })}
-                            </TableRow>
-                          );
-                        })}
+                        {(() => {
+                          const keys = new Set<string>([
+                            ...getSectionKeys("tech"),
+                            ...getSectionKeys("infotainment"),
+                          ]);
+
+                          return Array.from(keys).map((key) => {
+                            const values = specsData.map(
+                              (spec) => spec?.tech?.[key as any] ?? spec?.infotainment?.[key as any]
+                            );
+                            if (!values.some((value) => isDefinedValue(value))) return null;
+                            return (
+                              <TableRow key={key}>
+                                <TableCell className="sticky left-0 bg-background font-medium capitalize">{formatLabel(key)}</TableCell>
+                                {specsData.map((spec, idx) => {
+                                  const value = spec?.tech?.[key as any] ?? spec?.infotainment?.[key as any];
+                                  return renderCell(value, values);
+                                })}
+                              </TableRow>
+                            );
+                          });
+                        })()}
                       </TableBody>
                     </Table>
                   </div>

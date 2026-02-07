@@ -98,7 +98,34 @@ export const searchCars = (query: string): (Brand | Model | Variant)[] => {
 
 // Comparisons
 export const getTrendingComparisons = (): Comparison[] => {
-  return dataCache.getComparisons().sort((a, b) => b.views - a.views).slice(0, 6);
+  const models = dataCache.getModels();
+  const normalizeToken = (value: string) => {
+    return value
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  const modelTokenMap = new Map<string, string>();
+  models.forEach((model) => {
+    modelTokenMap.set(normalizeToken(model.slug), model.slug);
+    modelTokenMap.set(normalizeToken(model.id), model.slug);
+    modelTokenMap.set(normalizeToken(model.name), model.slug);
+  });
+
+  return dataCache
+    .getComparisons()
+    .map((comparison) => {
+      const validModels = comparison.models
+        .map((token) => modelTokenMap.get(normalizeToken(token)))
+        .filter(Boolean) as string[];
+
+      return { ...comparison, models: validModels };
+    })
+    .filter((comparison) => comparison.models.length >= 2)
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 6);
 };
 
 export const getFeaturedModels = (): Model[] => {

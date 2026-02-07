@@ -57,7 +57,11 @@ const Index = () => {
         <div className="flex flex-col gap-8 sm:gap-10">
           <RecentModelsSlider />
           <UpcomingTimeline />
+          <Suspense fallback={<SectionSkeleton />}>
+          <TrendingComparisons />
+          </Suspense>
         </div>
+
 
         {/* 2. DISCOVERY STRIPS */}
         <div className="flex flex-col gap-4 sm:gap-6">
@@ -86,7 +90,6 @@ const Index = () => {
         {/* 5. LAZY LOADED SECTIONS (Performance Optimization) */}
         <Suspense fallback={<SectionSkeleton />}>
           <div className="flex flex-col gap-8 sm:gap-10">
-            <TrendingComparisons />
             <LatestNews />
             <QuickToolsRibbon />
             <div className="bg-slate-50 dark:bg-slate-950/50">

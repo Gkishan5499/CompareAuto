@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import VariantPicker from "@/components/compare/VariantPicker";
 import CompareTable from "@/components/compare/CompareTable";
-import { getTrendingComparisons } from "@/lib/data";
+import { getTrendingComparisons, getModels, getVariants } from "@/lib/data";
 import { variantsApi, modelsApi, getOnRoadPrice, citiesApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { Share2, ArrowRight, Trophy, Banknote, Zap, Plus, CarFront, Trash2, XCircle } from "lucide-react";
@@ -21,14 +21,51 @@ const Compare = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
 
-  // Parse URL query for initial values
-  const urlVariants = searchParams.get("v")?.split(",") || [];
-  
-  const [selectedVariants, setSelectedVariants] = useState<(string | null)[]>([
-    urlVariants[0] || null,
-    urlVariants[1] || null,
-    urlVariants[2] || null,
-  ]);
+    const resolveVariantIdsFromParams = () => {
+        const variantsParam = searchParams.get("v");
+        if (variantsParam) {
+            return variantsParam
+                .split(",")
+                .map((value) => value.trim())
+                .filter(Boolean)
+                .slice(0, 3);
+        }
+
+        const modelsParam = searchParams.get("models");
+        if (!modelsParam) return [];
+
+        const modelTokens = modelsParam
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean)
+            .slice(0, 3);
+
+        const models = getModels();
+
+        return modelTokens
+            .map((token) => {
+                const model = models.find((item) => item.id === token || item.slug === token);
+                if (!model) return null;
+                const modelVariants = getVariants(model.id);
+                if (modelVariants.length === 0) return null;
+
+                const cheapestVariant = modelVariants.reduce((min, variant) => {
+                    if (!min || variant.price < min.price) return variant;
+                    return min;
+                }, null as (typeof modelVariants)[number] | null);
+
+                return (cheapestVariant || modelVariants[0]).id;
+            })
+            .filter((value): value is string => Boolean(value));
+    };
+
+    const urlVariants = resolveVariantIdsFromParams();
+
+    const [selectedVariants, setSelectedVariants] = useState<(string | null)[]>([
+        urlVariants[0] || null,
+        urlVariants[1] || null,
+        urlVariants[2] || null,
+    ]);
 
   const [selectedCity, setSelectedCity] = useState("delhi");
   const [onRoadPrices, setOnRoadPrices] = useState<(number | null)[]>([null, null, null]);
@@ -36,6 +73,27 @@ const Compare = () => {
   const [cities, setCities] = useState<Array<{ id: string; name: string; state: string; slug: string }>>([]);
   const [loadingCities, setLoadingCities] = useState(false);
   const [showCompareTable, setShowCompareTable] = useState(false);
+    const [compareMode, setCompareMode] = useState<"auto" | "manual">("auto");
+
+    useEffect(() => {
+        const nextVariants = resolveVariantIdsFromParams();
+        if (nextVariants.length === 3 && compareMode !== "manual") {
+            setCompareMode("manual");
+        }
+        const nextSelection: (string | null)[] = [
+            nextVariants[0] || null,
+            nextVariants[1] || null,
+            nextVariants[2] || null,
+        ];
+
+        const isSameSelection = nextSelection.every((value, index) => value === selectedVariants[index]);
+        if (!isSameSelection) {
+            setSelectedVariants(nextSelection);
+            setShowCompareTable(false);
+            setShowPrices(false);
+            setOnRoadPrices([null, null, null]);
+        }
+    }, [searchParams]);
 
   // Fetch cities from backend (single source of truth)
   useEffect(() => {
@@ -65,14 +123,24 @@ const Compare = () => {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const promises = selectedVariants.map(async (variantId) => {
-        if (!variantId) return null;
-        try {
-          return await variantsApi.getById(variantId);
-        } catch (err) {
-          return null;
-        }
-      });
+            const promises = selectedVariants.map(async (variantId) => {
+                if (!variantId) return null;
+                try {
+                    return await variantsApi.getById(variantId);
+                } catch (err) {
+                    try {
+                        const allVariants = await variantsApi.getAll();
+                        return allVariants.find(
+                            (variant) =>
+                                variant.id === variantId ||
+                                variant.slug === variantId ||
+                                variant._id === variantId
+                        ) || null;
+                    } catch (fallbackError) {
+                        return null;
+                    }
+                }
+            });
       const results = await Promise.all(promises);
       if (mounted) setVariantDataList(results);
     })();
@@ -85,12 +153,25 @@ const Compare = () => {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const promises = variantDataList.map(async (variant) => {
+            const promises = variantDataList.map(async (variant) => {
         if (!variant) return null;
         try {
-          return await modelsApi.getById(variant.modelId);
+                    return await modelsApi.getById(variant.modelId);
         } catch (err) {
-          return null;
+                    try {
+                        const modelBySlug = await modelsApi.getBySlug(variant.modelId);
+                        if (modelBySlug) return modelBySlug;
+
+                        const allModels = await modelsApi.getAll();
+                        return allModels.find(
+                            (model) =>
+                                model.id === variant.modelId ||
+                                model.slug === variant.modelId ||
+                                model._id === variant.modelId
+                        ) || null;
+                    } catch (fallbackError) {
+                        return null;
+                    }
         }
       });
       const results = await Promise.all(promises);
@@ -99,12 +180,26 @@ const Compare = () => {
     return () => { mounted = false; };
   }, [variantDataList]);
 
-  const trendingComparisons = getTrendingComparisons();
-  const selectedCount = selectedVariants.filter(v => v !== null).length;
+    const trendingComparisons = getTrendingComparisons();
+    const selectedCount = selectedVariants.filter((value): value is string => Boolean(value)).length;
+    const slotIndices = compareMode === "manual" ? [0, 1, 2] : [0, 1];
+    const maxSlots = slotIndices.length;
+
+    useEffect(() => {
+        if (compareMode === "auto" && selectedVariants[2]) {
+            setSelectedVariants([selectedVariants[0], selectedVariants[1], null]);
+        }
+    }, [compareMode, selectedVariants]);
+
+    useEffect(() => {
+        if (selectedCount < 2 && showCompareTable) {
+            setShowCompareTable(false);
+        }
+    }, [selectedCount, showCompareTable]);
 
   // Update URL when selections change
   useEffect(() => {
-    const validVariants = selectedVariants.filter(v => v !== null);
+    const validVariants = selectedVariants.filter((value): value is string => Boolean(value));
     if (validVariants.length > 0) {
       setSearchParams({ v: validVariants.join(",") });
       localStorage.setItem("compareList", JSON.stringify(validVariants));
@@ -127,7 +222,7 @@ const Compare = () => {
 
   const handleVariantSelect = (slot: number) => (variantId: string | null) => {
     const newSelections = [...selectedVariants];
-    newSelections[slot] = variantId;
+        newSelections[slot] = variantId || null;
     setSelectedVariants(newSelections);
     setShowPrices(false);
     setOnRoadPrices([null, null, null]);
@@ -204,29 +299,56 @@ const Compare = () => {
 
         {/* 2) THE GARAGE (Pickers + Cards) */}
         <section className="bg-white dark:bg-card rounded-xl shadow-sm border p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                 <h2 className="font-semibold text-lg flex items-center gap-2">
                     <CarFront className="w-5 h-5 text-primary" />
                     Select Vehicles
                 </h2>
-                {selectedCount > 0 && (
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8"
-                        onClick={() => setSelectedVariants([null, null, null])}
-                    >
-                        <Trash2 className="w-4 h-4 mr-2" /> Clear All
-                    </Button>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-full border bg-muted/40 px-2 py-1">
+                        <Button
+                            variant={compareMode === "auto" ? "default" : "ghost"}
+                            size="sm"
+                            className="h-7 px-3"
+                            onClick={() => setCompareMode("auto")}
+                        >
+                            2-Car
+                        </Button>
+                        <Button
+                            variant={compareMode === "manual" ? "default" : "ghost"}
+                            size="sm"
+                            className="h-7 px-3"
+                            onClick={() => setCompareMode("manual")}
+                        >
+                            Manual 3-Car
+                        </Button>
+                    </div>
+                    {selectedCount > 0 && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8"
+                            onClick={() => setSelectedVariants([null, null, null])}
+                        >
+                            <Trash2 className="w-4 h-4 mr-2" /> Clear All
+                        </Button>
+                    )}
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            <div className={cn(
+                "grid grid-cols-1 gap-6 relative",
+                compareMode === "manual" ? "md:grid-cols-3" : "md:grid-cols-2"
+            )}>
                  {/* Visual VS Dividers for Desktop */}
-                 <div className="hidden md:flex absolute left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-muted border items-center justify-center font-bold text-xs text-muted-foreground">VS</div>
-                 <div className="hidden md:flex absolute left-2/3 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-muted border items-center justify-center font-bold text-xs text-muted-foreground">VS</div>
+                 {maxSlots >= 2 && (
+                    <div className="hidden md:flex absolute left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-muted border items-center justify-center font-bold text-xs text-muted-foreground">VS</div>
+                 )}
+                 {maxSlots === 3 && (
+                    <div className="hidden md:flex absolute left-2/3 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-muted border items-center justify-center font-bold text-xs text-muted-foreground">VS</div>
+                 )}
 
-                {[0, 1, 2].map((idx) => {
+                {slotIndices.map((idx) => {
                     const variant = variantDataList[idx];
                     const model = modelDataList[idx];
                     const brandLogo = model ? getBrandLogo(model.brandName) : null;
@@ -318,7 +440,7 @@ const Compare = () => {
             </div>
 
             {/* Final Compare Button */}
-            {selectedCount === 3 && (
+            {selectedCount >= 2 && (
                 <div className="mt-8 flex justify-center">
                     <Button
                         onClick={() => {
@@ -329,7 +451,7 @@ const Compare = () => {
                         }}
                         className="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-12 text-lg rounded-lg shadow-lg hover:shadow-xl transition-all"
                     >
-                        Compare All Vehicles
+                        Compare Selected Vehicles
                     </Button>
                 </div>
             )}
@@ -351,18 +473,25 @@ const Compare = () => {
                     <div className="text-left">
                         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Trending Comparisons</h3>
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {trendingComparisons.slice(0, 3).map((comp) => (
-                                <Card key={comp.id} className="hover:border-primary/50 cursor-pointer transition-colors group">
-                                    <CardContent className="p-4">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <Badge variant="outline" className="text-xs font-normal">Trending</Badge>
-                                            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-                                        </div>
-                                        <h4 className="font-semibold text-sm">{comp.name}</h4>
-                                        <p className="text-xs text-muted-foreground mt-1">{comp.views.toLocaleString()} views</p>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                            {trendingComparisons.slice(0, 3).map((comp) => {
+                                const modelsParam = comp.models?.filter(Boolean).join(",");
+                                const compareLink = modelsParam ? `/compare?models=${modelsParam}` : "/compare";
+
+                                return (
+                                    <Link key={comp.id} to={compareLink} className="group">
+                                        <Card className="hover:border-primary/50 cursor-pointer transition-colors group">
+                                            <CardContent className="p-4">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <Badge variant="outline" className="text-xs font-normal">Trending</Badge>
+                                                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                                                </div>
+                                                <h4 className="font-semibold text-sm">{comp.name}</h4>
+                                                <p className="text-xs text-muted-foreground mt-1">{comp.views.toLocaleString()} views</p>
+                                            </CardContent>
+                                        </Card>
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

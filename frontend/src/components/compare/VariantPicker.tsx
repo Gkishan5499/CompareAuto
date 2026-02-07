@@ -69,7 +69,10 @@ const VariantPicker = ({ slot, initialValue, onSelect }: VariantPickerProps) => 
     // Find the variant and get its ID from the API variants
     const selectedVariantObj = variants.find(v => v.slug === value);
     if (selectedVariantObj) {
-      onSelect(selectedVariantObj.id);
+      const variantId = selectedVariantObj.id || selectedVariantObj._id || selectedVariantObj.slug;
+      onSelect(variantId || null);
+    } else {
+      onSelect(null);
     }
     setVariantSearchOpen(false);
   };

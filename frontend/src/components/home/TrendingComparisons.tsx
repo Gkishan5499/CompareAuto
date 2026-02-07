@@ -3,11 +3,51 @@ import { TrendingUp, ArrowRight, Scale, Flame, BarChart3 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getTrendingComparisons } from "@/lib/data";
+import { useComparisons, useModels } from "@/lib/api-hooks";
 import { cn } from "@/lib/utils";
 
 const TrendingComparisons = () => {
-  const comparisons = getTrendingComparisons().slice(0, 4);
+  const { data: comparisonsData = [], isLoading: comparisonsLoading } = useComparisons();
+  const { data: models = [], isLoading: modelsLoading } = useModels();
+
+  const normalizeToken = (value: string) => {
+    return value
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  const modelTokenMap = new Map<string, string>();
+  models.forEach((model) => {
+    const slug = model.slug;
+    const id = model.id;
+    const name = model.name;
+
+    modelTokenMap.set(normalizeToken(slug), slug);
+    modelTokenMap.set(normalizeToken(id), slug);
+    modelTokenMap.set(normalizeToken(name), slug);
+  });
+
+  const comparisons = comparisonsData
+    .map((comparison) => {
+      const normalizedModels = (comparison.models || [])
+        .map((token: string) => modelTokenMap.get(normalizeToken(token)))
+        .filter(Boolean) as string[];
+
+      return {
+        ...comparison,
+        models: normalizedModels,
+      };
+    })
+    .filter((comparison) => comparison.models.length >= 2)
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 4);
+
+  const placeholdersCount = Math.max(0, 4 - comparisons.length);
+
+  const isLoading = comparisonsLoading || modelsLoading;
+  const isEmpty = !isLoading && comparisons.length === 0;
 
   return (
     <section className="py-16 md:py-24 bg-background border-t border-slate-100 dark:border-slate-800">
@@ -102,6 +142,14 @@ const TrendingComparisons = () => {
                 </CardContent>
               </Card>
             </Link>
+          ))}
+
+          {Array.from({ length: placeholdersCount }).map((_, idx) => (
+            <Card key={`placeholder-${idx}`} className="h-full border-muted/60 bg-card">
+              <CardContent className="p-6 h-full flex items-center justify-center text-sm text-muted-foreground">
+                {isLoading ? "Loading trending comparisons..." : "More battles coming soon"}
+              </CardContent>
+            </Card>
           ))}
         </div>
 
