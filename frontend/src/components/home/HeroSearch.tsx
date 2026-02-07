@@ -8,6 +8,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
   type CarouselApi,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -34,6 +36,15 @@ const BUDGET_OPTIONS = ["Under 5L", "5L - 10L", "10L - 15L", "15L - 25L", "25L -
 const BODY_TYPE_OPTIONS = ["Sedan", "SUV", "Hatchback", "MUV", "Coupe", "Convertible"];
 const FUEL_TYPE_OPTIONS = ["Petrol", "Diesel", "CNG", "Hybrid", "Electric"];
 const TRANSMISSION_OPTIONS = ["Manual", "Automatic"];
+
+const BUDGET_RANGES: Record<string, { min: number; max: number; maxLakh: number }> = {
+  "Under 5L": { min: 0, max: 500000, maxLakh: 5 },
+  "5L - 10L": { min: 500000, max: 1000000, maxLakh: 10 },
+  "10L - 15L": { min: 1000000, max: 1500000, maxLakh: 15 },
+  "15L - 25L": { min: 1500000, max: 2500000, maxLakh: 25 },
+  "25L - 50L": { min: 2500000, max: 5000000, maxLakh: 50 },
+  "Above 50L": { min: 5000000, max: 5000000, maxLakh: 50 },
+};
 
 const HeroSearch = () => {
   const navigate = useNavigate();
@@ -172,16 +183,24 @@ const HeroSearch = () => {
     }));
   };
 
-  const buildSearchQueryWithFilters = () => {
+  const buildSearchQueryWithFilters = (tab: "new" | "used") => {
     const params = new URLSearchParams();
-    
-    if (searchQuery) params.append("search", searchQuery);
-    params.append("city", city);
-    
-    if (selectedFilters.budget) params.append("priceRange", selectedFilters.budget);
-    if (selectedFilters.bodyType) params.append("bodyType", selectedFilters.bodyType);
-    if (selectedFilters.fuelType) params.append("fuelType", selectedFilters.fuelType);
-    if (selectedFilters.transmission) params.append("transmission", selectedFilters.transmission);
+
+    if (searchQuery) params.append("q", searchQuery);
+
+    const budgetRange = selectedFilters.budget ? BUDGET_RANGES[selectedFilters.budget] : undefined;
+    if (tab === "new") {
+      if (budgetRange) {
+        params.append("priceMin", String(budgetRange.min));
+        params.append("priceMax", String(budgetRange.max));
+      }
+      if (selectedFilters.bodyType) params.append("body", selectedFilters.bodyType);
+      if (selectedFilters.fuelType) params.append("fuel", selectedFilters.fuelType);
+      if (selectedFilters.transmission) params.append("transmission", selectedFilters.transmission);
+    } else {
+      if (city) params.append("city", city);
+      if (budgetRange) params.append("priceMax", String(budgetRange.maxLakh));
+    }
     
     return params.toString();
   };
@@ -189,11 +208,12 @@ const HeroSearch = () => {
   const handleSearchWithFilters = (e?: React.FormEvent) => {
     e?.preventDefault();
     
-    const queryString = buildSearchQueryWithFilters();
+    const queryString = buildSearchQueryWithFilters(activeTab);
+    const querySuffix = queryString ? `?${queryString}` : "";
     if (activeTab === "new") {
-      navigate(`/models?${queryString}`);
+      navigate(`/new-cars${querySuffix}`);
     } else {
-      navigate(`/used-cars?${queryString}`);
+      navigate(`/used-cars/search${querySuffix}`);
     }
     setShowSuggestions(false);
   };
@@ -234,6 +254,8 @@ const HeroSearch = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
+          <CarouselPrevious className="left-4 md:left-6 bg-white/80 hover:bg-white text-black border-white/60" />
+          <CarouselNext className="right-4 md:right-6 bg-white/80 hover:bg-white text-black border-white/60" />
         </Carousel>
 
         {/* REMOVED PROMOTIONAL TEXT OVERLAY - Clean banner only */}
@@ -527,6 +549,8 @@ const HeroSearch = () => {
 
                 {/* All Filters Button */}
                 <button
+                  type="button"
+                  onClick={handleSearchWithFilters}
                   className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-border bg-card text-foreground hover:border-primary hover:text-primary transition-all"
                 >
                   <Search className="h-4 w-4" />

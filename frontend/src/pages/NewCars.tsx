@@ -8,16 +8,28 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { SlidersHorizontal, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useModels, useFilterOptions } from "@/lib/api-hooks";
+import { useModels, useFilterOptions, useVariants } from "@/lib/api-hooks";
+import { useCity } from "@/contexts/CityContext";
+import { formatINR } from "@/lib/guards";
+import { calculatePriceBreakdown } from "@/lib/priceCalculations";
 import { updateMetaTags, injectStructuredData, generateItemListSchema } from "@/lib/seo";
 
 const NewCars = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: allModels = [], isLoading: modelsLoading } = useModels();
+  const { data: allVariants = [] } = useVariants("");
+  const { city } = useCity();
+  const selectedCity = city || "Delhi";
+
+  const parseNumberParam = (value: string | null, fallback: number) => {
+    const parsed = value ? Number(value) : Number.NaN;
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
   
   const [filters, setFilters] = useState({
-    priceMin: 0,
-    priceMax: 5000000,
+    search: searchParams.get("q") || "",
+    priceMin: parseNumberParam(searchParams.get("priceMin"), 0),
+    priceMax: parseNumberParam(searchParams.get("priceMax"), 5000000),
     bodyType: searchParams.get("body") || "all",
     fuelType: searchParams.get("fuel") || "all",
     transmission: searchParams.get("transmission") || "all",
@@ -26,41 +38,120 @@ const NewCars = () => {
   
   const [sortBy, setSortBy] = useState(searchParams.get("sort") || "popularity");
   
+  const modelVariantsMap = useMemo(() => {
+    const map = new Map<string, any[]>();
+    allVariants.forEach((variant: any) => {
+      const key = String(variant.modelId || "");
+      if (!key) return;
+      const list = map.get(key) || [];
+      list.push(variant);
+      map.set(key, list);
+    });
+    return map;
+  }, [allVariants]);
+
+  const getModelVariants = (model: any) => {
+    const keys = [model.id, model._id, model.slug].filter(Boolean).map(String);
+    const collected: any[] = [];
+    keys.forEach((key) => {
+      const list = modelVariantsMap.get(key);
+      if (list) collected.push(...list);
+    });
+    return collected;
+  };
+
+  const getModelPriceRange = (model: any) => {
+    const isUpcoming = model.status === "upcoming";
+    let min = isUpcoming ? model.expectedPriceMin || 0 : model.priceRange?.min || 0;
+    let max = isUpcoming
+      ? model.expectedPriceMax || model.expectedPriceMin || 0
+      : model.priceRange?.max || min;
+
+    if (!min || !max) {
+      const modelVariants = getModelVariants(model)
+        .map((variant: any) => Number(variant.price))
+        .filter((price) => Number.isFinite(price) && price > 0);
+      if (modelVariants.length) {
+        min = Math.min(...modelVariants);
+        max = Math.max(...modelVariants);
+      }
+    }
+
+    if (!max) max = min;
+    return { min, max };
+  };
+
+  const normalizeBodyType = (value: string) =>
+    value.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+
+  const matchesBodyType = (modelBodyType: string | undefined, selectedBodyType: string) => {
+    if (!modelBodyType) return false;
+    const modelType = normalizeBodyType(modelBodyType);
+    const selectedType = normalizeBodyType(selectedBodyType);
+    if (selectedType === "suv") return modelType.includes("suv");
+    if (selectedType === "muv") return modelType.includes("muv") || modelType.includes("mpv");
+    return modelType === selectedType;
+  };
+
   const filteredModels = useMemo(() => {
     let result = [...allModels];
 
     // Filter by price
     result = result.filter((model) => {
-      const modelPrice = model.status === "upcoming" 
-        ? model.expectedPriceMin || 0 
-        : model.priceRange?.min || 0;
-      return modelPrice <= filters.priceMax && modelPrice >= filters.priceMin;
+      const { min, max } = getModelPriceRange(model);
+      return max >= filters.priceMin && min <= filters.priceMax;
     });
+
+    if (filters.search.trim()) {
+      const query = filters.search.trim().toLowerCase();
+      result = result.filter((model) => {
+        const brandName = model.brandName || model.brandId?.name || "";
+        const haystack = `${brandName} ${model.name} ${model.slug}`.toLowerCase();
+        if (haystack.includes(query)) return true;
+        const modelVariants = getModelVariants(model);
+        return modelVariants.some((variant: any) => {
+          const variantHaystack = `${variant.name || ""} ${variant.slug || ""}`.toLowerCase();
+          return variantHaystack.includes(query);
+        });
+      });
+    }
 
     // Filter by body type
     if (filters.bodyType !== "all") {
-      result = result.filter((model) => model.bodyType === filters.bodyType);
+      result = result.filter((model) => matchesBodyType(model.bodyType, filters.bodyType));
     }
 
     // Filter by fuel type
     if (filters.fuelType !== "all") {
+      const fuelQuery = filters.fuelType.toLowerCase();
       result = result.filter((model) => {
         const modelFuel = model.fuelTypes || model.fuelType;
         if (Array.isArray(modelFuel)) {
-          return modelFuel.some(f => f.toLowerCase() === filters.fuelType.toLowerCase());
+          if (modelFuel.some(f => f.toLowerCase() === fuelQuery)) return true;
+        } else if (modelFuel?.toLowerCase() === fuelQuery) {
+          return true;
         }
-        return modelFuel?.toLowerCase() === filters.fuelType.toLowerCase();
+        const modelVariants = getModelVariants(model);
+        return modelVariants.some((variant: any) =>
+          String(variant.fuelType || "").toLowerCase() === fuelQuery
+        );
       });
     }
 
     // Filter by transmission
     if (filters.transmission !== "all") {
+      const transmissionQuery = filters.transmission.toLowerCase();
       result = result.filter((model) => {
         const modelTrans = model.transmissions || model.transmission;
         if (Array.isArray(modelTrans)) {
-          return modelTrans.some(t => t.toLowerCase().includes(filters.transmission.toLowerCase()));
+          if (modelTrans.some(t => t.toLowerCase().includes(transmissionQuery))) return true;
+        } else if (modelTrans?.toLowerCase().includes(transmissionQuery)) {
+          return true;
         }
-        return modelTrans?.toLowerCase().includes(filters.transmission.toLowerCase());
+        const modelVariants = getModelVariants(model);
+        return modelVariants.some((variant: any) =>
+          String(variant.transmission || "").toLowerCase().includes(transmissionQuery)
+        );
       });
     }
 
@@ -73,18 +164,10 @@ const NewCars = () => {
     // Sort
     switch (sortBy) {
       case "price_asc":
-        result.sort((a, b) => {
-          const aPrice = a.status === "upcoming" ? a.expectedPriceMin || 0 : a.priceRange?.min || 0;
-          const bPrice = b.status === "upcoming" ? b.expectedPriceMin || 0 : b.priceRange?.min || 0;
-          return aPrice - bPrice;
-        });
+        result.sort((a, b) => getModelPriceRange(a).min - getModelPriceRange(b).min);
         break;
       case "price_desc":
-        result.sort((a, b) => {
-          const aPrice = a.status === "upcoming" ? a.expectedPriceMin || 0 : a.priceRange?.min || 0;
-          const bPrice = b.status === "upcoming" ? b.expectedPriceMin || 0 : b.priceRange?.min || 0;
-          return bPrice - aPrice;
-        });
+        result.sort((a, b) => getModelPriceRange(b).min - getModelPriceRange(a).min);
         break;
       case "popularity":
       default:
@@ -93,7 +176,7 @@ const NewCars = () => {
     }
 
     return result;
-  }, [allModels, filters, sortBy]);
+  }, [allModels, filters, sortBy, modelVariantsMap]);
 
   useEffect(() => {
     updateMetaTags({
@@ -118,14 +201,19 @@ const NewCars = () => {
   useEffect(() => {
     // Update URL
     const params = new URLSearchParams();
+    if (filters.search.trim()) params.set("q", filters.search.trim());
+    if (filters.priceMin > 0) params.set("priceMin", String(filters.priceMin));
+    if (filters.priceMax !== 5000000) params.set("priceMax", String(filters.priceMax));
     if (filters.bodyType !== "all") params.set("body", filters.bodyType);
     if (filters.fuelType !== "all") params.set("fuel", filters.fuelType);
+    if (filters.transmission !== "all") params.set("transmission", filters.transmission);
+    if (filters.seating !== "all") params.set("seating", filters.seating);
     if (sortBy !== "popularity") params.set("sort", sortBy);
-    setSearchParams(params);
+    setSearchParams(params, { replace: true });
   }, [filters, sortBy, setSearchParams]);
 
   const clearFilters = () => {
-    setFilters({ priceMin: 0, priceMax: 5000000, bodyType: "all", fuelType: "all", transmission: "all", seating: "all" });
+    setFilters({ search: "", priceMin: 0, priceMax: 5000000, bodyType: "all", fuelType: "all", transmission: "all", seating: "all" });
     setSortBy("popularity");
   };
 
@@ -302,6 +390,13 @@ const NewCars = () => {
                   {filteredModels.map((model: any) => {
                     const brandName = model.brandName || model.brandId?.name || "";
                     const brandSlug = brandName.toLowerCase().replace(/\s+/g, "-");
+                    const { min: minPrice, max: maxPrice } = getModelPriceRange(model);
+                    const minOnRoad = minPrice
+                      ? calculatePriceBreakdown(minPrice, selectedCity).onRoadPrice
+                      : 0;
+                    const maxOnRoad = maxPrice
+                      ? calculatePriceBreakdown(maxPrice, selectedCity).onRoadPrice
+                      : 0;
                     return (
                       <Link key={model.id} to={`/${brandSlug}/${model.slug}`}>
                         <Card className="overflow-hidden hover:shadow-lg transition-all hover:scale-[1.02] h-full flex flex-col">
@@ -334,15 +429,13 @@ const NewCars = () => {
                             </h3>
                             <div className="mb-2">
                               <p className="text-xl md:text-2xl font-bold text-primary">
-                                ₹{((model.status === "upcoming" 
-                                  ? model.expectedPriceMin || 0 
-                                  : model.priceRange?.min || 0) / 100000).toFixed(2)}L
-                                {model.priceRange?.max && (
-                                  <> - ₹{((model.status === "upcoming" 
-                                    ? model.expectedPriceMax || 0 
-                                    : model.priceRange?.max || 0) / 100000).toFixed(2)}L</>
-                                )}
+                                {minOnRoad > 0
+                                  ? maxOnRoad > 0 && maxOnRoad !== minOnRoad
+                                    ? `${formatINR(minOnRoad, true)} - ${formatINR(maxOnRoad, true)}`
+                                    : formatINR(minOnRoad, true)
+                                  : "TBA"}
                               </p>
+                              <p className="text-xs text-muted-foreground">On-road price in {selectedCity}</p>
                             </div>
                             <p className="text-xs md:text-sm text-muted-foreground mt-auto">{model.variantCount || 0} Variants</p>
                           </CardContent>
