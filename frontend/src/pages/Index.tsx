@@ -65,7 +65,7 @@ const Index = () => {
 
         {/* 2. DISCOVERY STRIPS */}
         <div className="flex flex-col gap-4 sm:gap-6">
-          <BodyTypesStrip />
+          <ExploreBodyTypes />
           <FuelTypeStrip />
         </div>
 
@@ -93,7 +93,6 @@ const Index = () => {
             <LatestNews />
             <QuickToolsRibbon />
             <div className="bg-slate-50 dark:bg-slate-950/50">
-              <ExploreBodyTypes />
               <WhyCompareAuto />
             </div>
           </div>

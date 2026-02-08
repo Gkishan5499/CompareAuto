@@ -7,7 +7,7 @@ const TOOLS = [
     title: "EMI Calculator",
     description: "Calculate your monthly car loan payments instantly",
     icon: Calculator,
-    path: "/tools",
+    path: "/tools#section-emi",
     color: "text-primary",
     bgColor: "bg-primary/10",
   },
@@ -15,7 +15,7 @@ const TOOLS = [
     title: "On-Road Price",
     description: "Get complete price breakdown by city",
     icon: FileText,
-    path: "/tools",
+    path: "/tools#section-onroad",
     color: "text-secondary",
     bgColor: "bg-secondary/10",
   },
@@ -23,18 +23,11 @@ const TOOLS = [
     title: "Fuel Cost Calculator",
     description: "Estimate your monthly fuel expenses",
     icon: Fuel,
-    path: "/tools",
+    path: "/tools#section-fuel",
     color: "text-success",
     bgColor: "bg-success/10",
   },
-  {
-    title: "Upcoming Cars",
-    description: "Stay updated on new launches and models",
-    icon: Calendar,
-    path: "/tools",
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-  },
+  
 ];
 
 const QuickToolsRibbon = () => {
@@ -53,7 +46,7 @@ const QuickToolsRibbon = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {TOOLS.map((tool) => {
             const Icon = tool.icon;
             return (

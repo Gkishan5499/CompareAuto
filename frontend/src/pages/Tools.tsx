@@ -8,8 +8,22 @@ import FuelCostEstimator from "@/components/tools/FuelCostEstimator";
 import RTOCalculator from "@/components/tools/RTOCalculator";
 import PersonaBuilderCTA from "@/components/tools/PersonaBuilderCTA";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { useLocation } from "react-router-dom";
 
 const Tools = () => {
+
+  const {hash} = useLocation();
+
+   useEffect(() => {
+    if (hash) {
+      const element = document.querySelector(hash);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }, [hash]);
+
+
   useEffect(() => {
     updateMetaTags({
       title: "Car Tools – EMI, On-Road Price & Fuel Cost | CompareAuto.in",

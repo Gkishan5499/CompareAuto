@@ -8,16 +8,16 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { SlidersHorizontal, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useModels, useFilterOptions, useVariants } from "@/lib/api-hooks";
+import { useModels, useVariants } from "@/lib/api-hooks";
 import { useCity } from "@/contexts/CityContext";
-import { formatINR } from "@/lib/guards";
+import { formatINR, parseINRToRupees } from "@/lib/guards";
 import { calculatePriceBreakdown } from "@/lib/priceCalculations";
 import { updateMetaTags, injectStructuredData, generateItemListSchema } from "@/lib/seo";
 
 const NewCars = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: allModels = [], isLoading: modelsLoading } = useModels();
-  const { data: allVariants = [] } = useVariants("");
+  const { data: allVariants = [], isLoading: variantsLoading } = useVariants("");
   const { city } = useCity();
   const selectedCity = city || "Delhi";
 
@@ -38,48 +38,25 @@ const NewCars = () => {
   
   const [sortBy, setSortBy] = useState(searchParams.get("sort") || "popularity");
   
-  const modelVariantsMap = useMemo(() => {
-    const map = new Map<string, any[]>();
-    allVariants.forEach((variant: any) => {
-      const key = String(variant.modelId || "");
-      if (!key) return;
-      const list = map.get(key) || [];
-      list.push(variant);
-      map.set(key, list);
+  const modelLookup = useMemo(() => {
+    const map = new Map<string, any>();
+    allModels.forEach((model: any) => {
+      [model.id, model._id, model.slug].filter(Boolean).forEach((key) => {
+        map.set(String(key), model);
+      });
     });
     return map;
-  }, [allVariants]);
+  }, [allModels]);
 
-  const getModelVariants = (model: any) => {
-    const keys = [model.id, model._id, model.slug].filter(Boolean).map(String);
-    const collected: any[] = [];
-    keys.forEach((key) => {
-      const list = modelVariantsMap.get(key);
-      if (list) collected.push(...list);
-    });
-    return collected;
-  };
-
-  const getModelPriceRange = (model: any) => {
-    const isUpcoming = model.status === "upcoming";
-    let min = isUpcoming ? model.expectedPriceMin || 0 : model.priceRange?.min || 0;
-    let max = isUpcoming
-      ? model.expectedPriceMax || model.expectedPriceMin || 0
-      : model.priceRange?.max || min;
-
-    if (!min || !max) {
-      const modelVariants = getModelVariants(model)
-        .map((variant: any) => Number(variant.price))
-        .filter((price) => Number.isFinite(price) && price > 0);
-      if (modelVariants.length) {
-        min = Math.min(...modelVariants);
-        max = Math.max(...modelVariants);
-      }
-    }
-
-    if (!max) max = min;
-    return { min, max };
-  };
+  const normalizedVariants = useMemo(() => {
+    return allVariants
+      .map((variant: any) => {
+        const key = String(variant.modelId || variant.model || variant.modelSlug || "");
+        const model = modelLookup.get(key);
+        return model ? { variant, model } : null;
+      })
+      .filter(Boolean) as Array<{ variant: any; model: any }>;
+  }, [allVariants, modelLookup]);
 
   const normalizeBodyType = (value: string) =>
     value.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
@@ -93,90 +70,83 @@ const NewCars = () => {
     return modelType === selectedType;
   };
 
-  const filteredModels = useMemo(() => {
-    let result = [...allModels];
+  const filteredVariants = useMemo(() => {
+    let result = [...normalizedVariants];
 
-    // Filter by price
-    result = result.filter((model) => {
-      const { min, max } = getModelPriceRange(model);
-      return max >= filters.priceMin && min <= filters.priceMax;
+    // Filter by price (variant ex-showroom)
+    result = result.filter(({ variant }) => {
+      const price = parseINRToRupees(variant.price ?? variant.exShowroomPrice);
+      if (!price) return filters.priceMin === 0;
+      return price >= filters.priceMin && price <= filters.priceMax;
     });
 
     if (filters.search.trim()) {
       const query = filters.search.trim().toLowerCase();
-      result = result.filter((model) => {
+      result = result.filter(({ variant, model }) => {
         const brandName = model.brandName || model.brandId?.name || "";
-        const haystack = `${brandName} ${model.name} ${model.slug}`.toLowerCase();
-        if (haystack.includes(query)) return true;
-        const modelVariants = getModelVariants(model);
-        return modelVariants.some((variant: any) => {
-          const variantHaystack = `${variant.name || ""} ${variant.slug || ""}`.toLowerCase();
-          return variantHaystack.includes(query);
-        });
+        const haystack = `${brandName} ${model.name} ${model.slug} ${variant.name || ""} ${variant.slug || ""}`.toLowerCase();
+        return haystack.includes(query);
       });
     }
 
     // Filter by body type
     if (filters.bodyType !== "all") {
-      result = result.filter((model) => matchesBodyType(model.bodyType, filters.bodyType));
+      result = result.filter(({ model }) => matchesBodyType(model.bodyType, filters.bodyType));
     }
 
     // Filter by fuel type
     if (filters.fuelType !== "all") {
       const fuelQuery = filters.fuelType.toLowerCase();
-      result = result.filter((model) => {
+      result = result.filter(({ variant, model }) => {
         const modelFuel = model.fuelTypes || model.fuelType;
-        if (Array.isArray(modelFuel)) {
-          if (modelFuel.some(f => f.toLowerCase() === fuelQuery)) return true;
-        } else if (modelFuel?.toLowerCase() === fuelQuery) {
-          return true;
-        }
-        const modelVariants = getModelVariants(model);
-        return modelVariants.some((variant: any) =>
-          String(variant.fuelType || "").toLowerCase() === fuelQuery
-        );
+        const variantFuel = String(variant.fuelType || "").toLowerCase();
+        if (variantFuel) return variantFuel === fuelQuery;
+        if (Array.isArray(modelFuel)) return modelFuel.some((f: string) => f.toLowerCase() === fuelQuery);
+        return String(modelFuel || "").toLowerCase() === fuelQuery;
       });
     }
 
     // Filter by transmission
     if (filters.transmission !== "all") {
       const transmissionQuery = filters.transmission.toLowerCase();
-      result = result.filter((model) => {
-        const modelTrans = model.transmissions || model.transmission;
-        if (Array.isArray(modelTrans)) {
-          if (modelTrans.some(t => t.toLowerCase().includes(transmissionQuery))) return true;
-        } else if (modelTrans?.toLowerCase().includes(transmissionQuery)) {
-          return true;
-        }
-        const modelVariants = getModelVariants(model);
-        return modelVariants.some((variant: any) =>
-          String(variant.transmission || "").toLowerCase().includes(transmissionQuery)
-        );
-      });
+      result = result.filter(({ variant }) =>
+        String(variant.transmission || "").toLowerCase().includes(transmissionQuery)
+      );
     }
 
     // Filter by seating
     if (filters.seating !== "all") {
-      const seatCount = parseInt(filters.seating);
-      result = result.filter((model) => model.seating === seatCount);
+      const seatCount = parseInt(filters.seating, 10);
+      result = result.filter(({ variant, model }) => {
+        const seats = Number(variant.seating ?? model.seating);
+        return Number.isFinite(seats) && seats === seatCount;
+      });
     }
 
     // Sort
     switch (sortBy) {
       case "price_asc":
-        result.sort((a, b) => getModelPriceRange(a).min - getModelPriceRange(b).min);
+        result.sort((a, b) => {
+          const priceA = parseINRToRupees(a.variant.price ?? a.variant.exShowroomPrice) || 0;
+          const priceB = parseINRToRupees(b.variant.price ?? b.variant.exShowroomPrice) || 0;
+          return priceA - priceB;
+        });
         break;
       case "price_desc":
-        result.sort((a, b) => getModelPriceRange(b).min - getModelPriceRange(a).min);
+        result.sort((a, b) => {
+          const priceA = parseINRToRupees(a.variant.price ?? a.variant.exShowroomPrice) || 0;
+          const priceB = parseINRToRupees(b.variant.price ?? b.variant.exShowroomPrice) || 0;
+          return priceB - priceA;
+        });
         break;
       case "popularity":
       default:
-        result.sort((a, b) => b.rating - a.rating);
+        result.sort((a, b) => (b.model.rating || 0) - (a.model.rating || 0));
         break;
     }
 
     return result;
-  }, [allModels, filters, sortBy, modelVariantsMap]);
+  }, [normalizedVariants, filters, sortBy]);
 
   useEffect(() => {
     updateMetaTags({
@@ -186,17 +156,17 @@ const NewCars = () => {
       ogImage: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1200",
     });
 
-    if (filteredModels.length > 0) {
+    if (filteredVariants.length > 0) {
       const schema = generateItemListSchema(
-        filteredModels.slice(0, 20).map((model: any, idx: number) => ({
-          name: `${model.brandName || model.brandId?.name} ${model.name}`,
-          url: `https://compareauto.in/${(model.brandName || model.brandId?.name || "").toLowerCase().replace(/\s+/g, "-")}/${model.slug}`,
+        filteredVariants.slice(0, 20).map(({ model, variant }, idx: number) => ({
+          name: `${model.brandName || model.brandId?.name} ${model.name} ${variant.name || ""}`.trim(),
+          url: `https://compareauto.in/${(model.brandName || model.brandId?.name || "").toLowerCase().replace(/\s+/g, "-")}/${model.slug}/${variant.slug}`,
           position: idx + 1,
         }))
       );
       injectStructuredData(schema);
     }
-  }, [filteredModels]);
+  }, [filteredVariants]);
 
   useEffect(() => {
     // Update URL
@@ -316,7 +286,7 @@ const NewCars = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">New Cars in India</h1>
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
-            Explore {allModels.length}+ new car models. Filter by budget, body type, and features to find your perfect match.
+            Explore {allVariants.length}+ new car variants. Filter by budget, body type, and features to find your perfect match.
           </p>
         </div>
       </section>
@@ -351,7 +321,7 @@ const NewCars = () => {
             {/* Main Content */}
             <div className="lg:col-span-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                <p className="text-muted-foreground">{filteredModels.length} cars found</p>
+                <p className="text-muted-foreground">{filteredVariants.length} variants found</p>
                 
                 <div className="flex items-center gap-4 w-full sm:w-auto">
                   <Sheet>
@@ -379,7 +349,7 @@ const NewCars = () => {
                 </div>
               </div>
 
-              {modelsLoading ? (
+              {modelsLoading || variantsLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="h-64 bg-muted animate-pulse rounded-lg"></div>
@@ -387,24 +357,23 @@ const NewCars = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                  {filteredModels.map((model: any) => {
+                  {filteredVariants.map(({ model, variant }) => {
                     const brandName = model.brandName || model.brandId?.name || "";
                     const brandSlug = brandName.toLowerCase().replace(/\s+/g, "-");
-                    const { min: minPrice, max: maxPrice } = getModelPriceRange(model);
-                    const minOnRoad = minPrice
-                      ? calculatePriceBreakdown(minPrice, selectedCity).onRoadPrice
+                    const rawPrice = parseINRToRupees(variant.exShowroomPrice ?? variant.price);
+                    const onRoadPrice = rawPrice
+                      ? calculatePriceBreakdown(rawPrice, selectedCity).onRoadPrice
                       : 0;
-                    const maxOnRoad = maxPrice
-                      ? calculatePriceBreakdown(maxPrice, selectedCity).onRoadPrice
-                      : 0;
+                    const cardImage = variant.image || model.image;
+                    const fuelLabel = variant.fuelType || model.fuelType || model.fuelTypes?.[0] || "N/A";
                     return (
-                      <Link key={model.id} to={`/${brandSlug}/${model.slug}`}>
+                      <Link key={variant.id || variant._id || variant.slug} to={`/${brandSlug}/${model.slug}/${variant.slug}`}>
                         <Card className="overflow-hidden hover:shadow-lg transition-all hover:scale-[1.02] h-full flex flex-col">
                           <div className="relative aspect-video bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
-                            {model.image ? (
+                            {cardImage ? (
                               <img
-                                src={model.image}
-                                alt={`${brandName} ${model.name}`}
+                                src={cardImage}
+                                alt={`${brandName} ${model.name} ${variant.name || ""}`.trim()}
                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                 loading="lazy"
                                 onError={(e) => {
@@ -422,22 +391,24 @@ const NewCars = () => {
                             <Badge className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm text-foreground shadow-sm">
                               {model.bodyType}
                             </Badge>
+                            {/* <Badge className="absolute top-2 left-2 bg-background/90 backdrop-blur-sm text-foreground shadow-sm">
+                              {fuelLabel}
+                            </Badge> */}
                           </div>
                           <CardContent className="p-4 md:p-5 flex-1 flex flex-col">
                             <h3 className="font-semibold text-base md:text-lg mb-2 line-clamp-2 min-h-[3rem]">
-                              {brandName} {model.name}
+                              {brandName} {model.name} {variant.name || ""}
                             </h3>
                             <div className="mb-2">
                               <p className="text-xl md:text-2xl font-bold text-primary">
-                                {minOnRoad > 0
-                                  ? maxOnRoad > 0 && maxOnRoad !== minOnRoad
-                                    ? `${formatINR(minOnRoad, true)} - ${formatINR(maxOnRoad, true)}`
-                                    : formatINR(minOnRoad, true)
-                                  : "TBA"}
+                                {onRoadPrice > 0 ? formatINR(onRoadPrice, true) : "TBA"}
                               </p>
                               <p className="text-xs text-muted-foreground">On-road price in {selectedCity}</p>
                             </div>
-                            <p className="text-xs md:text-sm text-muted-foreground mt-auto">{model.variantCount || 0} Variants</p>
+                            <div className="mt-auto flex items-center justify-between text-xs md:text-sm text-muted-foreground">
+                              <span>{variant.transmission || "Transmission N/A"}</span>
+                              <span>{variant.fuelType || "Fuel N/A"}</span>
+                            </div>
                           </CardContent>
                         </Card>
                       </Link>
@@ -446,9 +417,9 @@ const NewCars = () => {
                 </div>
               )}
 
-              {filteredModels.length === 0 && (
+              {filteredVariants.length === 0 && (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">No cars match your filters</p>
+                  <p className="text-muted-foreground mb-4">No variants match your filters</p>
                   <Button onClick={clearFilters}>Clear Filters</Button>
                 </div>
               )}

@@ -2,33 +2,49 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Battery, Leaf, Wind, Fuel, Zap, ArrowRight, Flame } from "lucide-react";
-import { filterApi } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
+import { useModels, useVariants } from "@/lib/api-hooks";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 const FuelTypeStrip = () => {
-  const { data: filterOptions } = useQuery({
-    queryKey: ["filters", "options"],
-    queryFn: () => filterApi.getOptions(),
-    staleTime: 30 * 60 * 1000,
-  });
+  const { data: allModels = [] } = useModels();
+  const { data: allVariants = [] } = useVariants("");
 
   const counts = useMemo(() => {
-    if (!filterOptions?.fuelTypes) return {};
     const countsMap: Record<string, number> = {};
-    filterOptions.fuelTypes.forEach((ft: any) => {
-      countsMap[ft.label] = ft.count || 0;
+    const modelKeys = new Set(
+      allModels
+        .map((model: any) => model.id || model._id || model.slug)
+        .filter(Boolean)
+        .map(String)
+    );
+    const fuelLabelMap: Record<string, string> = {
+      petrol: "Petrol",
+      diesel: "Diesel",
+      cng: "CNG",
+      hybrid: "Hybrid",
+      electric: "EV",
+      ev: "EV",
+    };
+
+    allVariants.forEach((variant: any) => {
+      const modelKey = String(variant.modelId || variant.model || variant.modelSlug || "");
+      if (!modelKey || (modelKeys.size > 0 && !modelKeys.has(modelKey))) return;
+      const fuelKey = String(variant.fuelType || "").toLowerCase();
+      const label = fuelLabelMap[fuelKey];
+      if (!label) return;
+      countsMap[label] = (countsMap[label] || 0) + 1;
     });
+
     return countsMap;
-  }, [filterOptions]);
+  }, [allModels, allVariants]);
 
   const fuelTypes = [
-    { name: "EV", icon: Battery, slug: "ev", color: "text-green-600", bg: "bg-green-100 dark:bg-green-900/30", description: "Zero Emissions" },
-    { name: "Hybrid", icon: Leaf, slug: "hybrid", color: "text-primary", bg: "bg-primary/10 dark:bg-primary/20", description: "Efficient & Smart" },
-    { name: "CNG", icon: Wind, slug: "cng", color: "text-cyan-600", bg: "bg-cyan-100 dark:bg-cyan-900/30", description: "Budget Friendly" },
-    { name: "Petrol", icon: Fuel, slug: "petrol", color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-900/30", description: "High Performance" },
-    { name: "Diesel", icon: Zap, slug: "diesel", color: "text-yellow-600", bg: "bg-yellow-100 dark:bg-yellow-900/30", description: "Long Range" },
+    { name: "EV", icon: Battery, slug: "ev", filterValue: "Electric", color: "text-green-600", bg: "bg-green-100 dark:bg-green-900/30", description: "Zero Emissions" },
+    { name: "Hybrid", icon: Leaf, slug: "hybrid", filterValue: "Hybrid", color: "text-primary", bg: "bg-primary/10 dark:bg-primary/20", description: "Efficient & Smart" },
+    { name: "CNG", icon: Wind, slug: "cng", filterValue: "CNG", color: "text-cyan-600", bg: "bg-cyan-100 dark:bg-cyan-900/30", description: "Budget Friendly" },
+    { name: "Petrol", icon: Fuel, slug: "petrol", filterValue: "Petrol", color: "text-orange-600", bg: "bg-orange-100 dark:bg-orange-900/30", description: "High Performance" },
+    { name: "Diesel", icon: Zap, slug: "diesel", filterValue: "Diesel", color: "text-yellow-600", bg: "bg-yellow-100 dark:bg-yellow-900/30", description: "Long Range" },
   ];
 
   return (
@@ -49,7 +65,7 @@ const FuelTypeStrip = () => {
             </p>
           </div>
           
-          <Link to="/brands?filter=fuel">
+          <Link to="/new-cars?filter=fuel">
             <Button variant="ghost" className="group hidden md:flex">
               View All Options
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -59,10 +75,10 @@ const FuelTypeStrip = () => {
 
         {/* Desktop Grid */}
         <div className="hidden md:grid grid-cols-5 gap-6">
-          {fuelTypes.map(({ name, icon: Icon, slug, color, bg, description }) => {
+          {fuelTypes.map(({ name, icon: Icon, filterValue, color, bg, description }) => {
             const count = counts[name] || 0;
             return (
-              <Link key={name} to={`/brands?fuel=${slug}`} className="group h-full">
+              <Link key={name} to={`/new-cars?fuel=${encodeURIComponent(filterValue)}`} className="group h-full">
                 <Card className="h-full border-muted/60 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-card overflow-hidden relative">
                   {/* Subtle hover background tint based on color prop */}
                   <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity", color.replace("text-", "bg-"))} />
@@ -84,7 +100,7 @@ const FuelTypeStrip = () => {
 
                     <div className="mt-auto pt-4 w-full border-t border-dashed border-slate-200 dark:border-slate-800">
                          <span className="text-xs font-medium text-slate-500">
-                            {count} {count === 1 ? "Model" : "Models"}
+                           {count} {count === 1 ? "Variant" : "Variants"}
                          </span>
                     </div>
                   </CardContent>
@@ -96,12 +112,12 @@ const FuelTypeStrip = () => {
 
         {/* Mobile Horizontal Scroll */}
         <div className="md:hidden flex overflow-x-auto gap-4 pb-4 -mx-4 px-4 snap-x snap-mandatory no-scrollbar">
-          {fuelTypes.map(({ name, icon: Icon, slug, color, bg, description }) => {
+          {fuelTypes.map(({ name, icon: Icon, filterValue, color, bg, description }) => {
             const count = counts[name] || 0;
             return (
               <Link 
                 key={name} 
-                to={`/brands?fuel=${slug}`} 
+                to={`/new-cars?fuel=${encodeURIComponent(filterValue)}`} 
                 className="snap-start flex-shrink-0 w-[160px]"
               >
                 <Card className="h-full border-muted/60 active:scale-95 transition-transform bg-card">
@@ -113,7 +129,7 @@ const FuelTypeStrip = () => {
                       <h3 className="font-bold text-sm mb-1">{name}</h3>
                       <p className="text-[10px] text-muted-foreground mb-2">{description}</p>
                       <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-medium text-slate-600 dark:text-slate-400">
-                        {count} Models
+                        {count} Variants
                       </span>
                     </div>
                   </CardContent>

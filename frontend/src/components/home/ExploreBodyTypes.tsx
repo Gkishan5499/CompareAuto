@@ -22,7 +22,7 @@ const ExploreBodyTypes = () => {
   return (
     <section className="py-12 md:py-16 bg-gradient-to-b from-background to-muted/20 border-t">
       <div className="container mx-auto px-4 max-w-7xl">
-        <div className="text-center mb-8 md:mb-10">
+        <div className="mb-8 md:mb-10">
           <h3 className="text-2xl md:text-3xl font-bold mb-3">
             Explore by <span className="text-primary">Body Type</span>
           </h3>
