@@ -51,12 +51,14 @@ const Header = () => {
                 src={logo}
                 alt="CompareAuto Logo"
                 className="h-12 w-auto md:h-14 object-contain"
+                loading="eager"
               />
             ) : (
               <img
                 src="/logo.png"
                 alt="CompareAuto Logo"
                 className="h-12 w-auto md:h-14 object-contain"
+                loading="eager"
               />
             )}
           </Link>

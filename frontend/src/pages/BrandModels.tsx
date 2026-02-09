@@ -323,7 +323,7 @@ const BrandModels = () => {
                 {/* Logo Box */}
                 <div className="w-28 h-28 bg-white dark:bg-black rounded-2xl shadow-md border flex items-center justify-center p-4">
                     {brandLogo ? (
-                        <img src={brandLogo} alt={brandData.name} className="w-full h-full object-contain" />
+                      <img src={brandLogo} alt={brandData.name} className="w-full h-full object-contain" loading="lazy" />
                     ) : (
                         <span className="text-4xl font-bold">{brandInitial}</span>
                     )}
@@ -505,11 +505,12 @@ const BrandModels = () => {
 
                     <div className="order-1 md:order-2 flex items-center justify-center">
                          {spotlightModel.image ? (
-                             <img 
-                                src={spotlightModel.image} 
-                                alt={spotlightModel.name} 
-                                className="w-full max-h-[350px] object-contain drop-shadow-2xl"
-                             />
+                           <img 
+                            src={spotlightModel.image} 
+                            alt={spotlightModel.name} 
+                            className="w-full max-h-[350px] object-contain drop-shadow-2xl"
+                            loading="lazy"
+                           />
                          ) : (
                              <div className="w-48 h-48 bg-white/10 rounded-full flex items-center justify-center text-6xl font-bold text-white/20">
                                  {getBrandInitial(brandData.name)}
@@ -633,7 +634,7 @@ const BrandModels = () => {
                      <Link key={rb.id} to={`/${rb.slug}`}>
                          <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border rounded-full px-4 py-2 hover:border-primary hover:shadow-sm transition-all">
                              {rb.logo ? (
-                                 <img src={rb.logo} alt={rb.name} className="w-6 h-6 object-contain" />
+                               <img src={rb.logo} alt={rb.name} className="w-6 h-6 object-contain" loading="lazy" />
                              ) : (
                                  <span className="font-bold text-xs">{getBrandInitial(rb.name)}</span>
                              )}

@@ -216,6 +216,7 @@ const UpcomingCars = () => {
                         src={model.image || "/placeholder.svg"}
                         alt={`${model.brandName} ${model.name}`}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                       <Badge className="absolute top-4 right-4" variant="secondary">
                         Upcoming

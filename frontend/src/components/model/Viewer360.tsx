@@ -113,6 +113,7 @@ const Viewer360 = ({ spinFrames, spin360Url, modelName, brandName }: Viewer360Pr
                   src={brandLogo} 
                   alt={`${brandName} logo`}
                   className="w-32 h-32 mx-auto mb-4 object-contain"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-32 h-32 rounded-full bg-white shadow-md flex items-center justify-center mx-auto mb-4">

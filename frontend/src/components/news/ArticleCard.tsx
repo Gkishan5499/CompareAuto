@@ -21,7 +21,7 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
       <Card className="overflow-hidden hover:shadow-lg transition-all group h-full flex flex-col">
         <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
           {article.heroImage ? (
-            <img src={article.heroImage} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+            <img src={article.heroImage} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
           ) : (
             <span className="text-6xl group-hover:scale-110 transition-transform">📰</span>
           )}

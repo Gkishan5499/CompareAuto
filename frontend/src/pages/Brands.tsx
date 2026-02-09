@@ -245,6 +245,7 @@ const Brands = () => {
                           src={spotlightLogo} 
                           alt={spotlightBrand.name}
                           className="w-full h-full object-contain"
+                          loading="lazy"
                         />
                       ) : (
                         <span className="text-4xl font-black text-slate-800">{spotlightInitial}</span>

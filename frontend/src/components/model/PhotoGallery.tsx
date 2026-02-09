@@ -53,7 +53,7 @@ const PhotoGallery = ({ photos, modelName, brandName, mode = "default" }: PhotoG
         >
           {validPhotos.length === 0 ? (
             brandLogo ? (
-              <img src={brandLogo} alt={`${brandName} logo`} className="w-24 h-24 object-contain" />
+              <img src={brandLogo} alt={`${brandName} logo`} className="w-24 h-24 object-contain" loading="lazy" />
             ) : (
               <div className="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center">
                 <span className="text-3xl font-bold text-muted-foreground">{brandInitial}</span>
@@ -65,6 +65,7 @@ const PhotoGallery = ({ photos, modelName, brandName, mode = "default" }: PhotoG
                 src={validPhotos[selectedIndex]}
                 alt={`${modelName} photo`}
                 className={mode === "hero" ? "w-full h-full object-contain max-h-[460px] cursor-zoom-in" : "w-full h-full object-contain max-h-[420px] cursor-zoom-in"}
+                loading="lazy"
                 onClick={() => openLightbox(selectedIndex)}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -113,6 +114,7 @@ const PhotoGallery = ({ photos, modelName, brandName, mode = "default" }: PhotoG
                     src={photo}
                     alt={`${modelName} thumb ${idx + 1}`}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = "none";
@@ -145,6 +147,7 @@ const PhotoGallery = ({ photos, modelName, brandName, mode = "default" }: PhotoG
                     src={validPhotos[selectedIndex]}
                     alt={`${modelName} photo ${selectedIndex + 1}`}
                     className="max-w-full max-h-[60vh] object-contain"
+                    loading="lazy"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       if (target.src !== DEFAULT_OG_IMAGE) target.src = DEFAULT_OG_IMAGE;

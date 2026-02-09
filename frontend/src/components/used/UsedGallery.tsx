@@ -26,6 +26,7 @@ export const UsedGallery = ({ images, title }: UsedGalleryProps) => {
           src={images[currentIndex]}
           alt={`${title} - Image ${currentIndex + 1}`}
           className="w-full h-full object-cover"
+          loading="lazy"
         />
         {images.length > 1 && (
           <>
@@ -66,7 +67,7 @@ export const UsedGallery = ({ images, title }: UsedGalleryProps) => {
               }`}
               aria-label={`View image ${idx + 1}`}
             >
-              <img src={img} alt={`${title} thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+              <img src={img} alt={`${title} thumbnail ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
             </button>
           ))}
         </div>

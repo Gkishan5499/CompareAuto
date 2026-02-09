@@ -1,13 +1,14 @@
 import { useEffect, Suspense, lazy } from "react";
+import { Loader2 } from "lucide-react";
 import { updateMetaTags, injectStructuredData, generateOrganizationSchema, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import HeroSearch from "@/components/home/HeroSearch";
-import BodyTypesStrip from "@/components/home/BodyTypesStrip";
-import FuelTypeStrip from "@/components/home/FuelTypeStrip";
-import TopPicks from "@/components/home/TopPicks";
-import RecentModelsSlider from "@/components/home/RecentModelsSlider";
-import UpcomingTimeline from "@/components/home/UpcomingTimeline";
-import BrandsStrip from "@/components/home/BrandsStrip";
-import QuickToolsRibbon from "@/components/home/QuickToolsRibbon";
+const BodyTypesStrip = lazy(() => import("@/components/home/BodyTypesStrip"));
+const FuelTypeStrip = lazy(() => import("@/components/home/FuelTypeStrip"));
+const TopPicks = lazy(() => import("@/components/home/TopPicks"));
+const RecentModelsSlider = lazy(() => import("@/components/home/RecentModelsSlider"));
+const UpcomingTimeline = lazy(() => import("@/components/home/UpcomingTimeline"));
+const BrandsStrip = lazy(() => import("@/components/home/BrandsStrip"));
+const QuickToolsRibbon = lazy(() => import("@/components/home/QuickToolsRibbon"));
 import CompareBar from "@/components/home/CompareBar";
 import AdSlot from "@/components/ads/AdSlot";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,22 +56,32 @@ const Index = () => {
 
         {/* Recent and Upcoming sections stacked with tighter mobile spacing */}
         <div className="flex flex-col gap-8 sm:gap-10">
-          <RecentModelsSlider />
-          <UpcomingTimeline />
-          <Suspense fallback={<SectionSkeleton />}>
-          <TrendingComparisons />
+          <Suspense fallback={<SectionLoader label="Loading recent models..." />}>
+            <RecentModelsSlider />
+          </Suspense>
+          <Suspense fallback={<SectionLoader label="Loading upcoming cars..." />}>
+            <UpcomingTimeline />
+          </Suspense>
+          <Suspense fallback={<SectionLoader label="Loading comparisons..." />}>
+            <TrendingComparisons />
           </Suspense>
         </div>
 
 
         {/* 2. DISCOVERY STRIPS */}
         <div className="flex flex-col gap-4 sm:gap-6">
-          <ExploreBodyTypes />
-          <FuelTypeStrip />
+          <Suspense fallback={<SectionLoader label="Loading body types..." />}> 
+            <ExploreBodyTypes />
+          </Suspense>
+          <Suspense fallback={<SectionLoader label="Loading fuel types..." />}> 
+            <FuelTypeStrip />
+          </Suspense>
         </div>
 
         {/* 3. EDITORIAL & RANKINGS */}
-        <TopPicks />
+        <Suspense fallback={<SectionLoader label="Loading top picks..." />}> 
+          <TopPicks />
+        </Suspense>
 
         {/* Ad Slot: Mid Billboard (High Visibility) */}
         <section className="py-6 sm:py-8 bg-muted/20 border-y border-dashed border-slate-200 dark:border-slate-800">
@@ -84,11 +95,13 @@ const Index = () => {
         </section>
 
         <section className="border-t border-slate-100 dark:border-slate-800">
-          <BrandsStrip />
+          <Suspense fallback={<SectionLoader label="Loading brands..." />}> 
+            <BrandsStrip />
+          </Suspense>
         </section>
 
         {/* 5. LAZY LOADED SECTIONS (Performance Optimization) */}
-        <Suspense fallback={<SectionSkeleton />}>
+        <Suspense fallback={<SectionLoader label="Loading highlights..." />}>
           <div className="flex flex-col gap-8 sm:gap-10">
             <LatestNews />
             <QuickToolsRibbon />
@@ -113,6 +126,17 @@ const SectionSkeleton = () => (
       <Skeleton className="h-64 rounded-xl" />
       <Skeleton className="h-64 rounded-xl" />
       <Skeleton className="h-64 rounded-xl" />
+    </div>
+  </div>
+);
+
+const SectionLoader = ({ label }: { label: string }) => (
+  <div className="container mx-auto px-4 max-w-7xl py-12 sm:py-16">
+    <div className="h-48 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-muted/20 flex items-center justify-center">
+      <div className="flex items-center gap-3 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        <span className="text-sm font-medium">{label}</span>
+      </div>
     </div>
   </div>
 );

@@ -388,12 +388,14 @@ const Compare = () => {
                                                     src={model.image} 
                                                     alt={`${model.brandName} ${model.name}`} 
                                                     className="w-full h-full object-contain p-2"
+                                                    loading="lazy"
                                                 />
                                             ) : model.gallery && model.gallery.length > 0 ? (
                                                 <img 
                                                     src={model.gallery[0]} 
                                                     alt={`${model.brandName} ${model.name}`} 
                                                     className="w-full h-full object-contain p-2"
+                                                    loading="lazy"
                                                 />
                                             ) : (
                                                 <div className="w-12 h-12 bg-slate-300 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-muted-foreground">No Image</div>
@@ -402,7 +404,7 @@ const Compare = () => {
 
                                         <div className="w-12 h-12 bg-white dark:bg-black rounded-full flex items-center justify-center shadow-sm p-2 mb-3 ring-1 ring-slate-100 dark:ring-slate-800">
                                             {brandLogo ? (
-                                                <img src={brandLogo} alt={model.brandName} className="w-full h-full object-contain" />
+                                                <img src={brandLogo} alt={model.brandName} className="w-full h-full object-contain" loading="lazy" />
                                             ) : (
                                                 <span className="text-sm font-bold">{brandInitial}</span>
                                             )}

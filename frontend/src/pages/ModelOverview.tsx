@@ -541,8 +541,8 @@ const ModelOverview = () => {
                 <Card className="border-t-4 border-t-primary shadow-premium-lg">
                     <CardHeader className="pb-4">
                          <div className="flex items-center gap-3 mb-2">
-                             {brandLogo ? (
-                                <img src={brandLogo} alt={modelData.brandName} className="w-8 h-8 object-contain" />
+                                      {brandLogo ? (
+                                          <img src={brandLogo} alt={modelData.brandName} className="w-8 h-8 object-contain" loading="lazy" />
                              ) : (
                                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs">{brandInitial}</div>
                              )}

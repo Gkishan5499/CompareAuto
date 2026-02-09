@@ -12,7 +12,7 @@ export default function SpecForm() {
   const navigate = useNavigate();
   const { register, handleSubmit, reset } = useForm();
 
-  const { data: spec, isLoading } = useQuery({
+  const { data: spec } = useQuery({
     queryKey: ["spec", variantId],
     queryFn: async () => (await client.get(`/api/specs/${encodeURIComponent(String(variantId || ""))}`)).data,
     enabled: !!variantId,

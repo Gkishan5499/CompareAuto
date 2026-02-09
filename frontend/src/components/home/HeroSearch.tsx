@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, MapPin, ChevronDown, DollarSign, Zap, Cog, Users, IndianRupee } from "lucide-react";
+import { Search, MapPin, ChevronDown, DollarSign, Zap, Cog, Users, IndianRupee, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,19 +17,6 @@ import { useBrands } from "@/lib/api-hooks";
 import { searchApi, citiesApi } from "@/lib/api";
 import { useCity } from "@/contexts/CityContext";
 import { cn } from "@/lib/utils";
-
-// Fallback images
-import carfirst from "@/assets/hero/car1.jpg";
-import carsecond from "@/assets/hero/car2.jpg";
-import carthird from "@/assets/hero/car3.jpg";
-import carfourth from "@/assets/hero/car4.jpg";
-
-const FALLBACK_IMAGES = [
-  carfirst,
-  carsecond,
-  carthird,
-  carfourth,
-];
 
 // Filter options
 const BUDGET_OPTIONS = ["Under 5L", "5L - 10L", "10L - 15L", "15L - 25L", "25L - 50L", "Above 50L"];
@@ -52,6 +39,7 @@ const HeroSearch = () => {
   const { city, setCity } = useCity();
   const [api, setApi] = useState<CarouselApi>();
   const [heroImages, setHeroImages] = useState<any[]>([]);
+  const [heroImagesLoading, setHeroImagesLoading] = useState(true);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const [activeTab, setActiveTab] = useState<"new" | "used">("new");
@@ -78,24 +66,24 @@ const HeroSearch = () => {
   // Fetch hero carousel images from backend
   useEffect(() => {
     const fetchHeroImages = async () => {
+      setHeroImagesLoading(true);
       try {
         const response = await fetch("/api/hero-carousel/active");
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
-            console.log("✅ Hero images loaded from backend:", data.length, "images");
             setHeroImages(data);
           } else {
-            console.warn("⚠️ No active hero images from backend, using fallback");
-            setHeroImages(FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` })));
+            setHeroImages([]);
           }
         } else {
-          console.warn("⚠️ Failed to fetch hero images (status: " + response.status + "), using fallback");
-          setHeroImages(FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` })));
+          setHeroImages([]);
         }
       } catch (error) {
         console.error("❌ Error fetching hero images:", error);
-        setHeroImages(FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` })));
+        setHeroImages([]);
+      } finally {
+        setHeroImagesLoading(false);
       }
     };
 
@@ -244,7 +232,7 @@ const HeroSearch = () => {
     setShowSuggestions(false);
   };
 
-  const displayImages = heroImages.length > 0 ? heroImages : FALLBACK_IMAGES.map((img, idx) => ({ imageUrl: img, title: `Hero ${idx + 1}` }));
+  const displayImages = heroImages;
 
   return (
     <section className="relative w-full pb-8 md:pb-16 bg-background">
@@ -262,19 +250,31 @@ const HeroSearch = () => {
           className="w-full h-full absolute inset-0 z-0 "
         >
           <CarouselContent className="h-full ml-0">
-            {displayImages.map((item, index) => (
-              <CarouselItem key={item.id || index} className="pl-0 h-full w-full ">
-                <div className="w-full h-full relative ">
+            {heroImagesLoading && (
+              <CarouselItem className="pl-0 h-full w-full">
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/60 to-muted">
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm font-medium">Loading hero images...</span>
+                  </div>
+                </div>
+              </CarouselItem>
+            )}
+            {!heroImagesLoading && displayImages.length === 0 && (
+              <CarouselItem className="pl-0 h-full w-full">
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/60 to-muted">
+                  <div className="text-muted-foreground text-sm font-medium">Hero images will appear here</div>
+                </div>
+              </CarouselItem>
+            )}
+            {!heroImagesLoading && displayImages.map((item, index) => (
+              <CarouselItem key={item.id || index} className="pl-0 h-full w-full">
+                <div className="w-full h-full relative">
                   <img
                     src={item.imageUrl}
                     alt={item.title || `Hero Background ${index + 1}`}
                     className="w-full h-full object-cover object-center"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      console.warn("⚠️ Image failed to load:", item.imageUrl);
-                      // Use fallback image only if image fails
-                      target.src = FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
-                    }}
+                    loading={index === 0 ? "eager" : "lazy"}
                   />
                 </div>
               </CarouselItem>

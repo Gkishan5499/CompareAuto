@@ -220,7 +220,12 @@ const NewsArticle = () => {
           {/* Hero Image */}
           <div className="aspect-video bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl overflow-hidden flex items-center justify-center mb-10 shadow-lg">
             {article.heroImage ? (
-              <img src={article.heroImage} alt={article.title} className="w-full h-full object-cover" />
+              <img
+                src={article.heroImage}
+                alt={article.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             ) : (
               <span className="text-9xl opacity-30">📰</span>
             )}

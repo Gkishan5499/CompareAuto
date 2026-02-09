@@ -158,6 +158,7 @@ const ModelCard = memo(({ model }: ModelCardProps) => {
               src={model.image} 
               alt={`${model.brandName} ${model.name}`}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
               onError={(e) => {
                 // Fallback to logo if image fails
                 const target = e.target as HTMLImageElement;
@@ -176,6 +177,7 @@ const ModelCard = memo(({ model }: ModelCardProps) => {
                   src={brandLogo} 
                   alt={`${model.brandName} logo`}
                   className="w-full h-full object-contain"
+                  loading="lazy"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';

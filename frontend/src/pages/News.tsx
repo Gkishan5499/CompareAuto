@@ -176,7 +176,12 @@ const News = () => {
                 </div> */}
                 <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
                   {featuredArticle.heroImage ? (
-                    <img src={featuredArticle.heroImage} alt={featuredArticle.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img
+                      src={featuredArticle.heroImage}
+                      alt={featuredArticle.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      loading="lazy"
+                    />
                   ) : (
                     <span className="text-6xl group-hover:scale-110 transition-transform">📰</span>
                   )}

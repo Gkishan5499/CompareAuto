@@ -100,12 +100,14 @@ const Footer = () => {
                         src={logo}
                         alt="CompareAuto Logo"
                         className="h-12 w-auto object-contain"
+                        loading="lazy"
                      />
                   ) : (
                      <img
                         src="/logo.png"
                         alt="CompareAuto Logo"
                         className="h-12 w-auto object-contain"
+                        loading="lazy"
                      />
                   )}
                </Link>
@@ -177,7 +179,7 @@ const Footer = () => {
             <div className="flex gap-6">
                <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
                <Link to="/terms-condition" className="hover:text-primary transition-colors">Terms of Service</Link>
-               <Link to="/sitemap" className="hover:text-primary transition-colors">Sitemap</Link>
+            
             </div>
          </div>
       </div>
