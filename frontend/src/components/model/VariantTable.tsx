@@ -1,8 +1,15 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowUpDown } from "lucide-react";
 import { Variant } from "@/lib/data";
 import { formatINR, parseINRToRupees } from "@/lib/guards";
@@ -16,10 +23,27 @@ interface VariantTableProps {
 type SortField = "price" | "name";
 
 const VariantTable = ({ variants, brandSlug, modelSlug }: VariantTableProps) => {
+  const navigate = useNavigate();
   const [sortField, setSortField] = useState<SortField>("price");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [fuelFilter, setFuelFilter] = useState<string>("All");
   const [transFilter, setTransFilter] = useState<string>("All");
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+
+  const loadCompareIds = () => {
+    const rawList = JSON.parse(localStorage.getItem("compareList") || "[]");
+    const normalized = Array.isArray(rawList)
+      ? rawList.filter((item) => typeof item === "string")
+      : [];
+    setCompareIds(normalized);
+  };
+
+  useEffect(() => {
+    loadCompareIds();
+    const handleUpdate = () => loadCompareIds();
+    window.addEventListener("compareListUpdated", handleUpdate);
+    return () => window.removeEventListener("compareListUpdated", handleUpdate);
+  }, []);
 
   // Get unique fuel types and transmissions
   const fuelTypes = ["All", ...Array.from(new Set(variants.map(v => v.fuelType)))];
@@ -56,21 +80,39 @@ const VariantTable = ({ variants, brandSlug, modelSlug }: VariantTableProps) => 
   };
 
   const handleAddToCompare = (variantId: string) => {
-    const compareList = JSON.parse(localStorage.getItem("compareList") || "[]");
+    const rawList = JSON.parse(localStorage.getItem("compareList") || "[]");
+    const compareList = Array.isArray(rawList)
+      ? rawList.filter((item) => typeof item === "string")
+      : [];
+
     if (!compareList.includes(variantId) && compareList.length < 3) {
       compareList.push(variantId);
       localStorage.setItem("compareList", JSON.stringify(compareList));
       window.dispatchEvent(new Event("compareListUpdated"));
     }
+
+    setCompareIds(compareList);
+
+    const validVariants = compareList.filter((v: string) => v !== null && v !== undefined);
+    if (validVariants.length >= 2) {
+      navigate(`/compare?v=${validVariants.join(",")}`);
+    }
   };
+
+  const compareSuggestions = useMemo(() => {
+    if (compareIds.length !== 1) return [];
+    return filteredAndSortedVariants
+      .filter((variant) => variant.id !== compareIds[0])
+      .slice(0, 3);
+  }, [compareIds, filteredAndSortedVariants]);
 
   return (
     <div>
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <div className="flex gap-2 items-center">
+      <div className="flex flex-wrap gap-4 mb-6 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <span className="text-sm font-medium">Fuel:</span>
-          {fuelTypes.map(fuel => (
+          {fuelTypes.map((fuel) => (
             <Badge
               key={fuel}
               variant={fuelFilter === fuel ? "default" : "outline"}
@@ -83,18 +125,38 @@ const VariantTable = ({ variants, brandSlug, modelSlug }: VariantTableProps) => 
         </div>
         <div className="flex gap-2 items-center">
           <span className="text-sm font-medium">Transmission:</span>
-          {transmissions.map(trans => (
-            <Badge
-              key={trans}
-              variant={transFilter === trans ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => setTransFilter(trans)}
-            >
-              {trans}
-            </Badge>
-          ))}
+          <Select value={transFilter} onValueChange={setTransFilter}>
+            <SelectTrigger className="h-8 w-[220px]">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              {transmissions.map((trans) => (
+                <SelectItem key={trans} value={trans}>
+                  {trans}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
+
+      {compareIds.length === 1 && compareSuggestions.length > 0 && (
+        <div className="mb-6 rounded-lg border border-dashed border-primary/40 bg-muted/40 p-3">
+          <div className="text-sm font-medium text-foreground mb-2">Add one more variant to compare</div>
+          <div className="flex flex-wrap gap-2">
+            {compareSuggestions.map((variant) => (
+              <Button
+                key={variant.id}
+                size="sm"
+                variant="outline"
+                onClick={() => handleAddToCompare(variant.id)}
+              >
+                {variant.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="border rounded-lg overflow-x-auto">

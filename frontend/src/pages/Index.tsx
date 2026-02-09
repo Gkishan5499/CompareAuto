@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Lazy load non-critical sections to improve Initial Load Time (LCP)
 const TrendingComparisons = lazy(() => import("@/components/home/TrendingComparisons"));
+const TrendingCollections = lazy(() => import("@/components/home/TrendingCollections"));
 const LatestNews = lazy(() => import("@/components/home/LatestNews"));
 const ExploreBodyTypes = lazy(() => import("@/components/home/ExploreBodyTypes"));
 const WhyCompareAuto = lazy(() => import("@/components/home/WhyCompareAuto"));
@@ -65,6 +66,9 @@ const Index = () => {
           <Suspense fallback={<SectionLoader label="Loading comparisons..." />}>
             <TrendingComparisons />
           </Suspense>
+          {/* <Suspense fallback={<SectionLoader label="Loading trending picks..." />}>
+            <TrendingCollections />
+          </Suspense> */}
         </div>
 
 

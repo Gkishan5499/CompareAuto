@@ -58,7 +58,7 @@ const FuelTypeStrip = () => {
               <Flame className="w-4 h-4" /> Power Your Drive
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-              Shop by Fuel Type
+              Explore by Fuel Type
             </h2>
             <p className="text-muted-foreground mt-2 max-w-2xl text-base">
               From electric efficiency to diesel durability, find the engine that matches your needs.

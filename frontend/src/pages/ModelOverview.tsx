@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import { specsApi, citiesApi } from "@/lib/api";
 import { updateMetaTags, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { formatINR, parseINRToRupees } from "@/lib/guards";
 import { useCity } from "@/contexts/CityContext";
+import { useToast } from "@/hooks/use-toast";
 import { Variant } from "@/lib/data";
 import {
   Select,
@@ -41,6 +42,8 @@ import { cn } from "@/lib/utils";
 const ModelOverview = () => {
   useScrollToTop();
   const { brand, model: modelSlug } = useParams<{ brand: string; model: string }>();
+    const navigate = useNavigate();
+    const { toast } = useToast();
   const { city } = useCity();
 
   // Refs for smooth scrolling
@@ -177,12 +180,26 @@ const ModelOverview = () => {
 
   const handleAddToCompare = () => {
     if (variants && variants[0]) {
-      const compareList = JSON.parse(localStorage.getItem("compareList") || "[]");
-      if (!compareList.includes(variants[0].id) && compareList.length < 3) {
-        compareList.push(variants[0].id);
-        localStorage.setItem("compareList", JSON.stringify(compareList));
-        window.dispatchEvent(new Event("compareListUpdated"));
-      }
+            const rawList = JSON.parse(localStorage.getItem("compareList") || "[]");
+            const compareList = Array.isArray(rawList)
+                ? rawList.filter((item) => typeof item === "string")
+                : [];
+
+            if (!compareList.includes(variants[0].id) && compareList.length < 3) {
+                compareList.push(variants[0].id);
+                localStorage.setItem("compareList", JSON.stringify(compareList));
+                window.dispatchEvent(new Event("compareListUpdated"));
+            }
+
+            const validVariants = compareList.filter((v: string) => v !== null && v !== undefined);
+            if (validVariants.length >= 2) {
+                navigate(`/compare?v=${validVariants.join(",")}`);
+            } else {
+                toast({
+                    title: "Add one more variant",
+                    description: "Select another variant from the list to compare.",
+                });
+            }
     }
   };
 
