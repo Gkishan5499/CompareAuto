@@ -25,7 +25,6 @@ import UsedCarsCity from "./pages/UsedCarsCity";
 import UsedCarsSearch from "./pages/UsedCarsSearch";
 import UsedCarsDetail from "./pages/UsedCarsDetail";
 import NotFound from "./pages/NotFound";
-import AdminQA from "./pages/AdminQA";
 import Body from "./pages/Body";
 import BodyType from "./pages/BodyType";
 import Fuel from "./pages/Fuel";
@@ -34,11 +33,6 @@ import UpcomingCars from "./pages/UpcomingCars";
 import Dealers from "./pages/Dealers";
 import DealerDetail from "./pages/DealerDetail";
 import DynamicPage from "./pages/DynamicPage";
-import AdminBuilder from "./pages/AdminBuilder";
-import AdminChangeReport from "./pages/AdminChangeReport";
-import AdminVariantSync from "./pages/AdminVariantSync";
-import AdminImportReport from "./pages/AdminImportReport";
-import AdminContentGuide from "./pages/AdminContentGuide";
 import DataLoader from "./components/DataLoader";
 import ScrollToTop from "./components/ScrollToTop";
 import Terms from "./pages/Terms";
@@ -75,12 +69,6 @@ const App = () => (
                   <Route path="/about" element={<About />} />
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/tools" element={<Tools />} />
-                  <Route path="/admin/qa" element={<AdminQA />} />
-                  <Route path="/admin/builder" element={<AdminBuilder />} />
-                  <Route path="/admin/change-report" element={<AdminChangeReport />} />
-                  <Route path="/admin/variant-sync" element={<AdminVariantSync />} />
-                  <Route path="/admin/import-report" element={<AdminImportReport />} />
-                  <Route path="/admin/content-guide" element={<AdminContentGuide />} />
                   <Route path="/fuel" element={<Fuel />} />
                   <Route path="/fuel/:type" element={<FuelType />} />
                   <Route path="/body" element={<Body />} />
