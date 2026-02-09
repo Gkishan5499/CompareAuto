@@ -212,7 +212,7 @@ const ModelCard = memo(({ model }: ModelCardProps) => {
               ))
             ) : (
               <Badge variant="outline" className="font-normal text-[10px] px-2 py-0.5">
-                {model.bodyType}
+                {model.bodyType} 
               </Badge>
             )}
           </div>
@@ -231,7 +231,7 @@ const ModelCard = memo(({ model }: ModelCardProps) => {
               ) : onRoadPriceRange ? (
                 <>
                   <div className="flex items-baseline gap-1 flex-wrap">
-                    <span className="text-xl md:text-2xl font-bold text-primary">
+                    <span className="text-lg md:text-xl font-bold text-primary">
                       {onRoadPriceRange.min === onRoadPriceRange.max
                         ? `Rs. ${(onRoadPriceRange.min / 100000).toFixed(2)} Lakh`
                         : `Rs. ${(onRoadPriceRange.min / 100000).toFixed(2)} - ${(onRoadPriceRange.max / 100000).toFixed(2)} Lakh`

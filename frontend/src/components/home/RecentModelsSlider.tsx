@@ -54,7 +54,7 @@ const RecentModelsSlider = () => {
             <Carousel opts={{ align: "start" }}>
               <CarouselContent>
                 {recent.map((model: any) => (
-                  <CarouselItem key={model.id} className="basis-4/5 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5 pr-4">
+                  <CarouselItem key={model.id} className="basis-4/5 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/4 pr-4">
                     <div className="h-full">
                       <ModelCard model={model} />
                     </div>
