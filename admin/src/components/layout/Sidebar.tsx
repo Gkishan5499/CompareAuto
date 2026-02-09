@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CarFront, Layers, Settings, FileSpreadsheet, MapPin, Database, Image, Mail, FileText, MessageSquare, Palette, TextAlignEnd, CalendarClock } from "lucide-react";
+import { LayoutDashboard, CarFront, Layers, Settings, FileSpreadsheet, MapPin, Database, Image, Mail, FileText, MessageSquare, Palette, TextAlignEnd, CalendarClock, Users } from "lucide-react";
+import { useAuth } from "../../auth/AuthProvider";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -17,10 +18,21 @@ const nav = [
   { to: "/dealers", label: "Dealers", icon: MapPin },
   { to: "/branding", label: "Branding", icon: Palette },
   { to: "/import", label: "Import CSV", icon: FileSpreadsheet },
+  { to: "/users", label: "Users", icon: Users },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
+  const filteredNav = nav.filter((item) => {
+    if (item.to === "/specs" || item.to === "/import" || item.to === "/users") {
+      return isAdmin;
+    }
+    return true;
+  });
+
   return (
     <aside className={`${collapsed ? "w-20" : "w-64"} fixed h-screen bg-white shadow-lg border-r z-50 flex flex-col transition-all`}> 
       <div className={`p-4 font-bold text-lg border-b flex items-center gap-3 ${collapsed ? "justify-center" : "justify-between"}`}>
@@ -32,7 +44,7 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       </div>
 
       <nav className="flex-1 p-2 space-y-1 mt-3 overflow-y-auto min-h-0">
-        {nav.map(({ to, label, icon: Icon }) => (
+        {filteredNav.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}

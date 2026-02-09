@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { AuthProvider } from "./auth/AuthProvider";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ProtectedRoute, AdminRoute } from "./components/ProtectedRoute";
 
 // Pages
 import Login from "./pages/Login";
@@ -40,6 +40,8 @@ import BrandingSettings from "./pages/Branding/BrandingSettings";
 import UpcomingCSVImport from "./pages/Upcoming/UpcomingCSVImport";
 import UpcomingCarList from "./pages/Upcoming/UpcomingCarList";
 import UpcomingCarForm from "./pages/Upcoming/UpcomingCarForm";
+import UserList from "./pages/Users/UserList";
+import UserForm from "./pages/Users/UserForm";
 
 const queryClient = new QueryClient();
 
@@ -197,44 +199,78 @@ export default function App() {
           <Route
             path="/specs"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <DashboardLayout>
                   <SpecList />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
 
           <Route
             path="/specs/new"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <DashboardLayout>
                   <SpecForm />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
 
           <Route
             path="/specs/:variantId/edit"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <DashboardLayout>
                   <SpecForm />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
 
           <Route
             path="/specs/import"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <DashboardLayout>
                   <SpecCSVImport />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </AdminRoute>
+            }
+          />
+
+          {/* Users routes (admin only) */}
+          <Route
+            path="/users"
+            element={
+              <AdminRoute>
+                <DashboardLayout>
+                  <UserList />
+                </DashboardLayout>
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/users/new"
+            element={
+              <AdminRoute>
+                <DashboardLayout>
+                  <UserForm />
+                </DashboardLayout>
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/users/:id/edit"
+            element={
+              <AdminRoute>
+                <DashboardLayout>
+                  <UserForm />
+                </DashboardLayout>
+              </AdminRoute>
             }
           />
 

@@ -168,13 +168,23 @@ export const deleteSpecs = async (req: any, res: Response) => {
 ============================================ */
 export const listSpecs = async (req: Request, res: Response) => {
   try {
+    const q = String(req.query.q || req.query.search || "").trim();
     const page = Math.max(1, parseInt(String(req.query.page || "1"), 10));
     const limit = Math.min(100, parseInt(String(req.query.limit || "50"), 10));
     const skip = (page - 1) * limit;
 
+    const filter: Record<string, any> = {};
+    if (q) {
+      const regex = new RegExp(q, "i");
+      filter.$or = [
+        { variantId: regex },
+        { "overview.summary": regex },
+      ];
+    }
+
     const [items, total] = await Promise.all([
-      CarSpecs.find().sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
-      CarSpecs.countDocuments(),
+      CarSpecs.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
+      CarSpecs.countDocuments(filter),
     ]);
 
     // Transform boolean values to "Yes"/"No" for display

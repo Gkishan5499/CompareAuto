@@ -58,6 +58,7 @@ router.get("/suggestions", async (req: Request, res: Response) => {
       brands.forEach((brand: any) => {
         suggestions.push({
           type: "brand",
+          id: brand.id,
           name: `All ${brand.name} Cars`,
           displayName: brand.name,
           slug: brand.slug,
@@ -84,6 +85,7 @@ router.get("/suggestions", async (req: Request, res: Response) => {
       
       suggestions.push({
         type: "model",
+        id: model.id,
         name: `${brandName} ${model.name}`,
         displayName: model.name,
         brandName: brandName,
@@ -110,6 +112,7 @@ router.get("/suggestions", async (req: Request, res: Response) => {
         
         suggestions.push({
           type: "variant",
+          id: variant.id,
           name: `${brandName} ${model.name} ${variant.name}`,
           displayName: variant.name,
           modelName: model.name,

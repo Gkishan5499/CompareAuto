@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { useApiList, useApiDelete } from "../../hooks/useapi";
 import { Search } from "lucide-react";
+import client from "../../api/client";
 
 export default function SpecList() {
   const { data: specs = [], isLoading } = useApiList(["specs"], "/api/specs");
@@ -11,18 +12,35 @@ export default function SpecList() {
   const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [displayCount, setDisplayCount] = useState(20);
   
   const specItems = specs.items || [];
   
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+
+    const fetchSearch = async () => {
+      try {
+        const res = await client.get(`/api/specs?q=${encodeURIComponent(q)}&limit=50`);
+        const items = res.data?.items || [];
+        setSearchResults(items);
+      } catch {
+        setSearchResults([]);
+      }
+    };
+
+    fetchSearch();
+  }, [searchQuery]);
+
   const filteredSpecs = useMemo(() => {
     if (!searchQuery) return specItems;
-    const query = searchQuery.toLowerCase();
-    return specItems.filter((s: any) => 
-      s.variantId?.toLowerCase().includes(query) ||
-      s.overview?.summary?.toLowerCase().includes(query)
-    );
-  }, [specItems, searchQuery]);
+    return searchResults;
+  }, [specItems, searchQuery, searchResults]);
   
   const displayedSpecs = filteredSpecs.slice(0, displayCount);
 
@@ -75,8 +93,8 @@ export default function SpecList() {
                 <td className="p-2">{s.variantId}</td>
                 <td className="p-2">{s.overview?.summary || '-'}</td>
                 <td className="p-2 flex gap-4">
-                  <button className="text-blue-600" onClick={() => navigate(`/specs/${s.variantId}/edit`)}>Edit</button>
-                  <button className="text-red-600" onClick={() => deleteSpec.mutate(s.variantId)}>Delete</button>
+                  <button className="text-blue-600" onClick={() => navigate(`/specs/${encodeURIComponent(s.variantId)}/edit`)}>Edit</button>
+                  <button className="text-red-600" onClick={() => deleteSpec.mutate(encodeURIComponent(s.variantId))}>Delete</button>
                 </td>
               </tr>
             ))

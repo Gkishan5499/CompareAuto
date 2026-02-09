@@ -31,6 +31,7 @@ import heroCarouselRoutes from "./routes/heroCarousel.routes";
 import enquiryRoutes from "./routes/enquiry.routes";
 import commentRoutes from "./routes/comment.routes";
 import siteSettingRoutes from "./routes/siteSetting.routes";
+import adminUsersRoutes from "./routes/adminUsers.routes";
 
 
 
@@ -108,6 +109,7 @@ app.use("/api/hero-carousel", heroCarouselRoutes);
 app.use("/api/enquiries", enquiryRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/site-settings", siteSettingRoutes);
+app.use("/api/admin-users", adminUsersRoutes);
 
 
 // Serve static images

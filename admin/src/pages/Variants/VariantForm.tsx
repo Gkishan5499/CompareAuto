@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import client from "../../api/client";
 import { useQuery } from "@tanstack/react-query";
 import { useApiCreate, useApiUpdate } from "../../hooks/useapi";
+import { Label } from "../../components/ui/label";
 
 export default function VariantForm() {
   const { id } = useParams();
@@ -95,16 +96,46 @@ export default function VariantForm() {
     <div className="p-6 max-w-xl">
       <h1 className="text-xl font-semibold mb-4">{id ? "Edit Variant" : "Add Variant"}</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-        <input {...register("id")} placeholder="Variant ID" className="border p-2 w-full" />
-        <input {...register("modelId")} placeholder="Model ID" className="border p-2 w-full" />
-        <input {...register("name")} placeholder="Name" className="border p-2 w-full" />
-        <input {...register("price")} placeholder="Price" type="number" className="border p-2 w-full" />
-        <input {...register("fuelType")} placeholder="Fuel Type" className="border p-2 w-full" />
-        <input {...register("transmission")} placeholder="Transmission" className="border p-2 w-full" />
-        <input {...register("engine")} placeholder="Engine" className="border p-2 w-full" />
-        <input {...register("mileage")} placeholder="Mileage" className="border p-2 w-full" />
-        <input {...register("seating")} placeholder="Seating" className="border p-2 w-full" />
-        <input {...register("colors")} placeholder="Colors (comma separated)" className="border p-2 w-full" />
+        <div className="space-y-1">
+          <Label htmlFor="variant-id">Variant ID</Label>
+          <input id="variant-id" {...register("id")} placeholder="Variant ID" className="border p-2 w-full" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variant-model-id">Model ID</Label>
+          <input id="variant-model-id" {...register("modelId")} placeholder="Model ID" className="border p-2 w-full" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variant-name">Name</Label>
+          <input id="variant-name" {...register("name")} placeholder="Name" className="border p-2 w-full" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variant-price">Price</Label>
+          <input id="variant-price" {...register("price")} placeholder="Price" type="number" className="border p-2 w-full" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variant-fuel">Fuel Type</Label>
+          <input id="variant-fuel" {...register("fuelType")} placeholder="Fuel Type" className="border p-2 w-full" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variant-transmission">Transmission</Label>
+          <input id="variant-transmission" {...register("transmission")} placeholder="Transmission" className="border p-2 w-full" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variant-engine">Engine</Label>
+          <input id="variant-engine" {...register("engine")} placeholder="Engine" className="border p-2 w-full" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variant-mileage">Mileage</Label>
+          <input id="variant-mileage" {...register("mileage")} placeholder="Mileage" className="border p-2 w-full" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variant-seating">Seating</Label>
+          <input id="variant-seating" {...register("seating")} placeholder="Seating" className="border p-2 w-full" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="variant-colors">Colors</Label>
+          <input id="variant-colors" {...register("colors")} placeholder="Colors (comma separated)" className="border p-2 w-full" />
+        </div>
         {/* Image upload + preview */}
         <div className="space-y-2">
           <label className="block text-sm font-medium">Images</label>

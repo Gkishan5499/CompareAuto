@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import client from "../../api/client";
 import { useApiCreate, useApiUpdate } from "../../hooks/useapi";
 import CloudinaryUpload from "../../components/CloudinaryUpload";
+import { Label } from "../../components/ui/label";
 
 export default function ModelForm() {
   const { id } = useParams();
@@ -77,15 +78,30 @@ export default function ModelForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
 
-        <input {...register("id")} placeholder="Model ID" className="border p-2 w-full" />
+        <div className="space-y-1">
+          <Label htmlFor="model-id">Model ID</Label>
+          <input id="model-id" {...register("id")} placeholder="Model ID" className="border p-2 w-full" />
+        </div>
 
-        <input {...register("name")} placeholder="Model Name" className="border p-2 w-full" />
+        <div className="space-y-1">
+          <Label htmlFor="model-name">Model Name</Label>
+          <input id="model-name" {...register("name")} placeholder="Model Name" className="border p-2 w-full" />
+        </div>
 
-        <input {...register("brandId")} placeholder="Brand ID" className="border p-2 w-full" />
+        <div className="space-y-1">
+          <Label htmlFor="model-brand-id">Brand ID</Label>
+          <input id="model-brand-id" {...register("brandId")} placeholder="Brand ID" className="border p-2 w-full" />
+        </div>
 
-        <input {...register("brandName")} placeholder="Brand Name" className="border p-2 w-full" />
+        <div className="space-y-1">
+          <Label htmlFor="model-brand-name">Brand Name</Label>
+          <input id="model-brand-name" {...register("brandName")} placeholder="Brand Name" className="border p-2 w-full" />
+        </div>
 
-        <input {...register("bodyType")} placeholder="Body Type" className="border p-2 w-full" />
+        <div className="space-y-1">
+          <Label htmlFor="model-body-type">Body Type</Label>
+          <input id="model-body-type" {...register("bodyType")} placeholder="Body Type" className="border p-2 w-full" />
+        </div>
 
         {/* Gallery Upload */}
         <div className="border rounded p-3">
@@ -93,7 +109,10 @@ export default function ModelForm() {
           <p className="text-xs text-gray-500 mt-2">First image becomes the hero image on the site.</p>
         </div>
 
-        <input type="file" {...register("imageFile")} />
+        <div className="space-y-1">
+          <Label htmlFor="model-image">Hero Image</Label>
+          <input id="model-image" type="file" {...register("imageFile")} />
+        </div>
         {imagePreview && <img src={imagePreview} alt="image preview" className="h-24 mt-2 rounded" />}
 
         <button className="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
