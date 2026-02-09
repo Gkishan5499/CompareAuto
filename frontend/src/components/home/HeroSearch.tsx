@@ -240,7 +240,7 @@ const HeroSearch = () => {
       {/* ----------------------------------------------------------------------- */}
       {/* 1. HERO BANNER AREA (Image Only - Clean Modern Design) */}
       {/* ----------------------------------------------------------------------- */}
-      <div className="relative w-full h-[420px] sm:h-[500px] md:h-[600px] overflow-hidden">
+      <div className="relative w-full h-[220px] sm:h-[360px] md:h-[520px] lg:h-[600px] overflow-hidden">
 
         {/* Background Carousel */}
         <Carousel
@@ -280,8 +280,8 @@ const HeroSearch = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-4 md:left-6 bg-white/80 hover:bg-white text-black border-white/60" />
-          <CarouselNext className="right-4 md:right-6 bg-white/80 hover:bg-white text-black border-white/60" />
+          <CarouselPrevious className="left-3 sm:left-4 md:left-6 bg-white/80 hover:bg-white text-black border-white/60 h-9 w-9 sm:h-10 sm:w-10" />
+          <CarouselNext className="right-3 sm:right-4 md:right-6 bg-white/80 hover:bg-white text-black border-white/60 h-9 w-9 sm:h-10 sm:w-10" />
         </Carousel>
 
         {/* REMOVED PROMOTIONAL TEXT OVERLAY - Clean banner only */}
@@ -290,7 +290,7 @@ const HeroSearch = () => {
       {/* ----------------------------------------------------------------------- */}
       {/* 2. SEARCH WIDGET (Overlapping Bottom) */}
       {/* ----------------------------------------------------------------------- */}
-      <div className="container max-w-4xl mx-auto px-4 relative z-20 -mt-24" ref={searchRef}>
+      <div className="container max-w-4xl mx-auto px-4 relative z-20 -mt-16 sm:-mt-20 md:-mt-24" ref={searchRef}>
         <div className="bg-card rounded-lg border border-border p-6 md:p-8 max-w-5xl mx-auto shadow-premium-lg">
 
           {/* Header: Title + Location */}

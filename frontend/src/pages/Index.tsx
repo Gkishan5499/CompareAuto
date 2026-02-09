@@ -2,6 +2,7 @@ import { useEffect, Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 import { updateMetaTags, injectStructuredData, generateOrganizationSchema, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import HeroSearch from "@/components/home/HeroSearch";
+import ExploreBodyTypes from "@/components/home/ExploreBodyTypes";
 const BodyTypesStrip = lazy(() => import("@/components/home/BodyTypesStrip"));
 const FuelTypeStrip = lazy(() => import("@/components/home/FuelTypeStrip"));
 const TopPicks = lazy(() => import("@/components/home/TopPicks"));
@@ -17,7 +18,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 const TrendingComparisons = lazy(() => import("@/components/home/TrendingComparisons"));
 const TrendingCollections = lazy(() => import("@/components/home/TrendingCollections"));
 const LatestNews = lazy(() => import("@/components/home/LatestNews"));
-const ExploreBodyTypes = lazy(() => import("@/components/home/ExploreBodyTypes"));
 const WhyCompareAuto = lazy(() => import("@/components/home/WhyCompareAuto"));
 
 const Index = () => {
@@ -74,9 +74,7 @@ const Index = () => {
 
         {/* 2. DISCOVERY STRIPS */}
         <div className="flex flex-col gap-4 sm:gap-6">
-          <Suspense fallback={<SectionLoader label="Loading body types..." />}> 
-            <ExploreBodyTypes />
-          </Suspense>
+          <ExploreBodyTypes />
           <Suspense fallback={<SectionLoader label="Loading fuel types..." />}> 
             <FuelTypeStrip />
           </Suspense>
