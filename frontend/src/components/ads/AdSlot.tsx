@@ -41,6 +41,12 @@ const AdSlot = ({ id, sizeMap, className = "" }: AdSlotProps) => {
 
   const adType = getAdType();
   const images = AD_IMAGES[adType];
+  const heightClasses: Record<keyof typeof AD_IMAGES, string> = {
+    leaderboard: "max-h-16 md:max-h-20",
+    billboard: "max-h-28 md:max-h-36",
+    sidebar: "max-h-32 md:max-h-40",
+    default: "max-h-16 md:max-h-20",
+  };
 
   return (
     <div
@@ -53,7 +59,7 @@ const AdSlot = ({ id, sizeMap, className = "" }: AdSlotProps) => {
       <img
         src={images.desktop}
         alt="Advertisement"
-        className="hidden md:block w-full h-auto max-w-full mx-auto"
+        className={`hidden md:block w-full h-auto max-w-full mx-auto object-contain ${heightClasses[adType]}`}
         loading="lazy"
       />
       
@@ -61,7 +67,7 @@ const AdSlot = ({ id, sizeMap, className = "" }: AdSlotProps) => {
       <img
         src={images.mobile}
         alt="Advertisement"
-        className="block md:hidden w-full h-auto max-w-full mx-auto"
+        className={`block md:hidden w-full h-auto max-w-full mx-auto object-contain ${heightClasses[adType]}`}
         loading="lazy"
       />
     </div>

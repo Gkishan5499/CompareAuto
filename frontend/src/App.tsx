@@ -52,7 +52,7 @@ const App = () => (
             <div className="flex flex-col min-h-screen overflow-x-hidden">
               <DataLoader />
               <Header />
-              <main className="flex-1 overflow-x-hidden pt-24">
+              <main className="flex-1 overflow-x-hidden pt-[84px]">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/brands" element={<Brands />} />
