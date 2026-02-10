@@ -45,7 +45,23 @@ export const BODY_TYPES: BodyTypeDefinition[] = [
     slug: "compact-suv",
     label: "Compact SUV",
     description: "Smaller SUVs perfect for city driving with elevated seating",
-    synonyms: ["compact suv", "subcompact suv", "sub-compact suv"],
+    synonyms: [
+      "compact suv",
+      "subcompact suv",
+      "sub-compact suv",
+    ],
+  },
+  {
+    slug: "micro-suv",
+    label: "Micro SUV",
+    description: "Ultra-compact SUVs designed for tight city use and efficiency",
+    synonyms: ["micro suv", "micro-suv"],
+  },
+  {
+    slug: "mini-suv",
+    label: "Mini SUV",
+    description: "Small SUVs with a balance of practicality and urban comfort",
+    synonyms: ["mini suv", "mini-suv"],
   },
   {
     slug: "suv",

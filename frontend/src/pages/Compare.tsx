@@ -334,36 +334,54 @@ const Compare = () => {
 
   const recommendations = getRecommendations();
 
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-background pb-20">
+    return (
+        <div className="min-h-screen bg-[#f7f4ef] dark:bg-background pb-20">
       
-      {/* 1) COMPACT HEADER */}
-      <div className="bg-white dark:bg-card border-b shadow-sm">
-        <div className="container max-w-7xl mx-auto px-4 py-6">
-            <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Compare" }]} />
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Compare Cars</h1>
-                    <p className="text-slate-500 mt-1">Select up to 3 vehicles to compare specs & prices.</p>
+            {/* 1) HERO HEADER */}
+            <div className="relative overflow-hidden border-b bg-gradient-to-br from-white via-white to-amber-50/60">
+                <div className="absolute -top-24 -right-10 h-56 w-56 rounded-full bg-amber-200/40 blur-3xl" />
+                <div className="absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-rose-200/40 blur-3xl" />
+                <div className="container max-w-7xl mx-auto px-4 py-8 relative">
+                    <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Compare" }]} />
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mt-4">
+                        <div className="max-w-3xl">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+                                Compare Hub
+                            </div>
+                            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 mt-4">
+                                Compare car variants side-by-side
+                            </h1>
+                            <p className="text-slate-600 mt-3 text-base md:text-lg">
+                                Pick up to three cars and see prices, specs, and features in one clean view.
+                            </p>
+                        </div>
+                        {selectedCount > 0 && (
+                            <Button onClick={handleCopyLink} variant="outline" size="sm" className="hidden md:flex bg-white/90">
+                                <Share2 className="h-4 w-4 mr-2" /> Share Comparison
+                            </Button>
+                        )}
+                    </div>
                 </div>
-                {selectedCount > 0 && (
-                     <Button onClick={handleCopyLink} variant="outline" size="sm" className="hidden md:flex">
-                        <Share2 className="h-4 w-4 mr-2" /> Share Comparison
-                    </Button>
-                )}
             </div>
-        </div>
-      </div>
 
-      <div className="container max-w-6xl mx-auto px-4 mt-8 space-y-8">
+            <div className="container max-w-6xl mx-auto px-4 mt-8 space-y-10">
         
         {/* Ad Slot */}
         <AdSlot id="compare_top_billboard" />
 
+          <TrendingComparisons
+                    offset={4}
+                    limit={4}
+                    showViewAll={false}
+                    variant="compare"
+                    title="More Battles"
+                    subtitle="Fresh matchups beyond the new trends."
+                />
+
         {/* 2) THE GARAGE (Pickers + Cards) */}
-        <section className="bg-white dark:bg-card rounded-xl shadow-sm border p-6">
+        <section className="bg-white/90 dark:bg-card rounded-2xl shadow-sm border border-slate-200/70 p-6 backdrop-blur">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                <h2 className="font-semibold text-lg flex items-center gap-2">
+                <h2 className="font-semibold text-lg flex items-center gap-2 text-slate-900">
                     <CarFront className="w-5 h-5 text-primary" />
                     Select Vehicles
                 </h2>
@@ -542,19 +560,19 @@ const Compare = () => {
         {showCompareTable && (
             <>
                 {/* City Selector */}
-                <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="bg-white/90 border border-slate-200/70 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white dark:bg-background rounded-md shadow-sm">
+                        <div className="p-2 bg-amber-50 rounded-md shadow-sm">
                             <Banknote className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                            <p className="font-semibold text-sm">Check On-Road Prices</p>
-                            <p className="text-xs text-muted-foreground">Prices vary by location</p>
+                            <p className="font-semibold text-sm text-slate-900">Check On-Road Prices</p>
+                            <p className="text-xs text-slate-500">Prices vary by location</p>
                         </div>
                      </div>
                      <div className="flex items-center gap-2 w-full sm:w-auto">
                         <Select value={selectedCity} onValueChange={setSelectedCity} disabled={loadingCities}>
-                            <SelectTrigger className="w-full sm:w-[180px] bg-white dark:bg-background">
+                            <SelectTrigger className="w-full sm:w-[180px] bg-white">
                                 <SelectValue placeholder="Select city..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -567,7 +585,9 @@ const Compare = () => {
                                 )}
                             </SelectContent>
                         </Select>
-                        <Button onClick={handleShowPrices} disabled={loadingCities || cities.length === 0}>Update</Button>
+                        <Button onClick={handleShowPrices} disabled={loadingCities || cities.length === 0}>
+                            Update
+                        </Button>
                      </div>
                 </div>
 
@@ -625,9 +645,9 @@ const Compare = () => {
                 )}
 
                 {/* The Big Table */}
-                <Card className="overflow-hidden border-t-4 border-t-primary shadow-md" id="comparison-table">
-                    <CardHeader className="bg-slate-50 dark:bg-slate-900/50 border-b">
-                        <CardTitle>Detailed Specification Comparison</CardTitle>
+                <Card className="overflow-hidden border border-slate-200/70 shadow-md rounded-2xl" id="comparison-table">
+                    <CardHeader className="bg-slate-50 border-b">
+                        <CardTitle className="text-slate-900">Detailed Specification Comparison</CardTitle>
                     </CardHeader>
                     <div className="overflow-x-auto">
                          <CompareTable
@@ -638,18 +658,10 @@ const Compare = () => {
                     </div>
                 </Card>
 
-                <AdSlot id="compare_mid_sidebar" />
             </>
         )}
 
-                <TrendingComparisons
-                    offset={4}
-                    limit={4}
-                    showViewAll={false}
-                    variant="compare"
-                    title="More Battles"
-                    subtitle="Fresh matchups beyond the homepage trends."
-                />
+              
       </div>
     </div>
   );

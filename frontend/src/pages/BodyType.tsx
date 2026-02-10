@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ChevronRight, ChevronDown, IndianRupee } from "lucide-react";
-import { getModelsByBody, getAllModels, sortByMinPriceAsc, Model, getVariants } from "@/lib/data";
+import {
+  getModelsByBody,
+  getAllModels,
+  sortByMinPriceAsc,
+  Model,
+  Variant,
+} from "@/lib/data";
+import { useModels, useVariants } from "@/lib/api-hooks";
+import { dataCache } from "@/lib/data-cache";
 import { updateMetaTags, injectStructuredData } from "@/lib/seo";
 import ModelCard from "@/components/home/ModelCard";
 import FilterBar from "@/components/brands/FilterBar";
@@ -31,6 +39,22 @@ const BodyType = () => {
   const [selectedTransmission, setSelectedTransmission] = useState("All");
   const [selectedPriceRange, setSelectedPriceRange] = useState("all");
 
+  const { data: apiModels = [] } = useModels();
+  const { data: apiVariants = [] } = useVariants("");
+  const modelsSource = apiModels.length > 0 ? apiModels : getAllModels();
+  const variantsSource: Variant[] =
+    apiVariants.length > 0 ? apiVariants : dataCache.getVariants();
+
+  const variantsByModel = useMemo(() => {
+    const map = new Map<string, Variant[]>();
+    variantsSource.forEach((variant) => {
+      const key = variant.modelId;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(variant);
+    });
+    return map;
+  }, [variantsSource]);
+
   // Canonicalize slug and friendly display
   const canonicalSlug = useMemo(() => normalizeBodyType(type || ""), [type]);
   const bodyTypeDisplay = useMemo(() => {
@@ -43,11 +67,52 @@ const BodyType = () => {
   const matchesBodyType = (modelBody: string, slug: string | null) => {
     if (!slug) return false;
     const mb = (modelBody || "").toLowerCase();
-    if (slug === "suv") return mb.includes("suv");
+    if (slug === "suv") {
+      const normalized = normalizeBodyType(modelBody);
+      if (normalized === "compact-suv" || normalized === "micro-suv" || normalized === "mini-suv") {
+        return false;
+      }
+      if (normalized === "suv") return true;
+      return mb.includes("suv") && !mb.includes("micro") && !mb.includes("mini") && !mb.includes("compact");
+    }
+    if (slug === "micro-suv") return mb.includes("micro") && mb.includes("suv");
+    if (slug === "mini-suv") return mb.includes("mini") && mb.includes("suv");
     if (slug === "muv") return mb.includes("muv") || mb.includes("mpv");
     if (slug === "hatchback") return mb.includes("hatch");
     if (slug === "sedan") return mb.includes("sedan");
     return normalizeBodyType(modelBody) === slug;
+  };
+
+  const normalizeFuel = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
+
+  const matchesFuel = (variantFuel: string, selectedFuelValue: string) => {
+    const fuel = normalizeFuel(variantFuel);
+    const selected = normalizeFuel(selectedFuelValue);
+    if (!fuel || fuel === "unknown") return false;
+    if (selected === "electric") return fuel.includes("electric") || fuel === "ev";
+    return fuel.includes(selected);
+  };
+
+  const normalizeTransmission = (value: string) => value.toLowerCase().replace(/\s+/g, " ").trim();
+
+  const matchesTransmission = (variantTransmission: string, selectedTransmissionValue: string) => {
+    const transmission = normalizeTransmission(variantTransmission);
+    const selected = normalizeTransmission(selectedTransmissionValue);
+    if (!transmission) return false;
+    if (selected === "manual") return transmission.includes("manual");
+    if (selected === "automatic") return transmission.includes("automatic");
+    if (selected === "amt") return transmission.includes("amt");
+    if (selected === "cvt") return transmission.includes("cvt");
+    if (selected === "dct") return transmission.includes("dct");
+    return transmission.includes(selected);
+  };
+
+  const getModelMinPriceFromVariants = (model: Model, modelVariants: Variant[]) => {
+    if (model.status === "upcoming" && model.expectedPriceMin) return model.expectedPriceMin;
+    if (model.priceRange?.min) return model.priceRange.min;
+    if (modelVariants.length === 0) return 0;
+    const prices = modelVariants.map((v) => v.price).filter((p) => p > 0);
+    return prices.length > 0 ? Math.min(...prices) : 0;
   };
 
   // Apply filters whenever they change
@@ -56,22 +121,22 @@ const BodyType = () => {
 
     // Flexible body-type matching to include sub-categories (e.g., micro/mini SUVs)
     let models = canonicalSlug
-      ? getAllModels().filter((m) => matchesBodyType(m.bodyType, canonicalSlug))
+      ? modelsSource.filter((m) => matchesBodyType(m.bodyType, canonicalSlug))
       : getModelsByBody(type);
 
     // Apply fuel filter (check variants)
     if (selectedFuel !== "All") {
       models = models.filter((model) => {
-        const variants = getVariants(model.id);
-        return variants.some((v) => v.fuelType === selectedFuel);
+        const modelVariants = variantsByModel.get(model.id) || [];
+        return modelVariants.some((v) => matchesFuel(v.fuelType || "", selectedFuel));
       });
     }
 
     // Apply transmission filter (check variants)
     if (selectedTransmission !== "All") {
       models = models.filter((model) => {
-        const variants = getVariants(model.id);
-        return variants.some((v) => v.transmission === selectedTransmission);
+        const modelVariants = variantsByModel.get(model.id) || [];
+        return modelVariants.some((v) => matchesTransmission(v.transmission || "", selectedTransmission));
       });
     }
 
@@ -82,10 +147,7 @@ const BodyType = () => {
       const max = maxStr === "+" ? Infinity : parseFloat(maxStr) * 100000;
       
       models = models.filter((model) => {
-        const modelMinPrice = model.status === "upcoming"
-          ? model.expectedPriceMin || 0
-          : model.priceRange?.min || 0;
-        
+        const modelMinPrice = getModelMinPriceFromVariants(model, variantsByModel.get(model.id) || []);
         if (max === Infinity) {
           return modelMinPrice >= min;
         }
@@ -96,7 +158,16 @@ const BodyType = () => {
     // Sort
     const sorted = sortOrder === "asc" ? sortByMinPriceAsc(models) : sortByMinPriceAsc(models).reverse();
     setFilteredModels(sorted);
-  }, [type, canonicalSlug, selectedFuel, selectedTransmission, selectedPriceRange, sortOrder]);
+  }, [
+    type,
+    canonicalSlug,
+    selectedFuel,
+    selectedTransmission,
+    selectedPriceRange,
+    sortOrder,
+    modelsSource,
+    variantsByModel,
+  ]);
 
   useEffect(() => {
     if (!type) return;
@@ -262,7 +333,15 @@ const BodyType = () => {
                 <h3 className="text-2xl font-bold mb-6">Variants by Model</h3>
                 <div className="space-y-3">
                   {filteredModels.map((model) => {
-                    const variants = getVariants(model.id);
+                    const variants = variantsByModel.get(model.id) || [];
+                    const visibleVariants = variants.filter((variant) => {
+                      const fuelOk =
+                        selectedFuel === "All" || matchesFuel(variant.fuelType || "", selectedFuel);
+                      const transmissionOk =
+                        selectedTransmission === "All" ||
+                        matchesTransmission(variant.transmission || "", selectedTransmission);
+                      return fuelOk && transmissionOk;
+                    });
                     const isExpanded = expandedModels.has(model.id);
                     
                     return (
@@ -274,7 +353,7 @@ const BodyType = () => {
                               <div className="flex-1 text-left">
                                 <h4 className="font-semibold text-base">{model.brandName} {model.name}</h4>
                                 <p className="text-sm text-muted-foreground mt-1">
-                                  {variants.length} variant{variants.length !== 1 ? "s" : ""} • 
+                                  {visibleVariants.length} variant{visibleVariants.length !== 1 ? "s" : ""} • 
                                   {model.priceRange && ` ₹${(model.priceRange.min / 100000).toFixed(2)}L - ₹${(model.priceRange.max / 100000).toFixed(2)}L`}
                                 </p>
                               </div>
@@ -283,30 +362,39 @@ const BodyType = () => {
                           </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <div className="mt-2 ml-4 pl-4 border-l-2 border-primary/30 space-y-2">
-                            {variants.length > 0 ? (
-                              variants.map((variant, idx) => (
-                                <Link key={variant.id} to={`/${model.slug}/${variant.slug}`}>
-                                  <div className="p-3 rounded-lg bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer border border-muted">
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <p className="font-medium text-sm">{variant.name}</p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                          {variant.fuelType} • {variant.transmission} • {variant.mileage} km/l
-                                        </p>
-                                      </div>
-                                      <div className="text-right">
-                                        <p className="font-semibold flex items-center gap-1">
-                                          <IndianRupee className="h-3 w-3" />
-                                          {(variant.price / 100000).toFixed(2)}L
-                                        </p>
+                          <div className="mt-2 ml-4 pl-4 border-l-2 border-primary/30">
+                            {visibleVariants.length > 0 ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {visibleVariants.map((variant) => (
+                                  <Link key={variant.id} to={`/${model.brandId}/${model.slug}/${variant.slug}`}>
+                                    <div className="h-full p-4 rounded-xl bg-white dark:bg-slate-900 border border-muted hover:border-primary/40 hover:shadow-md transition-all">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                          <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                                            {variant.name}
+                                          </p>
+                                          <p className="text-xs text-muted-foreground mt-1">
+                                            {variant.fuelType} • {variant.transmission}
+                                          </p>
+                                          {variant.mileage && (
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                              {variant.mileage} km/l
+                                            </p>
+                                          )}
+                                        </div>
+                                        <div className="text-right">
+                                          <p className="font-semibold flex items-center gap-1 text-sm">
+                                            <IndianRupee className="h-3 w-3" />
+                                            {(variant.price / 100000).toFixed(2)}L
+                                          </p>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </Link>
-                              ))
+                                  </Link>
+                                ))}
+                              </div>
                             ) : (
-                              <p className="text-sm text-muted-foreground p-3">No variants available</p>
+                              <p className="text-sm text-muted-foreground p-3">No variants match the selected filters</p>
                             )}
                           </div>
                         </CollapsibleContent>

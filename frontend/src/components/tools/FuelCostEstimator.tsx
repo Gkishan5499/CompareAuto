@@ -156,9 +156,19 @@ const FuelCostEstimator = () => {
         <div className="space-y-2">
           <Label>Vehicle Type</Label>
           <Tabs value={vehicleType} onValueChange={(v) => setVehicleType(v as "fuel" | "ev")}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="fuel">Fuel Vehicle</TabsTrigger>
-              <TabsTrigger value="ev">Electric Vehicle</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-blue-50">
+              <TabsTrigger
+                value="fuel"
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              >
+                Fuel Vehicle
+              </TabsTrigger>
+              <TabsTrigger
+                value="ev"
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              >
+                Electric Vehicle
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>

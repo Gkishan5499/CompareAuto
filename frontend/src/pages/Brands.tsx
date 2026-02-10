@@ -9,10 +9,11 @@ import BrandCard from "@/components/brands/BrandCard";
 import { getBrands, getModelsByBrand } from "@/lib/data";
 import { useBrands, useModelsByBrand } from "@/lib/api-hooks";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
-import { Search, CarFront, Zap, Crown, Mountain, Gauge, ArrowRight, FilterX } from "lucide-react";
+import { Search, CarFront, Crown, Mountain, Gauge, ArrowRight, FilterX } from "lucide-react";
 import AdSlot from "@/components/ads/AdSlot";
 import { getBrandLogo, getBrandInitial } from "@/lib/brandLogos";
 import { cn } from "@/lib/utils"; // Assuming you have a cn utility from shadcn
+import { BODY_TYPES } from "@/lib/bodyTypes";
 
 const Brands = () => {
   const { data: apiBrands, isLoading: brandsLoading } = useBrands();
@@ -25,14 +26,61 @@ const Brands = () => {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
   // Map body types to icons for better visuals
-  const bodyTypes = [
-    { name: "Hatchback", icon: CarFront, color: "text-primary", bg: "bg-primary/10" },
-    { name: "Sedan", icon: CarFront, color: "text-primary", bg: "bg-primary/10" },
-    { name: "SUV", icon: Mountain, color: "text-primary", bg: "bg-primary/10" },
-    { name: "MUV", icon: CarFront, color: "text-primary", bg: "bg-primary/10" },
-    { name: "EV", icon: Zap, color: "text-primary", bg: "bg-primary/10" },
-    { name: "Luxury", icon: Crown, color: "text-primary", bg: "bg-primary/10" },
+  const bodyTypeIcons: Record<string, typeof CarFront> = {
+    hatchback: CarFront,
+    "compact-suv": Mountain,
+    "micro-suv": Mountain,
+    "mini-suv": Mountain,
+    suv: Mountain,
+    muv: CarFront,
+    "compact-sedan": CarFront,
+    sedan: CarFront,
+    microcar: CarFront,
+    crossover: Mountain,
+    wagon: CarFront,
+    van: CarFront,
+    minivan: CarFront,
+    pickup: Mountain,
+    offroader: Mountain,
+    sports: Gauge,
+    luxury: Crown,
+    coupe: Gauge,
+    convertible: Gauge,
+  };
+
+  const extraBodyTypeShortcuts = [
+    { slug: "micro-suv", label: "Micro SUV" },
+    { slug: "mini-suv", label: "Mini SUV" },
   ];
+
+  const preferredBodyTypeOrder = [
+    "hatchback",
+    "compact-suv",
+    "micro-suv",
+    "mini-suv",
+    "suv",
+  ];
+
+  const allBodyTypes = [
+    ...BODY_TYPES.map((type) => ({ slug: type.slug, label: type.label })),
+    ...extraBodyTypeShortcuts,
+  ];
+
+  const bodyTypes = [
+    ...preferredBodyTypeOrder
+      .map((slug) => allBodyTypes.find((type) => type.slug === slug))
+      .filter((type): type is { slug: string; label: string } => Boolean(type)),
+    ...allBodyTypes.filter((type) => !preferredBodyTypeOrder.includes(type.slug)),
+  ].map((type) => {
+    const icon = bodyTypeIcons[type.slug] || CarFront;
+    return {
+      slug: type.slug,
+      name: type.label,
+      icon,
+      color: "text-primary",
+      bg: "bg-primary/10",
+    };
+  });
 
   // Spotlight logic
   const spotlightBrand = brands.find((b) => b.slug === "maruti-suzuki") || brands[0];
@@ -213,7 +261,7 @@ const Brands = () => {
               </h3>
               <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
                 {bodyTypes.map((type) => (
-                  <Link key={type.name} to={`/body/${type.name.toLowerCase()}`}>
+                  <Link key={type.slug} to={`/body/${type.slug}`}>
                     <div className="group flex items-center justify-between p-3 rounded-lg border bg-card hover:shadow-md transition-all cursor-pointer">
                       <div className="flex items-center gap-3">
                         <div className={cn("p-2 rounded-md", type.bg, type.color)}>

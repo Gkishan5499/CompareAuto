@@ -17,7 +17,11 @@ const toLabel = (raw: string) => {
   return cleaned.replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-const ExploreBodyTypes = () => {
+interface ExploreBodyTypesProps {
+  showHeader?: boolean;
+}
+
+const ExploreBodyTypes = ({ showHeader = true }: ExploreBodyTypesProps) => {
   const { data: models = [], isLoading: modelsLoading } = useModels();
   const { data: variants = [], isLoading: variantsLoading } = useVariants("");
 
@@ -106,17 +110,19 @@ const ExploreBodyTypes = () => {
   return (
     <section className="py-12 md:py-16 bg-gradient-to-b from-background to-muted/20 border-t">
       <div className="container mx-auto px-4 max-w-7xl">
-        <div className="mb-8 md:mb-10">
-          <div className="inline-flex items-center gap-2 text-primary font-medium text-sm mb-2 uppercase tracking-wider">
-            <LayoutGrid className="w-4 h-4" /> Browse by Body Type
+        {showHeader && (
+          <div className="mb-8 md:mb-10">
+            <div className="inline-flex items-center gap-2 text-primary font-medium text-sm mb-2 uppercase tracking-wider">
+              <LayoutGrid className="w-4 h-4" /> Browse by Body Type
+            </div>
+            <h3 className="text-2xl md:text-3xl font-bold mb-3">
+              Explore by <span className="text-primary">Body Type</span>
+            </h3>
+            <p className="text-sm md:text-base text-muted-foreground">
+              Browse cars by their body style and design
+            </p>
           </div>
-          <h3 className="text-2xl md:text-3xl font-bold mb-3">
-            Explore by <span className="text-primary">Body Type</span>
-          </h3>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Browse cars by their body style and design
-          </p>
-        </div>
+        )}
 
         <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {bodyTypes.map((type) => {

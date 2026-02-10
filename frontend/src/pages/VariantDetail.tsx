@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -51,7 +51,6 @@ const VariantDetail = () => {
     model: string;
     variant: string;
   }>();
-  const navigate = useNavigate();
 
   // --- DATA FETCHING & STATE (Backend Only - No Fallback) ---
   const { data: variantData, isLoading: variantLoading } = useVariant(brand || "", modelSlug || "", variantSlug || "");
@@ -398,17 +397,22 @@ const VariantDetail = () => {
   };
 
   const handleAddToCompare = () => {
-    if (variantData) {
-      const compareList = JSON.parse(localStorage.getItem("compareList") || "[]");
-      if (!compareList.includes(variantData.id) && compareList.length < 3) {
-        compareList.push(variantData.id);
-        localStorage.setItem("compareList", JSON.stringify(compareList));
-        window.dispatchEvent(new Event("compareListUpdated"));
-      }
-      // Navigate to compare page
-      const validVariants = compareList.filter((v: string) => v !== null && v !== undefined);
-      navigate(`/compare?v=${validVariants.join(",")}`);
+    if (!variantData) return;
+    const compareList = JSON.parse(localStorage.getItem("compareList") || "[]");
+    if (!compareList.includes(variantData.id) && compareList.length < 3) {
+      compareList.push(variantData.id);
+      localStorage.setItem("compareList", JSON.stringify(compareList));
+      window.dispatchEvent(new Event("compareListUpdated"));
     }
+  };
+
+  const buildCompareHref = () => {
+    if (!variantData) return "/compare";
+    const rawList = JSON.parse(localStorage.getItem("compareList") || "[]");
+    const base = Array.isArray(rawList) ? rawList.filter((item) => typeof item === "string") : [];
+    if (base.includes(variantData.id)) return `/compare?v=${base.join(",")}`;
+    if (base.length >= 3) return `/compare?v=${base.join(",")}`;
+    return `/compare?v=${[...base, variantData.id].join(",")}`;
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -907,8 +911,10 @@ const VariantDetail = () => {
                 </Button>
                 {priceBreakdown && <PriceBreakupComponent breakdown={priceBreakdown} city={selectedCity} />}
                 <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" onClick={handleAddToCompare}>
-                    <Plus className="w-4 h-4 mr-2" /> Compare
+                  <Button variant="outline" asChild>
+                    <Link to={buildCompareHref()} onClick={handleAddToCompare}>
+                      <Plus className="w-4 h-4 mr-2" /> Compare
+                    </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link to="#leads">Get Offers</Link>

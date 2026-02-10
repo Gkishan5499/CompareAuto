@@ -33,7 +33,9 @@ import {
 import { 
     Calculator, Plus, ChevronRight, ChevronLeft, Star, 
     Fuel, Gauge, Settings, ShieldCheck, 
-    CheckCircle2, XCircle, MapPin, ArrowRight, Info 
+    CheckCircle2, XCircle, MapPin, ArrowRight, Info, 
+    Cog,
+    Repeat
 } from "lucide-react";
 import { getBrandLogo, getBrandInitial } from "@/lib/brandLogos";
 import AdSlot from "@/components/ads/AdSlot";
@@ -192,14 +194,7 @@ const ModelOverview = () => {
             }
 
             const validVariants = compareList.filter((v: string) => v !== null && v !== undefined);
-            if (validVariants.length >= 2) {
-                navigate(`/compare?v=${validVariants.join(",")}`);
-            } else {
-                toast({
-                    title: "Add one more variant",
-                    description: "Select another variant from the list to compare.",
-                });
-            }
+            navigate(`/compare?v=${validVariants.join(",")}`);
     }
   };
 
@@ -322,7 +317,7 @@ const ModelOverview = () => {
                              <span className="font-semibold text-sm text-primary">{variants?.[0]?.fuelType || "Petrol/Diesel"}</span>
                         </div>
                         <div className="p-4 flex flex-col items-center justify-center text-center gap-1">
-                             <Settings className="w-5 h-5 text-primary" />
+                             <Repeat className="w-5 h-5 text-primary" />
                              <span className="text-xs text-muted-foreground">Transmission</span>
                              <span className="font-semibold text-sm text-primary">Manual / Auto</span>
                         </div>
@@ -400,7 +395,7 @@ const ModelOverview = () => {
                                             </p>
                                         </div>
                                         <div className="text-center p-3 bg-muted rounded-lg">
-                                            <Settings className="w-6 h-6 mx-auto mb-2 text-primary" />
+                                            <Repeat className="w-6 h-6 mx-auto mb-2 text-primary" />
                                             <p className="text-xs text-muted-foreground mb-1">Transmission</p>
                                             <p className="font-semibold text-sm text-primary">
                                                 {[...new Set(variants.map(v => v.transmission))].join("/") || "Manual"}
@@ -624,19 +619,11 @@ const ModelOverview = () => {
                              )}
                          </div>
                     </CardHeader>
-                    <CardContent className="space-y-3 pt-0">
-                         <Button size="lg" className="w-full font-semibold bg-primary hover:bg-primary-light text-primary-foreground shadow-premium-md" onClick={() => handleCheckPrice(variants?.[0]?.id)}>
-                            <Calculator className="w-4 h-4 mr-2" /> Check On-Road Price
-                         </Button>
-                         <div className="grid grid-cols-2 gap-3">
-                            <Button variant="outline" onClick={handleAddToCompare}>
-                                <Plus className="w-4 h-4 mr-2" /> Compare
-                            </Button>
-                            <Button variant="outline" asChild>
-                                <Link to="#leads">Get Offers</Link>
-                            </Button>
-                         </div>
-                    </CardContent>
+                          <CardContent className="space-y-3 pt-0">
+                                 <Button size="lg" className="w-full font-semibold bg-primary hover:bg-primary-light text-primary-foreground shadow-premium-md" onClick={() => handleCheckPrice(variants?.[0]?.id)}>
+                                     <Calculator className="w-4 h-4 mr-2" /> Check On-Road Price
+                                 </Button>
+                          </CardContent>
                 </Card>
 
                 {/* 2) VARIANT PRICE LIST WIDGET (The Request) */}

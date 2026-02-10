@@ -1,14 +1,8 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Car, Box, Truck, Home as Suv, Boxes, Sparkles, TruckIcon, Bus } from "lucide-react";
-import { getBodyTypes, countModelsByBody } from "@/lib/data";
+import ExploreBodyTypes from "@/components/home/ExploreBodyTypes";
 import { updateMetaTags } from "@/lib/seo";
 
 const Body = () => {
-  const bodyTypes = getBodyTypes();
-  const counts = countModelsByBody();
-
   useEffect(() => {
     updateMetaTags({
       title: "Browse Cars by Body Type – Hatchback, Sedan, SUV & More | CompareAuto.in",
@@ -18,82 +12,48 @@ const Body = () => {
     });
   }, []);
 
-  // Map body types to icons and slugs
-  const bodyTypeConfig: Record<string, { icon: any; slug: string; description: string }> = {
-    Hatchback: { icon: Car, slug: "hatchback", description: "Compact and fuel-efficient city cars perfect for urban driving" },
-    Sedan: { icon: Car, slug: "sedan", description: "Classic 4-door sedans with spacious interiors and boot space" },
-    SUV: { icon: Suv, slug: "suv", description: "Sport utility vehicles with high ground clearance and powerful performance" },
-    MUV: { icon: Bus, slug: "muv", description: "Multi utility vehicles with 7-8 seater capacity for families" },
-    MPV: { icon: Bus, slug: "mpv", description: "Multi purpose vehicles designed for passenger comfort" },
-    Coupe: { icon: Sparkles, slug: "coupe", description: "Sporty 2-door cars with sleek designs and performance focus" },
-    Convertible: { icon: Sparkles, slug: "convertible", description: "Open-top cars for the ultimate driving experience" },
-    Pickup: { icon: TruckIcon, slug: "pickup", description: "Pickup trucks with cargo capacity and rugged capability" },
-    Wagon: { icon: Boxes, slug: "wagon", description: "Estate wagons combining practicality with style" },
-  };
-
-  // Filter to show only body types with models
-  const availableBodyTypes = bodyTypes.filter((type) => counts[type] > 0);
-
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <section className="py-12 bg-gradient-to-b from-primary/5 to-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
-            <h1 className="mb-4">Browse by Body Type</h1>
-            <p className="text-lg text-muted-foreground">
-              Find your perfect car by selecting the body style that fits your lifestyle. 
-              From compact hatchbacks to spacious SUVs, explore all categories.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Body Type Grid */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {availableBodyTypes.map((bodyType) => {
-              const config = bodyTypeConfig[bodyType];
-              if (!config) return null;
-
-              const Icon = config.icon;
-              const count = counts[bodyType] || 0;
-
-              return (
-                <Link key={bodyType} to={`/body/${config.slug}`}>
-                  <Card className="group hover:shadow-xl transition-all hover:border-primary/50 h-full">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col items-start gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20   group-hover:scale-110 transition-transform">
-                          <Icon className="h-8 w-8 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                            {bodyType}
-                          </h3>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            {config.description}
-                          </p>
-                          <p className="text-sm font-semibold text-primary">
-                            {count} {count === 1 ? "model" : "models"} available →
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-
-          {availableBodyTypes.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No body types available at the moment.</p>
+    <div className="min-h-screen bg-background">
+      <section className="relative overflow-hidden py-14 md:py-20 px-12">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-white to-rose-50" />
+        <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl" />
+        <div className="absolute -bottom-28 -left-16 h-72 w-72 rounded-full bg-rose-200/40 blur-3xl" />
+        <div className="container mx-auto px-4 relative">
+          <div className="max-w-4xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+              Body Style Finder
             </div>
-          )}
+            <h1
+              className="mt-4 text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900"
+              style={{ fontFamily: "'Space Grotesk', 'Poppins', sans-serif" }}
+            >
+              Find a car shape that matches your life
+            </h1>
+            <p className="mt-4 text-base md:text-lg text-slate-600 max-w-2xl">
+              Explore every body style with live variant counts. Tap a category to see
+              real models, pricing, and features in one place.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {[
+                "City-friendly",
+                "Family-ready",
+                "Adventure",
+                "Premium",
+                "Electric",
+              ].map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-700"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
+
+      <ExploreBodyTypes showHeader={false} />
     </div>
   );
 };

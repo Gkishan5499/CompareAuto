@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,6 @@ interface VariantTableProps {
 type SortField = "price" | "name";
 
 const VariantTable = ({ variants, brandSlug, modelSlug }: VariantTableProps) => {
-  const navigate = useNavigate();
   const [sortField, setSortField] = useState<SortField>("price");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [fuelFilter, setFuelFilter] = useState<string>("All");
@@ -92,11 +91,13 @@ const VariantTable = ({ variants, brandSlug, modelSlug }: VariantTableProps) => 
     }
 
     setCompareIds(compareList);
+  };
 
-    const validVariants = compareList.filter((v: string) => v !== null && v !== undefined);
-    if (validVariants.length >= 2) {
-      navigate(`/compare?v=${validVariants.join(",")}`);
-    }
+  const buildCompareHref = (variantId: string) => {
+    const base = compareIds.filter(Boolean);
+    if (base.includes(variantId)) return `/compare?v=${base.join(",")}`;
+    if (base.length >= 3) return `/compare?v=${base.join(",")}`;
+    return `/compare?v=${[...base, variantId].join(",")}`;
   };
 
   const compareSuggestions = useMemo(() => {
@@ -207,12 +208,10 @@ const VariantTable = ({ variants, brandSlug, modelSlug }: VariantTableProps) => 
                     <Link to={`/${brandSlug}/${modelSlug}/${variant.slug}`}>
                       <Button size="sm" variant="outline">View</Button>
                     </Link>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => handleAddToCompare(variant.id)}
-                    >
-                      Compare
+                    <Button size="sm" variant="secondary" asChild>
+                      <Link to={buildCompareHref(variant.id)} onClick={() => handleAddToCompare(variant.id)}>
+                        Compare
+                      </Link>
                     </Button>
                   </div>
                 </TableCell>
