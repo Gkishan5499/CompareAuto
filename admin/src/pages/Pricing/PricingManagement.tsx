@@ -72,6 +72,9 @@ const PricingManagement = () => {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvUploading, setCsvUploading] = useState(false);
 
+  const apiBase = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
+  const apiUrl = (path: string) => `${apiBase}${path}`;
+
   // Fetch Summary
   useEffect(() => {
     fetchPricingSummary();
@@ -80,7 +83,7 @@ const PricingManagement = () => {
   const fetchPricingSummary = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/pricing/summary");
+      const response = await fetch(apiUrl("/api/admin/pricing/summary"));
       if (!response.ok) throw new Error("Failed to fetch summary");
       const data = await response.json();
       setPricingSummary(data);
@@ -95,7 +98,7 @@ const PricingManagement = () => {
   const handleUpdateAllPrices = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/pricing/variants/update-all", {
+      const response = await fetch(apiUrl("/api/admin/pricing/variants/update-all"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -121,7 +124,7 @@ const PricingManagement = () => {
   const handleUpdateStateTax = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/pricing/taxes/update", {
+      const response = await fetch(apiUrl("/api/admin/pricing/taxes/update"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editFormData),
@@ -147,7 +150,7 @@ const PricingManagement = () => {
 
     try {
       setLoading(true);
-      const response = await fetch("/api/state-tax-config/apply-updates", {
+      const response = await fetch(apiUrl("/api/state-tax-config/apply-updates"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -178,7 +181,7 @@ const PricingManagement = () => {
       const form = new FormData();
       form.append("file", csvFile);
 
-      const resp = await fetch("/api/state-tax-config/import-csv", {
+      const resp = await fetch(apiUrl("/api/state-tax-config/import-csv"), {
         method: "POST",
         body: form,
       });
@@ -403,7 +406,7 @@ const PricingManagement = () => {
                                 onClick={async () => {
                                   try {
                                     setLoading(true);
-                                    const response = await fetch("/api/admin/pricing/taxes/update", {
+                                    const response = await fetch(apiUrl("/api/admin/pricing/taxes/update"), {
                                       method: "POST",
                                       headers: { "Content-Type": "application/json" },
                                       body: JSON.stringify({ ...config, ...inlineEditData }),
@@ -796,7 +799,7 @@ const PricingManagement = () => {
                               onClick={async () => {
                                 try {
                                   setLoading(true);
-                                  const response = await fetch("/api/admin/pricing/taxes/update", {
+                                  const response = await fetch(apiUrl("/api/admin/pricing/taxes/update"), {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ ...config, ...inlineEditData }),
