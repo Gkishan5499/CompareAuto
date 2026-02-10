@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import VariantPicker from "@/components/compare/VariantPicker";
 import CompareTable from "@/components/compare/CompareTable";
+import TrendingComparisons from "@/components/home/TrendingComparisons";
 import { getTrendingComparisons, getModels, getVariants } from "@/lib/data";
 import { variantsApi, modelsApi, getOnRoadPrice, citiesApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
@@ -21,14 +22,12 @@ const Compare = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
 
-    const resolveVariantIdsFromParams = () => {
+    const resolveVariantIdsFromParams = (): (string | null)[] => {
         const variantsParam = searchParams.get("v");
         if (variantsParam) {
-            return variantsParam
-                .split(",")
-                .map((value) => value.trim())
-                .filter(Boolean)
-                .slice(0, 3);
+            const tokens = variantsParam.split(",").map((value) => value.trim());
+            const padded = [...tokens, "", "", ""].slice(0, 3);
+            return padded.map((value) => (value ? value : null));
         }
 
         const modelsParam = searchParams.get("models");
@@ -42,7 +41,7 @@ const Compare = () => {
 
         const models = getModels();
 
-        return modelTokens
+        const resolved = modelTokens
             .map((token) => {
                 const model = models.find((item) => item.id === token || item.slug === token);
                 if (!model) return null;
@@ -57,9 +56,31 @@ const Compare = () => {
                 return (cheapestVariant || modelVariants[0]).id;
             })
             .filter((value): value is string => Boolean(value));
+
+        return [...resolved, null, null, null].slice(0, 3);
     };
 
-    const urlVariants = resolveVariantIdsFromParams();
+    const resolveInitialVariants = (): (string | null)[] => {
+        const fromParams = resolveVariantIdsFromParams();
+        if (fromParams.some(Boolean)) return fromParams;
+
+        const stored = JSON.parse(localStorage.getItem("compareList") || "[]");
+        if (!Array.isArray(stored)) return [null, null, null];
+        const normalized = stored
+            .map((item) => {
+                if (!item) return null;
+                if (typeof item === "string") return item;
+                if (typeof item === "object") {
+                    return item.id || item.variantId || item.modelId || item.slug || null;
+                }
+                return null;
+            })
+            .filter((value): value is string => Boolean(value))
+            .slice(0, 3);
+        return [...normalized, null, null, null].slice(0, 3);
+    };
+
+    const urlVariants = resolveInitialVariants();
 
     const [selectedVariants, setSelectedVariants] = useState<(string | null)[]>([
         urlVariants[0] || null,
@@ -76,8 +97,15 @@ const Compare = () => {
     const [compareMode, setCompareMode] = useState<"auto" | "manual">("auto");
 
     useEffect(() => {
-        const nextVariants = resolveVariantIdsFromParams();
-        if (nextVariants.length === 3 && compareMode !== "manual") {
+        const shouldAutoShow = localStorage.getItem("compareAutoShow") === "1";
+
+        if (searchParams.get("models") && !searchParams.get("v")) {
+            setLastThirdVariant(null);
+            localStorage.removeItem("compareLastThird");
+        }
+
+        const nextVariants = resolveInitialVariants();
+        if (nextVariants.filter(Boolean).length === 3 && compareMode !== "manual") {
             setCompareMode("manual");
         }
         const nextSelection: (string | null)[] = [
@@ -88,10 +116,14 @@ const Compare = () => {
 
         const isSameSelection = nextSelection.every((value, index) => value === selectedVariants[index]);
         if (!isSameSelection) {
+            const nextCount = nextSelection.filter(Boolean).length;
             setSelectedVariants(nextSelection);
-            setShowCompareTable(false);
+            setShowCompareTable(shouldAutoShow && nextCount >= 2 ? true : false);
             setShowPrices(false);
             setOnRoadPrices([null, null, null]);
+            if (shouldAutoShow) {
+                localStorage.removeItem("compareAutoShow");
+            }
         }
     }, [searchParams]);
 
@@ -185,11 +217,33 @@ const Compare = () => {
     const slotIndices = compareMode === "manual" ? [0, 1, 2] : [0, 1];
     const maxSlots = slotIndices.length;
 
+    const [lastThirdVariant, setLastThirdVariant] = useState<string | null>(() => {
+        const stored = localStorage.getItem("compareLastThird");
+        return stored && stored.trim() ? stored : null;
+    });
+    const prevModeRef = useRef<"auto" | "manual">(compareMode);
+
     useEffect(() => {
         if (compareMode === "auto" && selectedVariants[2]) {
+            setLastThirdVariant(selectedVariants[2]);
+            localStorage.setItem("compareLastThird", selectedVariants[2]);
             setSelectedVariants([selectedVariants[0], selectedVariants[1], null]);
         }
     }, [compareMode, selectedVariants]);
+
+    useEffect(() => {
+        const prevMode = prevModeRef.current;
+        if (
+            prevMode === "auto" &&
+            compareMode === "manual" &&
+            !selectedVariants[2] &&
+            lastThirdVariant &&
+            (selectedVariants[0] || selectedVariants[1])
+        ) {
+            setSelectedVariants([selectedVariants[0], selectedVariants[1], lastThirdVariant]);
+        }
+        prevModeRef.current = compareMode;
+    }, [compareMode, selectedVariants, lastThirdVariant]);
 
     useEffect(() => {
         if (selectedCount < 2 && showCompareTable) {
@@ -197,16 +251,25 @@ const Compare = () => {
         }
     }, [selectedCount, showCompareTable]);
 
+    useEffect(() => {
+        const shouldAutoShow = localStorage.getItem("compareAutoShow") === "1";
+        if (shouldAutoShow && selectedCount >= 2) {
+            setShowCompareTable(true);
+            localStorage.removeItem("compareAutoShow");
+        }
+    }, [selectedCount]);
+
   // Update URL when selections change
-  useEffect(() => {
-    const validVariants = selectedVariants.filter((value): value is string => Boolean(value));
-    if (validVariants.length > 0) {
-      setSearchParams({ v: validVariants.join(",") });
-      localStorage.setItem("compareList", JSON.stringify(validVariants));
-    } else {
-      setSearchParams({});
-    }
-  }, [selectedVariants, setSearchParams]);
+    useEffect(() => {
+        const validVariants = selectedVariants.filter((value): value is string => Boolean(value));
+        if (validVariants.length > 0) {
+            const serialized = selectedVariants.map((value) => value || "").join(",");
+            setSearchParams({ v: serialized });
+            localStorage.setItem("compareList", JSON.stringify(validVariants));
+        } else {
+            setSearchParams({});
+        }
+    }, [selectedVariants, setSearchParams]);
 
   // SEO
   useEffect(() => {
@@ -320,7 +383,7 @@ const Compare = () => {
                             className="h-7 px-3"
                             onClick={() => setCompareMode("manual")}
                         >
-                            Manual 3-Car
+                            3-Car
                         </Button>
                     </div>
                     {selectedCount > 0 && (
@@ -328,7 +391,18 @@ const Compare = () => {
                             variant="ghost" 
                             size="sm" 
                             className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8"
-                            onClick={() => setSelectedVariants([null, null, null])}
+                            onClick={() => {
+                                setSelectedVariants([null, null, null]);
+                                setLastThirdVariant(null);
+                                setShowCompareTable(false);
+                                setShowPrices(false);
+                                setOnRoadPrices([null, null, null]);
+                                localStorage.removeItem("compareLastThird");
+                                localStorage.removeItem("compareList");
+                                localStorage.removeItem("compareAutoShow");
+                                setSearchParams({});
+                                window.dispatchEvent(new Event("compareListUpdated"));
+                            }}
                         >
                             <Trash2 className="w-4 h-4 mr-2" /> Clear All
                         </Button>
@@ -353,6 +427,9 @@ const Compare = () => {
                     const model = modelDataList[idx];
                     const brandLogo = model ? getBrandLogo(model.brandName) : null;
                     const brandInitial = model ? getBrandInitial(model.brandName) : "";
+                    const disabledVariantIds = selectedVariants.filter(
+                        (value, index): value is string => Boolean(value) && index !== idx
+                    );
 
                     return (
                         <div key={idx} className="flex flex-col h-full">
@@ -360,8 +437,10 @@ const Compare = () => {
                             <div className="mb-4">
                                 <VariantPicker
                                     slot={idx === 0 ? "A" : idx === 1 ? "B" : "C"}
-                                    initialValue={urlVariants[idx]}
+                                    initialValue={selectedVariants[idx] || undefined}
                                     onSelect={handleVariantSelect(idx)}
+                                    selectedVariantId={selectedVariants[idx] || null}
+                                    disabledVariantIds={disabledVariantIds}
                                 />
                             </div>
 
@@ -458,47 +537,6 @@ const Compare = () => {
                 </div>
             )}
         </section>
-
-        {/* 3) EMPTY STATE / TRENDING */}
-        {selectedCount < 2 && (
-            <section className="bg-slate-100 dark:bg-slate-900/50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800">
-                <div className="max-w-2xl mx-auto">
-                    <h2 className="text-xl font-semibold mb-2">
-                        {selectedCount === 0 ? "Start a Comparison" : "Add Another Vehicle"}
-                    </h2>
-                    <p className="text-muted-foreground mb-8">
-                        {selectedCount === 0 
-                            ? "Select two or more cars from the dropdowns above to see a detailed spec sheet comparison." 
-                            : "You need at least two vehicles to see the comparison table."}
-                    </p>
-                    
-                    <div className="text-left">
-                        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Trending Comparisons</h3>
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {trendingComparisons.slice(0, 3).map((comp) => {
-                                const modelsParam = comp.models?.filter(Boolean).join(",");
-                                const compareLink = modelsParam ? `/compare?models=${modelsParam}` : "/compare";
-
-                                return (
-                                    <Link key={comp.id} to={compareLink} className="group">
-                                        <Card className="hover:border-primary/50 cursor-pointer transition-colors group">
-                                            <CardContent className="p-4">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <Badge variant="outline" className="text-xs font-normal">Trending</Badge>
-                                                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-                                                </div>
-                                                <h4 className="font-semibold text-sm">{comp.name}</h4>
-                                                <p className="text-xs text-muted-foreground mt-1">{comp.views.toLocaleString()} views</p>
-                                            </CardContent>
-                                        </Card>
-                                    </Link>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-            </section>
-        )}
 
         {/* 4) DATA TABLES & RECOMMENDATIONS */}
         {showCompareTable && (
@@ -603,6 +641,15 @@ const Compare = () => {
                 <AdSlot id="compare_mid_sidebar" />
             </>
         )}
+
+                <TrendingComparisons
+                    offset={4}
+                    limit={4}
+                    showViewAll={false}
+                    variant="compare"
+                    title="More Battles"
+                    subtitle="Fresh matchups beyond the homepage trends."
+                />
       </div>
     </div>
   );

@@ -6,7 +6,23 @@ import { Badge } from "@/components/ui/badge";
 import { useComparisons, useModels } from "@/lib/api-hooks";
 import { cn } from "@/lib/utils";
 
-const TrendingComparisons = () => {
+interface TrendingComparisonsProps {
+  limit?: number;
+  offset?: number;
+  showViewAll?: boolean;
+  variant?: "home" | "compare";
+  title?: string;
+  subtitle?: string;
+}
+
+const TrendingComparisons = ({
+  limit = 4,
+  offset = 0,
+  showViewAll = true,
+  variant = "home",
+  title,
+  subtitle,
+}: TrendingComparisonsProps) => {
   const { data: comparisonsData = [], isLoading: comparisonsLoading } = useComparisons();
   const { data: models = [], isLoading: modelsLoading } = useModels();
 
@@ -29,7 +45,7 @@ const TrendingComparisons = () => {
     modelTokenMap.set(normalizeToken(name), slug);
   });
 
-  const comparisons = comparisonsData
+  const baseComparisons = comparisonsData
     .map((comparison) => {
       const normalizedModels = (comparison.models || [])
         .map((token: string) => modelTokenMap.get(normalizeToken(token)))
@@ -41,38 +57,76 @@ const TrendingComparisons = () => {
       };
     })
     .filter((comparison) => comparison.models.length >= 2)
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 4);
+    .sort((a, b) => b.views - a.views);
 
-  const placeholdersCount = Math.max(0, 4 - comparisons.length);
+  let comparisons = baseComparisons.slice(offset, offset + limit);
+  if (comparisons.length < limit && offset > 0) {
+    const remaining = limit - comparisons.length;
+    const fallback = baseComparisons.filter(
+      (item) => !comparisons.some((existing) => existing.id === item.id)
+    );
+    comparisons = [...comparisons, ...fallback.slice(0, remaining)];
+  }
 
   const isLoading = comparisonsLoading || modelsLoading;
   const isEmpty = !isLoading && comparisons.length === 0;
 
+  const isCompareVariant = variant === "compare";
+  const resolvedTitle = title || (isCompareVariant ? "More Battles" : "Trending Comparisons");
+  const resolvedSubtitle =
+    subtitle ||
+    (isCompareVariant
+      ? "Fresh matchups beyond the homepage trends."
+      : "See what other buyers are debating. The most popular head-to-head face-offs right now.");
+
   return (
-    <section className="py-16 md:py-24 bg-background border-t border-slate-100 dark:border-slate-800">
+    <section
+      className={cn(
+        "py-16 md:py-24 border-t",
+        isCompareVariant
+          ? "bg-gradient-to-br from-amber-50 via-white to-rose-50 border-amber-100"
+          : "bg-background border-slate-100 dark:border-slate-800"
+      )}
+    >
       <div className="container mx-auto px-4 max-w-7xl">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 text-orange-600 dark:text-orange-400 font-medium text-sm mb-3 uppercase tracking-wider bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded-full w-fit border border-orange-200 dark:border-orange-800">
+            <div
+              className={cn(
+                "inline-flex items-center gap-2 font-medium text-sm mb-3 uppercase tracking-wider px-3 py-1 rounded-full w-fit border",
+                isCompareVariant
+                  ? "text-amber-700 bg-amber-100 border-amber-200"
+                  : "text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800"
+              )}
+            >
               <Flame className="w-4 h-4 fill-current" /> Hot Battles
             </div>
             <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-              Trending <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">Comparisons</span>
+              {resolvedTitle.split(" ")[0]}{" "}
+              <span
+                className={cn(
+                  "text-transparent bg-clip-text",
+                  isCompareVariant
+                    ? "bg-gradient-to-r from-amber-600 to-rose-600"
+                    : "bg-gradient-to-r from-orange-500 to-red-600"
+                )}
+              >
+                {resolvedTitle.split(" ").slice(1).join(" ") || "Battles"}
+              </span>
             </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed">
-              See what other buyers are debating. The most popular head-to-head face-offs right now.
-            </p>
+            <p className="text-muted-foreground text-lg leading-relaxed">{resolvedSubtitle}</p>
           </div>
 
-          <Link to="/compare">
-            <Button variant="ghost" className="group hidden md:flex text-base">
-              View All Battles
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+          {showViewAll && (
+            <Link to="/compare">
+              <Button variant="ghost" className="group hidden md:flex text-base">
+                View All Battles
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Comparison Grid */}
@@ -144,23 +198,25 @@ const TrendingComparisons = () => {
             </Link>
           ))}
 
-          {Array.from({ length: placeholdersCount }).map((_, idx) => (
-            <Card key={`placeholder-${idx}`} className="h-full border-muted/60 bg-card">
+          {comparisons.length === 0 && !isLoading && (
+            <Card className="h-full border-muted/60 bg-card">
               <CardContent className="p-6 h-full flex items-center justify-center text-sm text-muted-foreground">
-                {isLoading ? "Loading trending comparisons..." : "More battles coming soon"}
+                No battles available right now.
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
 
         {/* Mobile View All Button */}
-        <div className="mt-10 text-center md:hidden">
-           <Link to="/compare">
-            <Button variant="outline" className="w-full h-12 text-base">
-              View All Battles
-            </Button>
-           </Link>
-        </div>
+        {showViewAll && (
+          <div className="mt-10 text-center md:hidden">
+            <Link to="/compare">
+              <Button variant="outline" className="w-full h-12 text-base">
+                View All Battles
+              </Button>
+            </Link>
+          </div>
+        )}
 
       </div>
     </section>

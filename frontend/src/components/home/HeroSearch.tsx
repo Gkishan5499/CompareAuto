@@ -63,6 +63,7 @@ const HeroSearch = () => {
     transmission: false
   });
 
+  const filterRef = useRef<HTMLDivElement>(null);
   // Fetch hero carousel images from backend
   useEffect(() => {
     const fetchHeroImages = async () => {
@@ -123,17 +124,35 @@ const HeroSearch = () => {
     }
   }, [searchQuery]);
 
-  // Close dropdowns when clicking outside
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      // Close search & city dropdown
+      if (searchRef.current && !searchRef.current.contains(target)) {
         setShowSuggestions(false);
         setShowCityDropdown(false);
       }
+
+      // Close ALL filter dropdowns
+      if (filterRef.current && !filterRef.current.contains(target)) {
+        setShowFilters(prev => {
+          const closedAll = Object.keys(prev).reduce((acc, key) => {
+            acc[key as keyof typeof prev] = false;
+            return acc;
+          }, {} as typeof prev);
+
+          return closedAll;
+        });
+      }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -179,22 +198,22 @@ const HeroSearch = () => {
   // };
 
   const toggleFilterDropdown = (filterType: string) => {
-  setShowFilters(prev => {
-    const isCurrentlyOpen = prev[filterType as keyof typeof prev];
+    setShowFilters(prev => {
+      const isCurrentlyOpen = prev[filterType as keyof typeof prev];
 
-    // close all dropdowns first
-    const closedAll = Object.keys(prev).reduce((acc, key) => {
-      acc[key as keyof typeof prev] = false;
-      return acc;
-    }, {} as typeof prev);
+      // close all dropdowns first
+      const closedAll = Object.keys(prev).reduce((acc, key) => {
+        acc[key as keyof typeof prev] = false;
+        return acc;
+      }, {} as typeof prev);
 
-    // open clicked dropdown if it was closed
-    return {
-      ...closedAll,
-      [filterType]: !isCurrentlyOpen
-    };
-  });
-};
+      // open clicked dropdown if it was closed
+      return {
+        ...closedAll,
+        [filterType]: !isCurrentlyOpen
+      };
+    });
+  };
 
 
   const buildSearchQueryWithFilters = (tab: "new" | "used") => {
@@ -423,7 +442,10 @@ const HeroSearch = () => {
           </form>
 
           {/* Filter Options Row */}
-          <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-border">
+          <div
+            ref={filterRef}
+            className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-border"
+          >
 
             {/* Budget Filter */}
             <div className="relative">
