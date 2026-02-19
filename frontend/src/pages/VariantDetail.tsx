@@ -270,6 +270,13 @@ const VariantDetail = () => {
       .getByVariant(variantData.id)
       .then((data) => {
         console.log("✅ Specs fetched for variant", variantData.id, ":", data);
+        // Log extras to see what fields are available
+        if (data?.extras) {
+          console.log("📊 Specs extras keys:", Object.keys(data.extras));
+        }
+        if (data?.engine) {
+          console.log("🔧 Specs engine keys:", Object.keys(data.engine));
+        }
         setSpecs(data);
       })
       .catch((err) => {
@@ -394,6 +401,59 @@ const VariantDetail = () => {
 
   const getFriendlyKey = (k: string): string => {
     return friendlyKeyMap[k] || prettifyKey(k);
+  };
+
+  // Helper to extract spec values from multiple possible locations
+  const getSpecValue = (paths: string[]): any => {
+    if (!specs) return null;
+    
+    for (const path of paths) {
+      const parts = path.split('.');
+      let value: any = specs;
+      
+      for (const part of parts) {
+        if (value && typeof value === 'object' && part in value) {
+          value = value[part];
+        } else {
+          value = null;
+          break;
+        }
+      }
+      
+      if (value !== null && value !== undefined && value !== '' && value !== 'N/A' && value !== 'No') {
+        return value;
+      }
+    }
+    
+    return null;
+  };
+
+  // Helper to search for a value by key name (case-insensitive) in any object
+  const findInObject = (obj: any, searchKeys: string[]): any => {
+    if (!obj || typeof obj !== 'object') return null;
+    
+    // Try exact matches first
+    for (const key of searchKeys) {
+      if (key in obj && obj[key] !== null && obj[key] !== undefined && obj[key] !== '' && obj[key] !== 'N/A' && obj[key] !== 'No') {
+        return obj[key];
+      }
+    }
+    
+    // Try case-insensitive matches
+    const objKeysLower = Object.keys(obj).map(k => k.toLowerCase());
+    for (const searchKey of searchKeys) {
+      const searchLower = searchKey.toLowerCase();
+      const matchIndex = objKeysLower.findIndex(k => k === searchLower || k.includes(searchLower));
+      if (matchIndex !== -1) {
+        const actualKey = Object.keys(obj)[matchIndex];
+        const value = obj[actualKey];
+        if (value !== null && value !== undefined && value !== '' && value !== 'N/A' && value !== 'No') {
+          return value;
+        }
+      }
+    }
+    
+    return null;
   };
 
   const handleAddToCompare = () => {
@@ -529,44 +589,97 @@ const VariantDetail = () => {
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="p-3 bg-muted/50 rounded-lg">
                           <p className="text-xs text-muted-foreground">Engine</p>
-                          <p className="font-semibold">{specs?.engine?.engine_cc || variantData.engine || "N/A"}</p>
+                          <p className="font-semibold">
+                            {getSpecValue(['engine.engine', 'engine.engine_cc', 'extras.engine', 'extras.engine_cc']) || 
+                             variantData.engine || "N/A"}
+                          </p>
                         </div>
                         <div className="p-3 bg-muted/50 rounded-lg">
                           <p className="text-xs text-muted-foreground">Power</p>
-                          <p className="font-semibold text-primary">{specs?.engine?.power || "N/A"}</p>
+                          <p className="font-semibold text-primary">
+                            {(() => {
+                              // Try standard paths
+                              let power = getSpecValue(['engine.power', 'engine.max_power', 'performance.power', 'extras.power']);
+                              if (power) return power;
+                              
+                              // Search in extras for power-related fields
+                              if (specs?.extras) {
+                                power = findInObject(specs.extras, [
+                                  'max_power_bhp_rpm', 
+                                  'Max Power (bhp@rpm)', 
+                                  'max_power',
+                                  'power',
+                                  'bhp'
+                                ]);
+                                if (power) return power;
+                              }
+                              
+                              // Search in engine
+                              if (specs?.engine) {
+                                power = findInObject(specs.engine, ['max_power_bhp_rpm', 'max_power', 'bhp']);
+                                if (power) return power;
+                              }
+                              
+                              return "N/A";
+                            })()}
+                          </p>
                         </div>
                         <div className="p-3 bg-muted/50 rounded-lg">
                           <p className="text-xs text-muted-foreground">Mileage</p>
-                          <p className="font-semibold text-emerald-600">{specs?.performance?.mileage || variantData.mileage ? `${specs?.performance?.mileage || variantData.mileage} km/l` : "N/A"}</p>
+                          <p className="font-semibold text-emerald-600">
+                            {(() => {
+                              const mileage = getSpecValue(['performance.mileage', 'extras.mileage', 'mileage']) || variantData.mileage;
+                              return mileage ? `${mileage} km/l` : "N/A";
+                            })()}
+                          </p>
                         </div>
                         <div className="p-3 bg-muted/50 rounded-lg">
                           <p className="text-xs text-muted-foreground">Seating</p>
-                          <p className="font-semibold">{specs?.overview?.seating_capacity || variantData.seating || "N/A"} Persons</p>
+                          <p className="font-semibold">
+                            {getSpecValue(['overview.seating_capacity', 'extras.seating_capacity', 'seating_capacity']) || 
+                             variantData.seating || "N/A"} Persons
+                          </p>
                         </div>
                         <div className="p-3 bg-muted/50 rounded-lg">
                           <p className="text-xs text-muted-foreground">Transmission</p>
-                          <p className="font-semibold">{specs?.performance?.transmission || variantData.transmission || "N/A"}</p>
+                          <p className="font-semibold">
+                            {getSpecValue(['performance.transmission', 'extras.transmission', 'transmission']) || 
+                             variantData.transmission || "N/A"}
+                          </p>
                         </div>
                         <div className="p-3 bg-muted/50 rounded-lg">
                           <p className="text-xs text-muted-foreground">Fuel</p>
-                          <p className="font-semibold">{variantData.fuelType || "N/A"}</p>
+                          <p className="font-semibold">
+                            {getSpecValue(['extras.fuel_type', 'engine.fuel_type', 'fuel_type']) || 
+                             variantData.fuelType || "N/A"}
+                          </p>
                         </div>
                         <div className="p-3 bg-muted/50 rounded-lg">
                           <p className="text-xs text-muted-foreground">Body Type</p>
-                          <p className="font-semibold">{specs?.overview?.body_type || modelData.bodyType || "N/A"}</p>
+                          <p className="font-semibold">
+                            {getSpecValue(['overview.body_type', 'extras.body_type', 'body_type']) || 
+                             modelData?.bodyType || "N/A"}
+                          </p>
                         </div>
-                        {specs?.engine?.torque && (
-                          <div className="p-3 bg-muted/50 rounded-lg">
-                            <p className="text-xs text-muted-foreground">Torque</p>
-                            <p className="font-semibold">{specs.engine.torque}</p>
-                          </div>
-                        )}
-                        {specs?.dimensions?.groundClearance && (
-                          <div className="p-3 bg-muted/50 rounded-lg">
-                            <p className="text-xs text-muted-foreground">Ground Clearance</p>
-                            <p className="font-semibold">{specs.dimensions.groundClearance} mm</p>
-                          </div>
-                        )}
+                        {(() => {
+                          const torque = getSpecValue(['engine.torque', 'engine.max_torque', 'performance.torque', 'extras.torque']) || 
+                                        getSpecValue(['extras.max_torque_nm_rpm', 'extras.Max Torque (nm@rpm)']);
+                          return torque ? (
+                            <div className="p-3 bg-muted/50 rounded-lg">
+                              <p className="text-xs text-muted-foreground">Torque</p>
+                              <p className="font-semibold">{torque}</p>
+                            </div>
+                          ) : null;
+                        })()}
+                        {(() => {
+                          const groundClearance = getSpecValue(['dimensions.groundClearance', 'dimensions.ground_clearance', 'extras.ground_clearance']);
+                          return groundClearance ? (
+                            <div className="p-3 bg-muted/50 rounded-lg">
+                              <p className="text-xs text-muted-foreground">Ground Clearance</p>
+                              <p className="font-semibold">{groundClearance} mm</p>
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                     </Card>
 
@@ -675,8 +788,14 @@ const VariantDetail = () => {
                         title="Engine & Performance"
                         rows={[
                           specs.engine.engine_cc && { label: 'Displacement', value: specs.engine.engine_cc },
-                          specs.engine.power && { label: 'Max Power', value: specs.engine.power },
-                          specs.engine.torque && { label: 'Max Torque', value: specs.engine.torque },
+                          (specs.engine.power || getSpecValue(['extras.max_power_bhp_rpm', 'extras.Max Power (bhp@rpm)'])) && { 
+                            label: 'Max Power', 
+                            value: specs.engine.power || getSpecValue(['extras.max_power_bhp_rpm', 'extras.Max Power (bhp@rpm)']) 
+                          },
+                          (specs.engine.torque || getSpecValue(['extras.max_torque_nm_rpm', 'extras.Max Torque (nm@rpm)'])) && { 
+                            label: 'Max Torque', 
+                            value: specs.engine.torque || getSpecValue(['extras.max_torque_nm_rpm', 'extras.Max Torque (nm@rpm)']) 
+                          },
                           specs.performance?.mileage && { label: 'ARAI Mileage', value: specs.performance.mileage + ' km/l' },
                           specs.engine.engine_type && { label: 'Engine Type', value: specs.engine.engine_type },
                           specs.engine.cylinders && { label: 'Cylinders', value: specs.engine.cylinders },
@@ -760,26 +879,31 @@ const VariantDetail = () => {
                     )}
 
                     {/* Features from specs object (if present) */}
-                    {specs && (specs.features || specs.extras?.features || specs.summary?.features) && (
-                      <Card className="mt-6">
-                        <CardHeader className="py-3 border-b bg-slate-50 dark:bg-slate-900">
-                          <CardTitle className="text-base">Additional Features</CardTitle>
-                          <CardDescription>Extra features from the database</CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-4">
-                          {(specs.features || specs.extras?.features || specs.summary?.features)?.length ? (
+                    {(() => {
+                      const featuresArray = specs?.features || specs?.extras?.features || specs?.summary?.features;
+                      const validFeatures = Array.isArray(featuresArray) ? featuresArray : [];
+                      
+                      if (!specs || validFeatures.length === 0) return null;
+                      
+                      return (
+                        <Card className="mt-6">
+                          <CardHeader className="py-3 border-b bg-slate-50 dark:bg-slate-900">
+                            <CardTitle className="text-base">Additional Features</CardTitle>
+                            <CardDescription>Extra features from the database</CardDescription>
+                          </CardHeader>
+                          <CardContent className="pt-4">
                             <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 list-none">
-                              {(specs.features || specs.extras?.features || specs.summary?.features).map((f: any, i: number) => (
+                              {validFeatures.map((f: any, i: number) => (
                                 <li key={i} className="text-sm flex items-center gap-2">
                                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                                   <span>{typeof f === 'string' ? f : JSON.stringify(f)}</span>
                                 </li>
                               ))}
                             </ul>
-                          ) : null}
-                        </CardContent>
-                      </Card>
-                    )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })()}
                   </TabsContent>
 
                   {/* COLORS TAB */}
@@ -922,18 +1046,92 @@ const VariantDetail = () => {
                 </div>
 
                 {/* Quick Facts List */}
-                <div className="pt-4 border-t mt-4 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Engine</span>
-                    <span className="font-medium">{variantData.engine}</span>
+                <div className="pt-4 border-t mt-4 space-y-3 text-sm">
+                  <div className="flex justify-between items-start gap-3">
+                    <span className="text-muted-foreground flex-shrink-0">Engine</span>
+                    <span className="font-medium text-right">
+                      {(() => {
+                        const engineFull = getSpecValue(['engine.engine', 'engine.engine_cc', 'extras.engine', 'extras.engine_cc']) || variantData.engine;
+                        if (!engineFull) return "N/A";
+                        // Extract just the CC value if it's a long description
+                        const ccMatch = String(engineFull).match(/(\d+)\s*cc/i);
+                        return ccMatch ? `${ccMatch[1]} cc` : engineFull;
+                      })()}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Power</span>
-                    <span className="font-medium">{specs?.engine?.power || "N/A"}</span>
+                  <div className="flex justify-between items-start gap-3">
+                    <span className="text-muted-foreground flex-shrink-0">Power</span>
+                    <span className="font-medium text-right">
+                      {(() => {
+                        // Try standard paths
+                        let power = getSpecValue(['engine.power', 'engine.max_power', 'performance.power', 'extras.power']);
+                        if (power) return power;
+                        
+                        // Search in extras for power-related fields
+                        if (specs?.extras) {
+                          power = findInObject(specs.extras, [
+                            'max_power_bhp_rpm', 
+                            'Max Power (bhp@rpm)', 
+                            'max_power',
+                            'power',
+                            'bhp'
+                          ]);
+                          if (power) return power;
+                        }
+                        
+                        // Search in engine
+                        if (specs?.engine) {
+                          power = findInObject(specs.engine, ['max_power_bhp_rpm', 'max_power', 'bhp']);
+                          if (power) return power;
+                        }
+                        
+                        return "N/A";
+                      })()}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Boot Space</span>
-                    <span className="font-medium">{specs?.capacity?.boot_space || "N/A"}</span>
+                  <div className="flex justify-between items-start gap-3">
+                    <span className="text-muted-foreground flex-shrink-0">Boot Space</span>
+                    <span className="font-medium text-right">
+                      {(() => {
+                        // Try standard paths
+                        let bootSpace = getSpecValue([
+                          'capacity.boot_space', 
+                          'capacity.bootSpace', 
+                          'extras.boot_space', 
+                          'extras.bootSpace', 
+                          'dimensions.boot_space', 
+                          'dimensions.bootSpace'
+                        ]);
+                        if (bootSpace) return `${bootSpace} L`;
+                        
+                        // Search in extras
+                        if (specs?.extras) {
+                          bootSpace = findInObject(specs.extras, [
+                            'boot_space',
+                            'bootSpace',
+                            'Boot Space',
+                            'boot',
+                            'luggage',
+                            'cargo'
+                          ]);
+                          if (bootSpace) return `${bootSpace} L`;
+                        }
+                        
+                        // Search in capacity
+                        if (specs?.capacity) {
+                          bootSpace = findInObject(specs.capacity, ['boot_space', 'bootSpace', 'boot']);
+                          if (bootSpace) return `${bootSpace} L`;
+                        }
+                        
+                        // Search in dimensions
+                        if (specs?.dimensions) {
+                          bootSpace = findInObject(specs.dimensions, ['boot_space', 'bootSpace', 'boot']);
+                          if (bootSpace) return `${bootSpace} L`;
+                        }
+                        
+                        return "N/A";
+                      })()}
+                    </span>
                   </div>
                 </div>
               </CardContent>
