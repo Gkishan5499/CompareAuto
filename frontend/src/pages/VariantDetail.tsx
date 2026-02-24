@@ -17,6 +17,7 @@ import { calculatePriceBreakdown, calculatePriceBreakdownWithConfig, getStateFro
 import VariantSwitcher from "@/components/variant/VariantSwitcher";
 import FeatureGrid from "@/components/variant/FeatureGrid";
 import ColorSwatches from "@/components/model/ColorSwatches";
+import ColorImageGallery from "@/components/model/ColorImageGallery";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,7 @@ import { useVariant, useModel, useVariants } from "@/lib/api-hooks";
 import { specsApi, citiesApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { parseINRToRupees, formatINR } from "@/lib/guards";
+import { getColorImageGallery, getDualToneColorImageGallery } from "@/lib/images";
 import { useCity } from "@/contexts/CityContext";
 import {
   Plus, Download, Fuel, Settings, Gauge,
@@ -43,6 +45,12 @@ import {
 import { getBrandLogo, getBrandInitial } from "@/lib/brandLogos";
 import AdSlot from "@/components/ads/AdSlot";
 import { cn } from "@/lib/utils";
+
+interface DualToneColor {
+  name: string;
+  primary: string;
+  secondary: string;
+}
 
 const VariantDetail = () => {
   useScrollToTop();
@@ -87,7 +95,7 @@ const VariantDetail = () => {
       : (specsOverviewNormalizedPrice && specsOverviewNormalizedPrice > 0 ? specsOverviewNormalizedPrice : null);
 
   const [priceModalOpen, setPriceModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState("White");
+  const [selectedColor, setSelectedColor] = useState<string | DualToneColor>("White");
   const [selectedCity, setSelectedCity] = useState<string>(city || "Delhi NCR");
   const [cities, setCities] = useState<Array<{ id: string; name: string; state: string; slug: string }>>([]);
   const [loadingCities, setLoadingCities] = useState(false);
@@ -171,16 +179,247 @@ const VariantDetail = () => {
     spinFrames: undefined,
   };
   const galleryImages = useMemo(() => {
-    const images = (modelData?.gallery && Array.isArray(modelData.gallery) ? modelData.gallery : mediaData.gallery || []).filter(Boolean);
+    // Try: modelData.gallery, then mediaData.gallery, then specs.media.gallery
+    let images = [];
+    
+    if (modelData?.gallery && Array.isArray(modelData.gallery)) {
+      images = modelData.gallery;
+    } else if (mediaData.gallery && Array.isArray(mediaData.gallery)) {
+      images = mediaData.gallery;
+    } else if (specs?.media?.gallery && Array.isArray(specs.media.gallery)) {
+      images = specs.media.gallery;
+    }
+    
+    images = images.filter(Boolean);
+    
     // Fallback to model.image if no gallery images
     if (images.length === 0 && modelData?.image) {
-      return [modelData.image];
+      images = [modelData.image];
     }
+    
+    console.log("🖼️ GALLERY IMAGES DEBUG:", {
+      count: images.length,
+      allUrls: images,
+      filenames: images.map(url => {
+        const parts = url.split("/");
+        return parts[parts.length - 1];
+      }),
+      source: modelData?.gallery ? "modelData.gallery" : mediaData.gallery ? "mediaData.gallery" : specs?.media?.gallery ? "specs.media.gallery" : "model.image",
+    });
+    
     return images;
-  }, [modelData?.gallery, modelData?.image, mediaData.gallery]);
+  }, [modelData?.gallery, modelData?.image, mediaData.gallery, specs?.media?.gallery]);
 
   const [heroIndex, setHeroIndex] = useState<number>(0);
   const carImage = galleryImages[heroIndex] || mediaData.hero || modelData?.image || DEFAULT_OG_IMAGE;
+
+  // Parse dual tone colors FIRST - so we can use them for monotone filtering
+  const parsedDualToneColorsForMatching = useMemo(() => {
+    let dualToneData = 
+      specs?.exterior?.dual_tone_color_names ||
+      specs?.exterior?.exterior_dual_tone_color_names ||
+      specs?.exterior?.dual_tone_colors ||
+      specs?.exterior?.dualToneColors ||
+      specs?.exterior?.dualToneColorNames ||
+      specs?.dual_tone_color_names ||
+      specs?.exterior_dual_tone_color_names ||
+      specs?.dual_tone_colors ||
+      specs?.dualToneColors ||
+      specs?.dualToneColorNames ||
+      specs?.extras?.dual_tone_color_names ||
+      specs?.extras?.exterior_dual_tone_color_names ||
+      specs?.extras?.dual_tone_colors ||
+      specs?.extras?.dualToneColors ||
+      specs?.extras?.dualToneColorNames;
+
+    let dualToneColors: Array<{ name: string; primary: string; secondary: string }> = [];
+
+    // Parse dual tone color data
+    if (Array.isArray(dualToneData)) {
+      if (dualToneData.length > 0 && typeof dualToneData[0] === 'object' && 'name' in dualToneData[0]) {
+        dualToneColors = dualToneData;
+      } else if (dualToneData.length > 0 && typeof dualToneData[0] === 'string') {
+        dualToneColors = dualToneData.map((colorStr: string) => {
+          const parts = colorStr.split(' with ');
+          return {
+            name: colorStr.trim(),
+            primary: parts[0]?.trim() || "",
+            secondary: parts[1]?.trim() || ""
+          };
+        });
+      }
+    } else if (typeof dualToneData === 'string' && dualToneData.length > 0) {
+      dualToneColors = dualToneData
+        .split(',')
+        .map((colorStr: string) => {
+          const colorTrim = colorStr.trim();
+          const parts = colorTrim.split(' with ');
+          return {
+            name: colorTrim,
+            primary: parts[0]?.trim() || "",
+            secondary: parts[1]?.trim() || ""
+          };
+        })
+        .filter((c) => c.primary && c.secondary);
+    }
+
+    return dualToneColors;
+  }, [specs?.exterior?.dual_tone_color_names, specs?.exterior?.exterior_dual_tone_color_names, specs?.exterior?.dual_tone_colors, specs?.exterior?.dualToneColors, specs?.exterior?.dualToneColorNames, specs?.dual_tone_color_names, specs?.exterior_dual_tone_color_names, specs?.dual_tone_colors, specs?.dualToneColors, specs?.dualToneColorNames, specs?.extras]);
+
+  // Color-based image gallery - maps colors from specs to images
+  const colorImages = useMemo(() => {
+    // Check multiple possible locations for colors (matching the Colors Tab logic)
+    let colorsFromSpecs = 
+      specs?.exterior?.monotone_color_names || 
+      specs?.exterior?.colors ||
+      specs?.exterior?.body_colours ||
+      specs?.colors ||
+      specs?.exterior_monotone_color_names ||
+      specs?.exterior_colors ||
+      specs?.available_colors ||
+      specs?.color_names ||
+      specs?.extras?.exterior_monotone_color_names ||
+      specs?.extras?.monotone_colors ||
+      specs?.extras?.colors ||
+      specs?.extras?.available_colors ||
+      specs?.extras?.body_colours;
+      
+    const colorsFromVariant = variantData?.colors;
+    
+    // Parse colors if they're a string (comma-separated from backend)
+    let colors: string[] = [];
+    
+    if (Array.isArray(colorsFromSpecs)) {
+      colors = colorsFromSpecs;
+    } else if (typeof colorsFromSpecs === 'string' && colorsFromSpecs.length > 0) {
+      colors = colorsFromSpecs
+        .split(',')
+        .map((c: string) => c.trim())
+        .filter((c: string) => c.length > 0);
+    } else if (Array.isArray(colorsFromVariant)) {
+      colors = colorsFromVariant;
+    } else if (typeof colorsFromVariant === 'string' && colorsFromVariant.length > 0) {
+      colors = colorsFromVariant
+        .split(',')
+        .map((c: string) => c.trim())
+        .filter((c: string) => c.length > 0);
+    }
+    
+    console.log("🎨 ColorImages UseMemo - Color Lookup:", {
+      foundColors: colors,
+      colorsLength: colors.length,
+      galleryImagesCount: galleryImages?.length,
+      galleryImageFilenames: galleryImages?.map(url => url.split("/").pop()),
+    });
+    
+    if (!colors || colors.length === 0) {
+      console.log("⚠️ No colors found for image matching");
+      return {};
+    }
+    
+    const result = getColorImageGallery(brand || "", modelSlug || "", variantSlug || "", colors, galleryImages, parsedDualToneColorsForMatching);
+    console.log("✅ Color Images Matched:", {
+      colorsWithImages: Object.keys(result).length,
+      totalImages: Object.values(result).reduce((sum, arr) => sum + arr.length, 0),
+    });
+    return result;
+  }, [specs?.exterior?.monotone_color_names, specs?.exterior?.colors, specs?.exterior?.body_colours, specs?.colors, specs?.exterior_monotone_color_names, specs?.exterior_colors, specs?.available_colors, specs?.color_names, specs?.extras, variantData?.colors, brand, modelSlug, variantSlug, galleryImages, parsedDualToneColorsForMatching]);
+
+  // Dual tone colors - maps dual tone color combinations to images
+  const dualToneColorImages = useMemo(() => {
+    if (!parsedDualToneColorsForMatching || parsedDualToneColorsForMatching.length === 0) {
+      return {};
+    }
+
+    console.log("🎨 Dual Tone Color Images Debug:", {
+      foundDualToneColors: parsedDualToneColorsForMatching,
+      dualToneCount: parsedDualToneColorsForMatching.length,
+      galleryImagesCount: galleryImages?.length,
+      galleryFilenames: galleryImages?.map(url => url.split("/").pop()),
+    });
+
+    const result = getDualToneColorImageGallery(brand || "", modelSlug || "", variantSlug || "", parsedDualToneColorsForMatching, galleryImages);
+    console.log("✅ Dual Tone Color Images Matched:", {
+      colorsWithImages: Object.keys(result).length,
+      totalImages: Object.values(result).reduce((sum, arr) => sum + arr.length, 0),
+      matchedColorNames: Object.keys(result),
+    });
+    return result;
+  }, [parsedDualToneColorsForMatching, brand, modelSlug, variantSlug, galleryImages]);
+
+  // Extract parsed dual tone color objects for UI components
+  const parsedDualToneColors = useMemo(() => {
+    let dualToneData = 
+      specs?.exterior?.dual_tone_color_names ||
+      specs?.exterior?.exterior_dual_tone_color_names ||
+      specs?.exterior?.dual_tone_colors ||
+      specs?.exterior?.dualToneColors ||
+      specs?.exterior?.dualToneColorNames ||
+      specs?.dual_tone_color_names ||
+      specs?.exterior_dual_tone_color_names ||
+      specs?.dual_tone_colors ||
+      specs?.dualToneColors ||
+      specs?.dualToneColorNames ||
+      specs?.extras?.dual_tone_color_names ||
+      specs?.extras?.exterior_dual_tone_color_names ||
+      specs?.extras?.dual_tone_colors ||
+      specs?.extras?.dualToneColors ||
+      specs?.extras?.dualToneColorNames;
+
+    console.log("🔍 DUAL TONE DEBUG:", {
+      dualToneData,
+      dataType: typeof dualToneData,
+      isArray: Array.isArray(dualToneData),
+      "specs?.exterior": specs?.exterior,
+      "specs?.extras": specs?.extras,
+      "specs?.exterior?.exterior_dual_tone_color_names": specs?.exterior?.exterior_dual_tone_color_names,
+      "specs?.exterior_dual_tone_color_names": specs?.exterior_dual_tone_color_names,
+    });
+
+    let dualToneColors: Array<{ name: string; primary: string; secondary: string }> = [];
+
+    // Parse dual tone color data
+    if (Array.isArray(dualToneData)) {
+      console.log("✅ dualToneData is array:", dualToneData);
+      // If array of objects
+      if (dualToneData.length > 0 && typeof dualToneData[0] === 'object' && 'name' in dualToneData[0]) {
+        dualToneColors = dualToneData;
+        console.log("✅ Parsed as array of objects");
+      } else if (dualToneData.length > 0 && typeof dualToneData[0] === 'string') {
+        // If array of strings like ["Color1 with Color2", "Color3 with Color4"]
+        dualToneColors = dualToneData.map((colorStr: string) => {
+          const parts = colorStr.split(' with ');
+          return {
+            name: colorStr.trim(),
+            primary: parts[0]?.trim() || "",
+            secondary: parts[1]?.trim() || ""
+          };
+        });
+        console.log("✅ Parsed as array of strings");
+      }
+    } else if (typeof dualToneData === 'string' && dualToneData.length > 0) {
+      console.log("✅ dualToneData is string:", dualToneData);
+      // If comma-separated string like "Color1 with Color2, Color3 with Color4"
+      dualToneColors = dualToneData
+        .split(',')
+        .map((colorStr: string) => {
+          const colorTrim = colorStr.trim();
+          const parts = colorTrim.split(' with ');
+          return {
+            name: colorTrim,
+            primary: parts[0]?.trim() || "",
+            secondary: parts[1]?.trim() || ""
+          };
+        })
+        .filter((c) => c.primary && c.secondary);
+      console.log("✅ Parsed as comma-separated string, result:", dualToneColors);
+    } else {
+      console.log("❌ No dual tone data found or invalid format");
+    }
+
+    console.log("📋 Final parsedDualToneColors:", dualToneColors);
+    return dualToneColors;
+  }, [specs?.exterior?.dual_tone_color_names, specs?.exterior?.exterior_dual_tone_color_names, specs?.exterior?.dual_tone_colors, specs?.exterior?.dualToneColors, specs?.exterior?.dualToneColorNames, specs?.dual_tone_color_names, specs?.exterior_dual_tone_color_names, specs?.dual_tone_colors, specs?.dualToneColors, specs?.dualToneColorNames, specs?.extras]);
 
   // Features Data - Dynamically built from backend specs
   const featureCategories = useMemo(() => {
@@ -270,9 +509,30 @@ const VariantDetail = () => {
       .getByVariant(variantData.id)
       .then((data) => {
         console.log("✅ Specs fetched for variant", variantData.id, ":", data);
+        console.log("🏗️ Specs structure:", {
+          hasExterior: !!data?.exterior,
+          exteriorKeys: data?.exterior ? Object.keys(data.exterior) : [],
+          monotoneColors: data?.exterior?.monotone_color_names,
+          dualToneColors: data?.exterior?.dual_tone_color_names,
+          allColors: data?.exterior?.colors,
+          hasExtras: !!data?.extras,
+          extrasKeys: data?.extras ? Object.keys(data.extras) : [],
+          extrasColors: data?.extras?.monotone_color_names || data?.extras?.colors || data?.extras?.exterior_monotone_color_names,
+          extrasDualTone: data?.extras?.dual_tone_color_names,
+          allDataKeys: Object.keys(data || {}),
+          fulldData: data // Log entire data for inspection
+        });
         // Log extras to see what fields are available
         if (data?.extras) {
           console.log("📊 Specs extras keys:", Object.keys(data.extras));
+          console.log("📦 All extras data:", data.extras);
+          console.log("🎨 Looking for dual tone in extras:", {
+            dual_tone_color_names: data?.extras?.dual_tone_color_names,
+            dualToneColorNames: data?.extras?.dualToneColorNames,
+            dual_tone_colors: data?.extras?.dual_tone_colors,
+            dualToneColors: data?.extras?.dualToneColors,
+            exterior_dual_tone_color_names: data?.extras?.exterior_dual_tone_color_names,
+          });
         }
         if (data?.engine) {
           console.log("🔧 Specs engine keys:", Object.keys(data.engine));
@@ -910,7 +1170,136 @@ const VariantDetail = () => {
                   <TabsContent value="colors" className="animate-in fade-in slide-in-from-bottom-2">
                     <Card className="p-8">
                       <h3 className="text-lg font-semibold mb-6">Available Colors</h3>
-                      <ColorSwatches colors={variantData.colors || []} onColorChange={setSelectedColor} />
+                      
+    {(() => {
+      // Check multiple possible locations for colors in specs
+      let colorData = 
+        specs?.exterior?.monotone_color_names || 
+        specs?.exterior?.colors ||
+        specs?.exterior?.body_colours ||
+        specs?.colors ||
+        specs?.exterior_monotone_color_names ||
+        specs?.exterior_colors ||
+        specs?.available_colors ||
+        specs?.color_names ||
+        specs?.extras?.exterior_monotone_color_names ||
+        specs?.extras?.monotone_colors ||
+        specs?.extras?.colors ||
+        specs?.extras?.available_colors ||
+        specs?.extras?.body_colours ||
+        variantData?.colors;
+      
+      // Ensure allColors is always an array
+      let allColors: string[] = [];
+      if (Array.isArray(colorData)) {
+        allColors = colorData;
+      } else if (typeof colorData === 'string') {
+        // Split by comma and trim whitespace
+        allColors = colorData
+          .split(',')
+          .map((c: string) => c.trim())
+          .filter((c: string) => c.length > 0);
+      } else if (colorData) {
+        allColors = [String(colorData)];
+      }
+      
+      const hasColors = allColors && allColors.length > 0;
+      
+      console.log("🎨 Final Colors Extracted:", {
+        rawColorData: colorData,
+        parsedColors: allColors,
+        hasColors,
+        colorCount: allColors.length
+      });
+      
+      if (!hasColors) {
+        return (
+          <div className="text-center py-12 text-slate-500">
+            <p>No colors configured for this variant</p>
+          </div>
+        );
+      }
+      
+      console.log("🎨 Colors Tab - Render Decision:", {
+        allColorsLength: allColors.length,
+        colorImagesKeys: Object.keys(colorImages),
+        colorImagesCount: Object.keys(colorImages).length,
+        shouldShowGallery: Object.keys(colorImages).length > 0,
+        colorImages: colorImages
+      });
+      
+      if (Object.keys(colorImages).length > 0 || Object.keys(dualToneColorImages).length > 0) {
+        console.log("✅ SHOWING ColorImageGallery");
+        return (
+          <ColorImageGallery
+            colors={allColors}
+            dualToneColors={parsedDualToneColors}
+            colorImages={colorImages}
+            dualToneColorImages={dualToneColorImages}
+            modelName={modelData?.name || ""}
+            brandName={modelData?.brandName}
+            onColorChange={setSelectedColor}
+          />
+        );
+      }
+      
+
+      console.log("❌ SHOWING Placeholder");
+
+      console.log("🟣 DualTone Debug:", {
+      parsedDualToneColors,
+      dualToneColorImages,
+     });
+
+
+      return (
+        <div className="space-y-6">
+          {/* Placeholder for images - Reserved space that fills up when images uploaded */}
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-12 text-center min-h-96 flex items-center justify-center">
+            <div className="space-y-3">
+              <div className="text-5xl">📸</div>
+              <p className="text-slate-600 font-medium text-lg">Car images will appear here</p>
+              <p className="text-sm text-slate-500">
+                Upload color-specific images from the admin panel to display {allColors.length} available color{allColors.length !== 1 ? 's' : ''}: {allColors.join(', ')}
+                {parsedDualToneColors.length > 0 && (
+                  <><br /><strong>Dual Tone:</strong> {parsedDualToneColors.map(d => d.name).join(', ')}</>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Tabs to switch between monotone and dual tone */}
+          {parsedDualToneColors.length > 0 && (
+            <div className="flex gap-2 border-b">
+              <button
+                onClick={() => {}}
+                className="px-4 py-2 font-medium border-b-2 border-blue-500 text-blue-600"
+              >
+                Single Tone ({allColors.length})
+              </button>
+              <button
+                onClick={() => {}}
+                className="px-4 py-2 font-medium text-gray-500 hover:text-gray-700"
+              >
+                Dual Tone ({parsedDualToneColors.length})
+              </button>
+            </div>
+          )}
+
+          {/* Color swatches below placeholder */}
+          <div className="space-y-4 border-t pt-6">
+            <div className="flex items-center justify-between">
+              <p className="font-semibold text-sm">Available Colors ({allColors.length}{parsedDualToneColors.length > 0 ? ` + ${parsedDualToneColors.length} Dual Tone` : ''}):</p>
+            </div>
+            <ColorSwatches 
+              colors={allColors} 
+              dualToneColors={parsedDualToneColors}
+              onColorChange={setSelectedColor} 
+            />
+          </div>
+        </div>
+      );
+    })()}
                     </Card>
                   </TabsContent>
 

@@ -146,6 +146,16 @@ const DEFAULT_MAPPING: Mapping = {
   battery_warranty: "warranty.batteryWarranty",
   wheels: "wheels",
   body_colours: "exterior.body_colours",
+  
+  // Color-related fields
+  exterior_monotone_color_names: "exterior.monotone_color_names",
+  monotone_color_names: "exterior.monotone_color_names",
+  monotone_colors: "exterior.monotone_color_names",
+  colors: "exterior.colors",
+  exterior_colors: "exterior.colors",
+  available_colors: "exterior.colors",
+  color_names: "exterior.colors",
+  
   ground_clearance: "dimensions.groundClearance",
   gross_vehicle_weight: "dimensions.grossWeight",
   number_of_rows: "overview.number_of_rows",

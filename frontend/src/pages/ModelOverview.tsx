@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import VariantTable from "@/components/model/VariantTable";
 import ColorSwatches from "@/components/model/ColorSwatches";
+import ColorImageGallery from "@/components/model/ColorImageGallery";
 import { PriceBreakupModal } from "@/components/model/PriceBreakupModal";
 import { calculatePriceBreakdown, calculatePriceBreakdownWithConfig, getStateFromCity } from "@/lib/priceCalculations";
 import PhotoGallery from "@/components/model/PhotoGallery";
@@ -18,6 +19,7 @@ import Viewer360 from "@/components/model/Viewer360";
 import { LeadsStrip } from "@/components/leads/LeadsStrip";
 import { useModel, useVariants, useModels } from "@/lib/api-hooks";
 import { specsApi, citiesApi } from "@/lib/api";
+import { getColorImageGallery } from "@/lib/images";
 import { updateMetaTags, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { formatINR, parseINRToRupees } from "@/lib/guards";
 import { useCity } from "@/contexts/CityContext";
@@ -97,7 +99,61 @@ const ModelOverview = () => {
     }, [modelData?.gallery, modelData?.image, mediaData.gallery]);
 
     const carImage = galleryImages[0] || mediaData.hero || modelData?.image || DEFAULT_OG_IMAGE;
-  const colors = variants?.[0]?.colors || ["White", "Black", "Silver", "Red", "Blue"];
+  
+  // Get colors from specs or variant
+  const colors = useMemo(() => {
+    // Check multiple possible locations for colors in specs
+    const colorsFromSpecs = 
+      specs?.exterior?.monotone_color_names || 
+      specs?.exterior?.colors ||
+      specs?.exterior?.body_colours ||
+      specs?.colors ||
+      specs?.exterior_monotone_color_names ||
+      specs?.exterior_colors ||
+      specs?.available_colors ||
+      specs?.color_names ||
+      specs?.extras?.exterior_monotone_color_names ||
+      specs?.extras?.monotone_colors ||
+      specs?.extras?.colors ||
+      specs?.extras?.available_colors ||
+      specs?.extras?.body_colours;
+    
+    const colorsFromVariant = variants?.[0]?.colors;
+    const defaultColors = ["White", "Black", "Silver", "Red", "Blue"];
+    
+    // Ensure result is always an array
+    let result: string[] = [];
+    
+    if (Array.isArray(colorsFromSpecs)) {
+      result = colorsFromSpecs;
+    } else if (typeof colorsFromSpecs === 'string') {
+      // Split by comma and trim whitespace
+      result = colorsFromSpecs
+        .split(',')
+        .map((c: string) => c.trim())
+        .filter((c: string) => c.length > 0);
+    } else if (Array.isArray(colorsFromVariant)) {
+      result = colorsFromVariant;
+    } else if (typeof colorsFromVariant === 'string') {
+      result = colorsFromVariant.split(',').map(c => c.trim()).filter(Boolean);
+    } else {
+      result = defaultColors;
+    }
+    
+    console.log("🎨 Colors Debug (ModelOverview):", {
+      fromSpecs: colorsFromSpecs,
+      fromVariant: colorsFromVariant,
+      finalResult: result
+    });
+    
+    return result;
+  }, [specs?.exterior?.monotone_color_names, specs?.exterior?.colors, specs?.exterior?.body_colours, specs?.colors, specs?.exterior_monotone_color_names, specs?.exterior_colors, specs?.available_colors, specs?.color_names, specs?.extras, variants]);
+
+  // Color-based image gallery
+  const colorImages = useMemo(() => {
+    if (!colors || colors.length === 0) return {};
+    return getColorImageGallery(brand || "", modelSlug || "", "", colors, galleryImages);
+  }, [colors, brand, modelSlug, galleryImages]);
 
   // Price Logic
   const { minPrice, maxPrice } = useMemo(() => {
@@ -501,7 +557,38 @@ const ModelOverview = () => {
                         <div ref={colorsRef}>
                             <h2 className="text-2xl font-bold mb-6">Available Colors</h2>
                             <Card className="p-8">
-                                 <ColorSwatches colors={colors} onColorChange={setSelectedColor} />
+                              {!colors || colors.length === 0 ? (
+                                <div className="text-center py-12 text-slate-500">
+                                  <p>No colors configured for this model</p>
+                                </div>
+                              ) : Object.keys(colorImages).length > 0 ? (
+                                <ColorImageGallery
+                                  colors={colors}
+                                  colorImages={colorImages}
+                                  modelName={modelData?.name || ""}
+                                  brandName={modelData?.brandName}
+                                  onColorChange={setSelectedColor}
+                                />
+                              ) : (
+                                <div className="space-y-6">
+                                  {/* Placeholder for images - Reserved space that fills up when images uploaded */}
+                                  <div className="bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-12 text-center min-h-96 flex items-center justify-center">
+                                    <div className="space-y-3">
+                                      <div className="text-5xl">📸</div>
+                                      <p className="text-slate-600 font-medium text-lg">Car images will appear here</p>
+                                      <p className="text-sm text-slate-500">Upload color-specific images from the admin panel to display {colors.length} available color{colors.length > 1 ? 's' : ''}: {colors.join(', ')}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Color swatches below placeholder */}
+                                  <div className="space-y-4 border-t pt-6">
+                                    <div className="flex items-center justify-between">
+                                      <p className="font-semibold text-sm">Available Colors ({colors.length}):</p>
+                                    </div>
+                                    <ColorSwatches colors={colors} onColorChange={setSelectedColor} />
+                                  </div>
+                                </div>
+                              )}
                             </Card>
                         </div>
                     )}

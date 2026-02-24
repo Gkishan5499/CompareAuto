@@ -66,6 +66,11 @@ export interface ICarSpecs extends Document {
     foglamps?: string;
   };
 
+  exterior?: {
+    monotone_color_names?: string[]; // Available exterior colors
+    colors?: string[]; // Alias for colors
+  };
+
   media?: {
     hero?: string;
     gallery?: string[];
@@ -176,6 +181,11 @@ const CarSpecsSchema = new Schema<ICarSpecs>(
       drl: String,
       taillamps: String,
       foglamps: String,
+    },
+
+    exterior: {
+      monotone_color_names: [String],
+      colors: [String],
     },
 
     media: {

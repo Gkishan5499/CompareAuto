@@ -105,8 +105,11 @@ export default function ModelForm() {
 
         {/* Gallery Upload */}
         <div className="border rounded p-3">
-          <CloudinaryUpload value={gallery} onChange={setGallery} maxFiles={12} />
-          <p className="text-xs text-gray-500 mt-2">First image becomes the hero image on the site.</p>
+          <CloudinaryUpload value={gallery} onChange={setGallery} maxFiles={30} />
+          <p className="text-xs text-gray-500 mt-2">
+            Upload up to 30 images. First image becomes the hero image on the site. <br/>
+            You can reorder images by dragging or using the move buttons on hover.
+          </p>
         </div>
 
         <div className="space-y-1">
