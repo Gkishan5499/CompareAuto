@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import client from "../../api/client";
@@ -14,8 +15,13 @@ export default function DealerForm() {
     queryKey: ["dealer", id],
     queryFn: async () => (await client.get(`/api/dealers/${id}`)).data,
     enabled: !!id,
-    onSuccess: (d) => d && reset(d),
   });
+
+  useEffect(() => {
+    if (dealer) {
+      reset(dealer);
+    }
+  }, [dealer, reset]);
 
   const create = useApiCreate(["dealers"], "/api/dealers");
   const update = useApiUpdate(["dealers"], `/api/dealers/${id}`);

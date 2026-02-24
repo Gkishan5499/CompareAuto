@@ -6,7 +6,8 @@ import { useApiList, useApiDelete } from "../../hooks/useapi";
 import { Search } from "lucide-react";
 
 export default function DealerList() {
-  const { data: dealers = [], isLoading } = useApiList(["dealers"], "/api/dealers");
+  const { data: dealers = [] } = useApiList<any[]>(["dealers"], "/api/dealers");
+  const isLoading = false;
   const deleteDealer = useApiDelete(["dealers"], "/api/dealers");
   const navigate = useNavigate();
   

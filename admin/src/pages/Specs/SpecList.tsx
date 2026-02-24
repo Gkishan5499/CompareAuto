@@ -15,7 +15,7 @@ export default function SpecList() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [displayCount, setDisplayCount] = useState(20);
   
-  const specItems = specs.items || [];
+  const specItems = (specs as any)?.items || [];
   
   useEffect(() => {
     const q = searchQuery.trim();
