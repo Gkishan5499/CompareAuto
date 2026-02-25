@@ -9,6 +9,7 @@ const ArticleSchema = new mongoose_1.Schema({
     tags: { type: [String], default: [] },
     date: { type: String, required: true },
     author: { type: String, required: true },
+    authorBio: { type: String, default: "" },
     heroImage: { type: String },
     excerpt: { type: String },
     body: { type: String, required: true },

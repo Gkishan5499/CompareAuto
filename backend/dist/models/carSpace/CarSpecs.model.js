@@ -58,6 +58,10 @@ const CarSpecsSchema = new mongoose_1.Schema({
         taillamps: String,
         foglamps: String,
     },
+    exterior: {
+        monotone_color_names: [String],
+        colors: [String],
+    },
     media: {
         hero: String,
         gallery: [String],

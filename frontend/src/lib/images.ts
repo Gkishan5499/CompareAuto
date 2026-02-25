@@ -167,14 +167,15 @@ export const getColorImageGallery = (
         const pattern2 = `${brandSlug}_${modelSlug}_${colorSlug}`;
         const pattern2Alt = `${brandSlug}_${modelSlugNoUnderscore}_${colorSlug}`;
         
-        const match1 = filename.includes(pattern1) || filename.includes(pattern1Alt);
-        const match2 = filename.includes(pattern2) || filename.includes(pattern2Alt);
+        // Remove file extension for cleaner matching
+        const filenameNoExt = filename.replace(/\.(jpg|jpeg|png|webp)$/i, "");
+        const filenameNormalized = filenameNoExt.replace(/-/g, "_");
+        
+        const match1 = filenameNormalized.includes(pattern1) || filenameNormalized.includes(pattern1Alt);
+        const match2 = filenameNormalized.includes(pattern2) || filenameNormalized.includes(pattern2Alt);
         const matches = match1 || match2;
         
         if (!matches) return false;
-        
-        // Remove file extension for cleaner matching
-        const filenameNoExt = filename.replace(/\.(jpg|jpeg|png|webp)$/i, "");
         
         // For monotone colors, EXCLUDE images that match dual-tone patterns
         // Method 1: Check against explicit dual-tone list from specs
@@ -189,8 +190,8 @@ export const getColorImageGallery = (
           const dualPattern2Alt = `${brandSlug}_${modelSlugNoUnderscore}_${primarySlug}_${secondarySlug}`;
           
           // If this image matches a dual-tone pattern, exclude it from monotone
-          if (filenameNoExt.includes(dualPattern1) || filenameNoExt.includes(dualPattern2) ||
-              filenameNoExt.includes(dualPattern1Alt) || filenameNoExt.includes(dualPattern2Alt)) {
+          if (filenameNormalized.includes(dualPattern1) || filenameNormalized.includes(dualPattern2) ||
+              filenameNormalized.includes(dualPattern1Alt) || filenameNormalized.includes(dualPattern2Alt)) {
             console.log(`  ❌ [${color}] Excluded dual-tone: ${filename.substring(0, 50)}...`);
             return false;
           }
@@ -205,8 +206,8 @@ export const getColorImageGallery = (
         const expectedPattern2AltEnd = pattern2Alt; // brand_model_color (no underscore in model)
         
         // Check if filename has content AFTER the expected monotone pattern (excluding common suffixes)
-        const afterPattern1 = filenameNoExt.replace(expectedPattern1End, "").replace(expectedPattern1AltEnd, "");
-        const afterPattern2 = filenameNoExt.replace(expectedPattern2End, "").replace(expectedPattern2AltEnd, "");
+        const afterPattern1 = filenameNormalized.replace(expectedPattern1End, "").replace(expectedPattern1AltEnd, "");
+        const afterPattern2 = filenameNormalized.replace(expectedPattern2End, "").replace(expectedPattern2AltEnd, "");
         
         // If there's additional content after the color (beyond just _ or angle/descriptor), it's likely dual-tone
         const hasExtraColorSegment = (remaining: string) => {
@@ -364,6 +365,7 @@ export const getDualToneColorImageGallery = (
         
         // Remove file extension for cleaner matching
         const filenameNoExt = filename.replace(/\.(jpg|jpeg|png|webp)$/i, "");
+        const filenameNormalized = filenameNoExt.replace(/-/g, "_");
         
         // Check all secondary color variations
         let matched = false;
@@ -373,10 +375,10 @@ export const getDualToneColorImageGallery = (
           const varPattern1Alt = `${brandSlug}_${modelSlugNoUnderscore}_${variantSlug}_${primarySlug}_${secSlug}`;
           const varPattern2Alt = `${brandSlug}_${modelSlugNoUnderscore}_${primarySlug}_${secSlug}`;
           
-          const match1 = filenameNoExt === varPattern1 || filenameNoExt.includes(varPattern1);
-          const match2 = filenameNoExt === varPattern2 || filenameNoExt.includes(varPattern2);
-          const match1Alt = filenameNoExt === varPattern1Alt || filenameNoExt.includes(varPattern1Alt);
-          const match2Alt = filenameNoExt === varPattern2Alt || filenameNoExt.includes(varPattern2Alt);
+          const match1 = filenameNormalized === varPattern1 || filenameNormalized.includes(varPattern1);
+          const match2 = filenameNormalized === varPattern2 || filenameNormalized.includes(varPattern2);
+          const match1Alt = filenameNormalized === varPattern1Alt || filenameNormalized.includes(varPattern1Alt);
+          const match2Alt = filenameNormalized === varPattern2Alt || filenameNormalized.includes(varPattern2Alt);
           
           if (match1 || match2 || match1Alt || match2Alt) {
             console.log(`  ✅ MATCHED: ${filename}`);

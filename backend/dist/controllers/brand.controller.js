@@ -5,10 +5,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteBrand = exports.updateBrand = exports.bulkCreateBrands = exports.createBrand = exports.getBrandBySlug = exports.getBrandById = exports.getAllBrands = void 0;
 const Brand_model_1 = __importDefault(require("../models/Brand.model"));
+const CarModel_model_1 = __importDefault(require("../models/CarModel.model"));
 const getAllBrands = async (req, res) => {
     try {
-        const brands = await Brand_model_1.default.find().sort({ name: 1 });
-        res.json(brands);
+        const brands = await Brand_model_1.default.find().sort({ name: 1 }).lean();
+        // Get model counts for each brand
+        const brandIds = brands.map(b => b.id);
+        const modelCounts = await CarModel_model_1.default.aggregate([
+            { $match: { brandId: { $in: brandIds } } },
+            { $group: { _id: "$brandId", count: { $sum: 1 } } }
+        ]);
+        // Create a map for quick lookup
+        const countMap = new Map(modelCounts.map(mc => [mc._id, mc.count]));
+        // Add model count to each brand
+        const brandsWithCounts = brands.map(brand => ({
+            ...brand,
+            modelCount: countMap.get(brand.id) || 0
+        }));
+        res.json(brandsWithCounts);
     }
     catch (error) {
         res.status(500).json({ error: "Failed to fetch brands" });
@@ -17,10 +31,12 @@ const getAllBrands = async (req, res) => {
 exports.getAllBrands = getAllBrands;
 const getBrandById = async (req, res) => {
     try {
-        const brand = await Brand_model_1.default.findOne({ id: req.params.id });
+        const brand = await Brand_model_1.default.findOne({ id: req.params.id }).lean();
         if (!brand)
             return res.status(404).json({ message: "Brand not found" });
-        res.json(brand);
+        // Get model count for this brand
+        const modelCount = await CarModel_model_1.default.countDocuments({ brandId: brand.id });
+        res.json({ ...brand, modelCount });
     }
     catch (error) {
         res.status(500).json({ error: "Failed to fetch brand" });
@@ -29,10 +45,12 @@ const getBrandById = async (req, res) => {
 exports.getBrandById = getBrandById;
 const getBrandBySlug = async (req, res) => {
     try {
-        const brand = await Brand_model_1.default.findOne({ slug: req.params.slug });
+        const brand = await Brand_model_1.default.findOne({ slug: req.params.slug }).lean();
         if (!brand)
             return res.status(404).json({ message: "Brand not found" });
-        res.json(brand);
+        // Get model count for this brand
+        const modelCount = await CarModel_model_1.default.countDocuments({ brandId: brand.id });
+        res.json({ ...brand, modelCount });
     }
     catch (error) {
         res.status(500).json({ error: "Failed to fetch brand" });

@@ -10,6 +10,38 @@ const CarSpecs_model_1 = __importDefault(require("../../models/carSpace/CarSpecs
  * req: any  → allow req.admin, req.logActivity etc.
  */
 /* ============================================
+   HELPER: Convert boolean values to "Yes"/"No"
+   Transforms stored boolean values AND string "true"/"false" to match CSV format (Yes/No)
+============================================ */
+function transformBooleansToYesNo(obj) {
+    if (obj === null || obj === undefined)
+        return obj;
+    // Handle boolean values
+    if (typeof obj === "boolean") {
+        return obj ? "Yes" : "No";
+    }
+    // Handle string "true"/"false" values (case-insensitive)
+    if (typeof obj === "string") {
+        const lowerStr = obj.toLowerCase().trim();
+        if (lowerStr === "true")
+            return "Yes";
+        if (lowerStr === "false")
+            return "No";
+        return obj; // Return original string if not true/false
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(item => transformBooleansToYesNo(item));
+    }
+    if (typeof obj === "object") {
+        const transformed = {};
+        for (const [key, value] of Object.entries(obj)) {
+            transformed[key] = transformBooleansToYesNo(value);
+        }
+        return transformed;
+    }
+    return obj;
+}
+/* ============================================
    GET SPECS BY VARIANT ID
 ============================================ */
 const getSpecsByVariant = async (req, res) => {
@@ -19,9 +51,11 @@ const getSpecsByVariant = async (req, res) => {
         if (!specs) {
             return res.status(404).json({ message: "Specifications not found" });
         }
+        // Transform boolean values to "Yes"/"No" for display
+        const transformedSpecs = transformBooleansToYesNo(specs);
         return res.json({
             success: true,
-            data: specs,
+            data: transformedSpecs,
         });
     }
     catch (err) {
@@ -47,10 +81,12 @@ const createSpecs = async (req, res) => {
         if (req.logActivity) {
             await req.logActivity("create", "specs", created.variantId, payload);
         }
+        // Transform boolean values to "Yes"/"No" for display
+        const transformedCreated = transformBooleansToYesNo(created.toObject ? created.toObject() : created);
         return res.json({
             success: true,
             message: "Specs created",
-            data: created,
+            data: transformedCreated,
         });
     }
     catch (err) {
@@ -71,10 +107,12 @@ const updateSpecs = async (req, res) => {
         if (req.logActivity) {
             await req.logActivity("update", "specs", variantId, payload);
         }
+        // Transform boolean values to "Yes"/"No" for display
+        const transformedUpdated = transformBooleansToYesNo(updated.toObject ? updated.toObject() : updated);
         return res.json({
             success: true,
             message: "Specs updated",
-            data: updated,
+            data: transformedUpdated,
         });
     }
     catch (err) {
@@ -112,19 +150,30 @@ exports.deleteSpecs = deleteSpecs;
 ============================================ */
 const listSpecs = async (req, res) => {
     try {
+        const q = String(req.query.q || req.query.search || "").trim();
         const page = Math.max(1, parseInt(String(req.query.page || "1"), 10));
         const limit = Math.min(100, parseInt(String(req.query.limit || "50"), 10));
         const skip = (page - 1) * limit;
+        const filter = {};
+        if (q) {
+            const regex = new RegExp(q, "i");
+            filter.$or = [
+                { variantId: regex },
+                { "overview.summary": regex },
+            ];
+        }
         const [items, total] = await Promise.all([
-            CarSpecs_model_1.default.find().sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
-            CarSpecs_model_1.default.countDocuments(),
+            CarSpecs_model_1.default.find(filter).sort({ updatedAt: -1 }).skip(skip).limit(limit).lean(),
+            CarSpecs_model_1.default.countDocuments(filter),
         ]);
+        // Transform boolean values to "Yes"/"No" for display
+        const transformedItems = items.map(item => transformBooleansToYesNo(item));
         return res.json({
             success: true,
             page,
             limit,
             total,
-            items,
+            items: transformedItems,
         });
     }
     catch (err) {
@@ -163,11 +212,16 @@ const bulkCreateSpecs = async (req, res) => {
         if (req.logActivity) {
             await req.logActivity("bulk-upsert", "specs", "bulk", { count: upserted });
         }
+        // Transform invalid rows for consistency
+        const transformedInvalidRows = invalid.map((row) => ({
+            ...row,
+            row: transformBooleansToYesNo(row.row),
+        }));
         return res.json({
             success: true,
             upsertedCount: upserted,
-            invalidCount: invalid.length,
-            invalidRows: invalid,
+            invalidCount: transformedInvalidRows.length,
+            invalidRows: transformedInvalidRows,
         });
     }
     catch (err) {

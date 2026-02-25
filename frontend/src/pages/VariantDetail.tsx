@@ -230,9 +230,18 @@ const VariantDetail = () => {
       specs?.extras?.exterior_dual_tone_color_names ||
       specs?.extras?.dual_tone_colors ||
       specs?.extras?.dualToneColors ||
-      specs?.extras?.dualToneColorNames;
+      specs?.extras?.dualToneColorNames ||
+      specs?.extras?.exterior?.dual_tone_color_names ||
+      specs?.extras?.exterior?.dual_tone_colors;
 
     let dualToneColors: Array<{ name: string; primary: string; secondary: string }> = [];
+
+    // Debug logging
+    console.log("🎨 DualTone Color Lookup:", {
+      foundData: dualToneData,
+      specs_exterior: specs?.exterior,
+      specs_extras: specs?.extras,
+    });
 
     // Parse dual tone color data
     if (Array.isArray(dualToneData)) {
@@ -263,6 +272,8 @@ const VariantDetail = () => {
         .filter((c) => c.primary && c.secondary);
     }
 
+    console.log("🎨 Parsed DualTone Colors:", dualToneColors);
+
     return dualToneColors;
   }, [specs?.exterior?.dual_tone_color_names, specs?.exterior?.exterior_dual_tone_color_names, specs?.exterior?.dual_tone_colors, specs?.exterior?.dualToneColors, specs?.exterior?.dualToneColorNames, specs?.dual_tone_color_names, specs?.exterior_dual_tone_color_names, specs?.dual_tone_colors, specs?.dualToneColors, specs?.dualToneColorNames, specs?.extras]);
 
@@ -290,14 +301,38 @@ const VariantDetail = () => {
     let colors: string[] = [];
     
     if (Array.isArray(colorsFromSpecs)) {
-      colors = colorsFromSpecs;
+      if (colorsFromSpecs.length === 1 && typeof colorsFromSpecs[0] === "string") {
+        const raw = colorsFromSpecs[0];
+        if (raw.includes(",")) {
+          colors = raw
+            .split(",")
+            .map((c: string) => c.trim())
+            .filter((c: string) => c.length > 0);
+        } else {
+          colors = colorsFromSpecs as string[];
+        }
+      } else {
+        colors = colorsFromSpecs as string[];
+      }
     } else if (typeof colorsFromSpecs === 'string' && colorsFromSpecs.length > 0) {
       colors = colorsFromSpecs
         .split(',')
         .map((c: string) => c.trim())
         .filter((c: string) => c.length > 0);
     } else if (Array.isArray(colorsFromVariant)) {
-      colors = colorsFromVariant;
+      if (colorsFromVariant.length === 1 && typeof colorsFromVariant[0] === "string") {
+        const raw = colorsFromVariant[0];
+        if (raw.includes(",")) {
+          colors = raw
+            .split(",")
+            .map((c: string) => c.trim())
+            .filter((c: string) => c.length > 0);
+        } else {
+          colors = colorsFromVariant as string[];
+        }
+      } else {
+        colors = colorsFromVariant as string[];
+      }
     } else if (typeof colorsFromVariant === 'string' && colorsFromVariant.length > 0) {
       colors = colorsFromVariant
         .split(',')
@@ -513,11 +548,13 @@ const VariantDetail = () => {
           hasExterior: !!data?.exterior,
           exteriorKeys: data?.exterior ? Object.keys(data.exterior) : [],
           monotoneColors: data?.exterior?.monotone_color_names,
+          monotoneColorsType: typeof data?.exterior?.monotone_color_names,
           dualToneColors: data?.exterior?.dual_tone_color_names,
+          dualToneColorsType: typeof data?.exterior?.dual_tone_color_names,
           allColors: data?.exterior?.colors,
           hasExtras: !!data?.extras,
           extrasKeys: data?.extras ? Object.keys(data.extras) : [],
-          extrasColors: data?.extras?.monotone_color_names || data?.extras?.colors || data?.extras?.exterior_monotone_color_names,
+          extrasMonotoneColors: data?.extras?.monotone_color_names || data?.extras?.colors || data?.extras?.exterior_monotone_color_names,
           extrasDualTone: data?.extras?.dual_tone_color_names,
           allDataKeys: Object.keys(data || {}),
           fulldData: data // Log entire data for inspection
@@ -526,6 +563,12 @@ const VariantDetail = () => {
         if (data?.extras) {
           console.log("📊 Specs extras keys:", Object.keys(data.extras));
           console.log("📦 All extras data:", data.extras);
+          console.log("🎨 Looking for monotone in extras:", {
+            monotone_color_names: data?.extras?.monotone_color_names,
+            exterior_monotone_color_names: data?.extras?.exterior_monotone_color_names,
+            monotone_colors: data?.extras?.monotone_colors,
+            colors: data?.extras?.colors,
+          });
           console.log("🎨 Looking for dual tone in extras:", {
             dual_tone_color_names: data?.extras?.dual_tone_color_names,
             dualToneColorNames: data?.extras?.dualToneColorNames,
@@ -1228,7 +1271,9 @@ const VariantDetail = () => {
         colorImages: colorImages
       });
       
-      if (Object.keys(colorImages).length > 0 || Object.keys(dualToneColorImages).length > 0) {
+      const hasAnyColors = allColors.length > 0 || parsedDualToneColors.length > 0;
+
+      if (hasAnyColors) {
         console.log("✅ SHOWING ColorImageGallery");
         return (
           <ColorImageGallery

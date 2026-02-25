@@ -119,8 +119,8 @@ exports.getPopularCarModels = getPopularCarModels;
 const getNewCarModels = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
-        const models = await CarModel_model_1.default.find({ status: "new" })
-            .sort({ launchDate: -1 })
+        const models = await CarModel_model_1.default.find({ status: { $ne: "upcoming" } })
+            .sort({ createdAt: -1 })
             .limit(limit);
         res.json(models);
     }

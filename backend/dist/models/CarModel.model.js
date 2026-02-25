@@ -8,6 +8,7 @@ const CarModelSchema = new mongoose_1.Schema({
     brandName: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     image: { type: String, default: "/cars/placeholder.png" },
+    gallery: { type: [String], default: [] },
     bodyType: { type: String },
     fuelTypes: { type: [String], default: [] },
     priceRange: {

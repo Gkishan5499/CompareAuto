@@ -151,6 +151,9 @@ const DEFAULT_MAPPING: Mapping = {
   exterior_monotone_color_names: "exterior.monotone_color_names",
   monotone_color_names: "exterior.monotone_color_names",
   monotone_colors: "exterior.monotone_color_names",
+  exterior_dual_tone_color_names: "exterior.dual_tone_color_names",
+  dual_tone_color_names: "exterior.dual_tone_color_names",
+  dual_tone_colors: "exterior.dual_tone_color_names",
   colors: "exterior.colors",
   exterior_colors: "exterior.colors",
   available_colors: "exterior.colors",
@@ -449,7 +452,16 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
       }
 
       // Helper to walk and normalize arrays in the specsObj
-      const allowedArrays = new Set(["media.gallery", "model.colors", "colors", "wheels"]);
+      const allowedArrays = new Set([
+        "media.gallery", 
+        "model.colors", 
+        "colors", 
+        "wheels",
+        "exterior.monotone_color_names",
+        "exterior.dual_tone_color_names",
+        "exterior.colors",
+        "exterior.body_colours"
+      ]);
       const normalizeArrays = (obj: any, path = "") => {
         if (!obj || typeof obj !== 'object') return;
         for (const key of Object.keys(obj)) {
@@ -477,6 +489,13 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
         variant: variant.name,
         ...specsObj.overview,
       };
+
+      // Debug logging for color fields
+      console.log(`📋 CSV Upload - Variant ${variantId}:`, {
+        monotone_colors: specsObj?.exterior?.monotone_color_names,
+        dual_tone_colors: specsObj?.exterior?.dual_tone_color_names,
+        exterior_data: specsObj?.exterior,
+      });
 
       // =============================
       // UPSERT CAR SPECS

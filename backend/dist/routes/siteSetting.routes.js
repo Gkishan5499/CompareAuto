@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const siteSetting_controller_1 = require("../controllers/siteSetting.controller");
+const router = (0, express_1.Router)();
+router.get("/", siteSetting_controller_1.getAllSettings);
+router.get("/:key", siteSetting_controller_1.getSettingByKey);
+router.put("/", siteSetting_controller_1.upsertSetting);
+router.delete("/:key", siteSetting_controller_1.deleteSetting);
+exports.default = router;

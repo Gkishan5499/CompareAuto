@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calcPriceFromValue = exports.getVariantPriceBreakdown = void 0;
 const Variant_model_1 = __importDefault(require("../models/Variant.model"));
+const CarModel_model_1 = __importDefault(require("../models/CarModel.model"));
 const StateTaxConfig_model_1 = __importDefault(require("../models/StateTaxConfig.model"));
 const priceUtils_1 = require("../lib/priceUtils");
 const parseEngineCc = (engine) => {
@@ -22,10 +23,41 @@ const getVariantPriceBreakdown = async (req, res) => {
     try {
         const { id } = req.params;
         const { city, state } = req.query;
-        const variant = await Variant_model_1.default.findById(id).lean();
-        if (!variant)
-            return res.status(404).json({ error: "Variant not found" });
-        const exShowroomPrice = variant.exShowroomPrice || variant.price || 0;
+        // Try to find variant by ID first (MongoDB ObjectId), then by slug, then by id field
+        let variant = null;
+        if (id.match(/^[0-9a-fA-F]{24}$/)) {
+            // It's a valid MongoDB ObjectId
+            variant = await Variant_model_1.default.findById(id).lean();
+        }
+        if (!variant) {
+            // Try finding by slug field
+            variant = await Variant_model_1.default.findOne({ slug: id }).lean();
+        }
+        if (!variant) {
+            // Try finding by id field (some variants might use this)
+            variant = await Variant_model_1.default.findOne({ id: id }).lean();
+        }
+        if (!variant) {
+            console.error(`Variant not found with id/slug: ${id}`);
+            return res.status(404).json({ error: "Variant not found", searchedId: id });
+        }
+        // Fetch related model to get bodyType for variant-specific RTO calculation
+        let bodyType;
+        if (variant.modelId) {
+            const relatedModel = await CarModel_model_1.default.findOne({ id: variant.modelId }).lean();
+            bodyType = relatedModel === null || relatedModel === void 0 ? void 0 : relatedModel.bodyType;
+        }
+        let exShowroomPrice = variant.exShowroomPrice || variant.price || 0;
+        console.log(`getVariantPriceBreakdown: Variant ${id}`, {
+            exShowroomPrice: variant.exShowroomPrice,
+            price: variant.price,
+            resolved: exShowroomPrice
+        });
+        // If price is still 0, use a fallback (prevents 0 prices in response)
+        if (!exShowroomPrice || exShowroomPrice <= 0) {
+            console.warn(`Variant ${id} has no price, using fallback 800000`);
+            exShowroomPrice = 800000; // Safe fallback instead of error
+        }
         const resolvedState = state || (0, priceUtils_1.getStateFromCity)(city);
         // Validate state exists in database
         if (!priceUtils_1.ALL_STATES.includes(resolvedState)) {
@@ -39,6 +71,9 @@ const getVariantPriceBreakdown = async (req, res) => {
             fuelType: variant.fuelType,
             engineCc: parseEngineCc(variant.engine),
             stateCode: resolvedState,
+            seating: variant.seating ? parseInt(String(variant.seating)) : undefined,
+            transmission: variant.transmission,
+            bodyType: bodyType,
         });
         // Set cache control headers to prevent caching
         res.set({

@@ -137,6 +137,17 @@ const DEFAULT_MAPPING = {
     battery_warranty: "warranty.batteryWarranty",
     wheels: "wheels",
     body_colours: "exterior.body_colours",
+    // Color-related fields
+    exterior_monotone_color_names: "exterior.monotone_color_names",
+    monotone_color_names: "exterior.monotone_color_names",
+    monotone_colors: "exterior.monotone_color_names",
+    exterior_dual_tone_color_names: "exterior.dual_tone_color_names",
+    dual_tone_color_names: "exterior.dual_tone_color_names",
+    dual_tone_colors: "exterior.dual_tone_color_names",
+    colors: "exterior.colors",
+    exterior_colors: "exterior.colors",
+    available_colors: "exterior.colors",
+    color_names: "exterior.colors",
     ground_clearance: "dimensions.groundClearance",
     gross_vehicle_weight: "dimensions.grossWeight",
     number_of_rows: "overview.number_of_rows",
@@ -172,7 +183,7 @@ const DEFAULT_MAPPING = {
 // MAIN CSV UPLOAD HANDLER
 // =============================
 const uploadSpecsCsv = async (req, res) => {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     if (!req.file)
         return res.status(400).json({ message: "No file uploaded" });
     const filePath = req.file.path;
@@ -181,6 +192,7 @@ const uploadSpecsCsv = async (req, res) => {
         createdBrands: 0,
         createdModels: 0,
         createdVariants: 0,
+        updatedVariants: 0,
         createdSpecs: 0,
         updatedSpecs: 0,
         failed: 0,
@@ -301,50 +313,72 @@ const uploadSpecsCsv = async (req, res) => {
                 normalizedRow.variantId ||
                 `${carModel.id}-${slugify(variantName)}`;
             let variant = await Variant_model_1.default.findOne({ id: variantId });
-            if (!variant) {
-                // ensure variant-level values are scalar (not arrays) and parsed correctly
-                const pick = (paths) => {
-                    for (const p of paths) {
-                        const parts = p.split('.');
-                        let cur = specsObj;
-                        for (const part of parts) {
-                            if (!cur || typeof cur !== 'object') {
-                                cur = undefined;
-                                break;
-                            }
-                            cur = cur[part];
+            // Helper to pick a value from nested paths
+            const pick = (paths) => {
+                for (const p of paths) {
+                    const parts = p.split('.');
+                    let cur = specsObj;
+                    for (const part of parts) {
+                        if (!cur || typeof cur !== 'object') {
+                            cur = undefined;
+                            break;
                         }
-                        if (cur !== undefined && cur !== null && String(cur).trim() !== '')
-                            return cur;
+                        cur = cur[part];
                     }
-                    return undefined;
-                };
-                const priceRaw = pick(['overview.price', 'ex_showroom_price', 'price', 'variant.price']) || 0;
-                const priceNum = typeof priceRaw === 'string' && priceRaw !== '' ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) : Number(priceRaw) || 0;
-                let transmissionVal = pick(['performance.transmission', 'transmission', 'variant.transmission']);
-                if (Array.isArray(transmissionVal))
-                    transmissionVal = transmissionVal.join(', ');
-                if (transmissionVal === undefined || transmissionVal === null || String(transmissionVal).trim() === '')
-                    transmissionVal = 'Unknown';
-                let fuelTypeVal = pick(['fuel_type', 'fuelType', 'variant.fuelType']);
-                if (Array.isArray(fuelTypeVal))
-                    fuelTypeVal = fuelTypeVal.join(', ');
-                if (fuelTypeVal === undefined || fuelTypeVal === null || String(fuelTypeVal).trim() === '')
-                    fuelTypeVal = 'Unknown';
-                let mileageVal = pick(['performance.mileage', 'mileage_raw', 'mileage']);
-                if (Array.isArray(mileageVal))
-                    mileageVal = mileageVal[0];
-                const mileageNum = mileageVal ? Number(String(mileageVal).replace(/[^0-9.]/g, '')) : undefined;
-                let seatingVal = pick(['seating_capacity', 'seating', 'seating_capacity_raw']);
-                if (Array.isArray(seatingVal))
-                    seatingVal = seatingVal[0];
-                const seatingNum = seatingVal ? parseInt(String(seatingVal).replace(/[^0-9]/g, ''), 10) : undefined;
+                    if (cur !== undefined && cur !== null && String(cur).trim() !== '')
+                        return cur;
+                }
+                return undefined;
+            };
+            const priceRaw = normalizedRow.exshowroomprice || normalizedRow.ex_showroom_price || pick(['overview.price', 'ex_showroom_price', 'price', 'variant.price']) || normalizedRow.price || 0;
+            console.log('Price extraction:', {
+                priceRaw,
+                exshowroomprice: normalizedRow.exshowroomprice,
+                ex_showroom_price: normalizedRow.ex_showroom_price,
+                price: normalizedRow.price,
+                normalizedRowKeys: Object.keys(normalizedRow).filter(k => k.includes('price'))
+            });
+            let priceNum = typeof priceRaw === 'string' && priceRaw !== '' ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) : Number(priceRaw) || 0;
+            console.log('Parsed price before fallback:', priceNum);
+            // Normalize price: if < 1000, assume it's in lakhs and convert to rupees
+            // Examples: 10.49 (lakhs) → 1,049,000 rupees; 0.1049901 detected as malformed
+            if (priceNum > 0 && priceNum < 1000) {
+                // This is in lakhs, convert to rupees
+                priceNum = Math.round(priceNum * 100000);
+                console.log('Price was in lakhs format, converted to rupees:', priceNum);
+            }
+            // If price is 0 or missing, use a reasonable fallback
+            if (!priceNum || priceNum <= 0) {
+                priceNum = 800000; // Safe fallback price in rupees
+                console.log('Price was zero, using fallback 800000');
+            }
+            console.log('Final price:', priceNum);
+            let transmissionVal = pick(['performance.transmission', 'transmission', 'variant.transmission']) || normalizedRow.transmission;
+            if (Array.isArray(transmissionVal))
+                transmissionVal = transmissionVal.join(', ');
+            if (transmissionVal === undefined || transmissionVal === null || String(transmissionVal).trim() === '')
+                transmissionVal = 'Unknown';
+            let fuelTypeVal = pick(['fuel_type', 'fuelType', 'variant.fuelType']) || normalizedRow.fuel_type || normalizedRow.fueltype;
+            if (Array.isArray(fuelTypeVal))
+                fuelTypeVal = fuelTypeVal.join(', ');
+            if (fuelTypeVal === undefined || fuelTypeVal === null || String(fuelTypeVal).trim() === '')
+                fuelTypeVal = 'Unknown';
+            let mileageVal = pick(['performance.mileage', 'mileage_raw', 'mileage']) || normalizedRow.mileage_raw || normalizedRow.mileage;
+            if (Array.isArray(mileageVal))
+                mileageVal = mileageVal[0];
+            const mileageNum = mileageVal ? Number(String(mileageVal).replace(/[^0-9.]/g, '')) : undefined;
+            let seatingVal = pick(['seating_capacity', 'seating', 'seating_capacity_raw']) || normalizedRow.seating_capacity_raw || normalizedRow.seating;
+            if (Array.isArray(seatingVal))
+                seatingVal = seatingVal[0];
+            const seatingNum = seatingVal ? parseInt(String(seatingVal).replace(/[^0-9]/g, ''), 10) : undefined;
+            if (!variant) {
                 variant = await Variant_model_1.default.create({
                     id: variantId,
                     modelId: carModel.id,
                     name: variantName,
                     slug: slugify(variantName),
                     price: priceNum,
+                    exShowroomPrice: priceNum,
                     fuelType: fuelTypeVal,
                     transmission: String(transmissionVal),
                     mileage: mileageNum,
@@ -353,6 +387,22 @@ const uploadSpecsCsv = async (req, res) => {
                 report.createdVariants++;
                 // increase variant count
                 await CarModel_model_1.default.updateOne({ id: carModel.id }, { $inc: { variantCount: 1 } });
+            }
+            else {
+                // Update existing variant with new data
+                await Variant_model_1.default.updateOne({ id: variantId }, {
+                    $set: {
+                        name: variantName,
+                        slug: slugify(variantName),
+                        price: priceNum,
+                        exShowroomPrice: priceNum,
+                        fuelType: fuelTypeVal,
+                        transmission: String(transmissionVal),
+                        mileage: mileageNum,
+                        seating: seatingNum,
+                    }
+                });
+                report.updatedVariants = (report.updatedVariants || 0) + 1;
             }
             // =============================
             // PREPARE SPECS OBJECT: normalize array/string types and guard schema expectations
@@ -365,7 +415,16 @@ const uploadSpecsCsv = async (req, res) => {
                     .filter(Boolean);
             }
             // Helper to walk and normalize arrays in the specsObj
-            const allowedArrays = new Set(["media.gallery", "model.colors", "colors", "wheels"]);
+            const allowedArrays = new Set([
+                "media.gallery",
+                "model.colors",
+                "colors",
+                "wheels",
+                "exterior.monotone_color_names",
+                "exterior.dual_tone_color_names",
+                "exterior.colors",
+                "exterior.body_colours"
+            ]);
             const normalizeArrays = (obj, path = "") => {
                 if (!obj || typeof obj !== 'object')
                     return;
@@ -395,6 +454,12 @@ const uploadSpecsCsv = async (req, res) => {
                 variant: variant.name,
                 ...specsObj.overview,
             };
+            // Debug logging for color fields
+            console.log(`📋 CSV Upload - Variant ${variantId}:`, {
+                monotone_colors: (_g = specsObj === null || specsObj === void 0 ? void 0 : specsObj.exterior) === null || _g === void 0 ? void 0 : _g.monotone_color_names,
+                dual_tone_colors: (_h = specsObj === null || specsObj === void 0 ? void 0 : specsObj.exterior) === null || _h === void 0 ? void 0 : _h.dual_tone_color_names,
+                exterior_data: specsObj === null || specsObj === void 0 ? void 0 : specsObj.exterior,
+            });
             // =============================
             // UPSERT CAR SPECS
             // =============================

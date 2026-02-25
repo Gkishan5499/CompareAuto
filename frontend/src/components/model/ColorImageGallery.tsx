@@ -19,6 +19,59 @@ interface ColorImageGalleryProps {
   onColorChange?: (color: string | DualToneColor) => void;
 }
 
+// Smart color mapper - automatically generates color classes from color names
+const getColorClass = (colorName: string): string => {
+  const name = colorName.toLowerCase();
+  
+  // Check exact matches first
+  const exactMatch = colorMap[colorName];
+  if (exactMatch) return exactMatch;
+  
+  // Auto-detect color based on keywords
+  if (name.includes("white") || name.includes("pearl") && name.includes("white")) {
+    return "bg-white border-2 border-gray-300";
+  }
+  if (name.includes("black") && (name.includes("midnight") || name.includes("deep"))) {
+    return "bg-slate-950";
+  }
+  if (name.includes("black") || name.includes("stealth")) {
+    return "bg-black";
+  }
+  if (name.includes("red") || name.includes("ruby") || name.includes("crimson") || name.includes("scarlet") || name.includes("tango")) {
+    return name.includes("dark") || name.includes("velvet") ? "bg-red-800" : "bg-red-600";
+  }
+  if (name.includes("blue") || name.includes("nebula") || name.includes("azure") || name.includes("ocean")) {
+    return name.includes("dark") || name.includes("deep") ? "bg-blue-800" : "bg-blue-600";
+  }
+  if (name.includes("green") || name.includes("forest") || name.includes("emerald") || name.includes("olive")) {
+    return name.includes("dark") || name.includes("deep") ? "bg-green-900" : "bg-green-600";
+  }
+  if (name.includes("yellow") || name.includes("citrine") || name.includes("gold")) {
+    return "bg-yellow-400";
+  }
+  if (name.includes("orange") || name.includes("amber")) {
+    return "bg-orange-600";
+  }
+  if (name.includes("grey") || name.includes("gray") || name.includes("silver") || name.includes("galaxy") || name.includes("galvano")) {
+    return "bg-gray-600";
+  }
+  if (name.includes("beige") || name.includes("dune") || name.includes("sand") || name.includes("cream")) {
+    return "bg-amber-600";
+  }
+  if (name.includes("brown") || name.includes("desert") || name.includes("myst")) {
+    return name.includes("satin") || name.includes("light") ? "bg-amber-600" : "bg-amber-700";
+  }
+  if (name.includes("purple") || name.includes("violet") || name.includes("magenta")) {
+    return "bg-purple-600";
+  }
+  if (name.includes("pink") || name.includes("rose")) {
+    return "bg-pink-500";
+  }
+  
+  // Default fallback
+  return "bg-gray-400";
+};
+
 const colorMap: Record<string, string> = {
   // Mahindra XUV 3XO colors
   "Citrine Yellow": "bg-yellow-400",
@@ -30,6 +83,16 @@ const colorMap: Record<string, string> = {
   "Nebula Blue": "bg-blue-800",
   "Stealth Black": "bg-black",
   "Tango Red": "bg-red-600",
+  
+  // Mahindra XUV 7XO colors
+  "everest white": "bg-white border-2 border-gray-300",
+  "stealth black": "bg-black",
+  "midnight black": "bg-slate-950",
+  "galaxy grey": "bg-gray-600",
+  "nebula blue": "bg-blue-800",
+  "ruby velvet": "bg-red-800",
+  "desert myst": "bg-amber-700",
+  "desert myst satin": "bg-amber-600",
   
   // Generic colors
   White: "bg-white border-2",
@@ -167,11 +230,7 @@ const ColorImageGallery = ({
         <div className="flex flex-wrap gap-4">
           {colorMode === "monotone" && colors && colors.length > 0
             ? colors.map((color) => {
-                const colorClass = colorMap[color];
-                console.log(`🎨 Color Button - ${color}:`, {
-                  found: !!colorClass,
-                  tailwindClass: colorClass || "bg-gray-400",
-                });
+                const colorClass = getColorClass(color);
                 return (
                   <button
                     key={color}
@@ -181,7 +240,7 @@ const ColorImageGallery = ({
                     <div
                       className={cn(
                         "w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all",
-                        colorClass || "bg-gray-400",
+                        colorClass,
                         typeof selectedColor === "string" && selectedColor === color
                           ? "ring-4 ring-primary ring-offset-2 scale-110"
                           : "hover:scale-105 border-border"
@@ -213,8 +272,8 @@ const ColorImageGallery = ({
                     )}
                   >
                     {/* Dual tone split circle */}
-                    <div className={cn("flex-1", colorMap[dualColor.primary] || "bg-gray-400")} />
-                    <div className={cn("flex-1", colorMap[dualColor.secondary] || "bg-gray-400")} />
+                    <div className={cn("flex-1", getColorClass(dualColor.primary))} />
+                    <div className={cn("flex-1", getColorClass(dualColor.secondary))} />
                   </div>
                   <span className="text-xs font-medium text-center max-w-20 line-clamp-3 group-hover:text-primary transition-colors">
                     {dualColor.name}

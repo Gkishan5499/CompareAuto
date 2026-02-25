@@ -4,11 +4,36 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteComparison = exports.updateComparison = exports.createComparison = exports.getComparisonById = exports.getAllComparisons = void 0;
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const Comparison_model_1 = __importDefault(require("../models/Comparison.model"));
+const seedComparisonsPath = path_1.default.join(__dirname, "..", "data", "comparisons.json");
+const loadSeedComparisons = () => {
+    try {
+        const raw = fs_1.default.readFileSync(seedComparisonsPath, "utf-8");
+        const data = JSON.parse(raw);
+        return Array.isArray(data) ? data : [];
+    }
+    catch (error) {
+        return [];
+    }
+};
 const getAllComparisons = async (req, res) => {
     try {
         const data = await Comparison_model_1.default.find().sort({ views: -1 });
-        res.json(data);
+        if (data.length >= 4) {
+            return res.json(data);
+        }
+        const seedData = loadSeedComparisons();
+        if (seedData.length === 0) {
+            return res.json(data);
+        }
+        const existingIds = new Set(data.map((item) => item.id));
+        const merged = [
+            ...data,
+            ...seedData.filter((item) => !existingIds.has(item.id)),
+        ].sort((a, b) => (b.views || 0) - (a.views || 0));
+        return res.json(merged);
     }
     catch (error) {
         res.status(500).json({ error: "Failed to fetch comparisons" });
