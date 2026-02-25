@@ -3,3 +3,12 @@
 .env.local
 .env.production
 .env.development
+
+dist
+node_modules
+
+backend/dist
+backend/node_modules
+backend/.env
+admin/node_modules
+admin/.env
