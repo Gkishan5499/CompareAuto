@@ -7,6 +7,15 @@ export interface IBrand extends Document {
   country: string;
   modelCount: number;
   slug: string;
+  heroIntro?: string;
+  popularModelsIntro?: string;
+  latestUpcomingIntro?: string;
+  brandOverview?: string;
+  brandPositioning?: string;
+  warrantyServiceNetwork?: string;
+  brandProsCons?: string;
+  brandHistory?: string;
+  brandFaqs?: string;
 }
 
 const BrandSchema = new Schema<IBrand>(
@@ -16,7 +25,16 @@ const BrandSchema = new Schema<IBrand>(
     logo: { type: String, required: true },
     country: { type: String, required: true },
     modelCount: { type: Number, default: 0 },
-    slug: { type: String, required: true, unique: true }
+    slug: { type: String, required: true, unique: true },
+    heroIntro: { type: String, default: "" },
+    popularModelsIntro: { type: String, default: "" },
+    latestUpcomingIntro: { type: String, default: "" },
+    brandOverview: { type: String, default: "" },
+    brandPositioning: { type: String, default: "" },
+    warrantyServiceNetwork: { type: String, default: "" },
+    brandProsCons: { type: String, default: "" },
+    brandHistory: { type: String, default: "" },
+    brandFaqs: { type: String, default: "" }
   },
   { timestamps: true }
 );

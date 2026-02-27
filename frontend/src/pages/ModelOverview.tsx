@@ -43,6 +43,57 @@ import { getBrandLogo, getBrandInitial } from "@/lib/brandLogos";
 import AdSlot from "@/components/ads/AdSlot";
 import { cn } from "@/lib/utils";
 
+// Helper function to render HTML content from ReactQuill
+const renderHtmlContent = (html?: string) => {
+  if (!html) return null;
+  return (
+    <div 
+      className="prose prose-sm max-w-none text-foreground leading-relaxed [&_p]:mb-3 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-3 [&_li]:mb-1 [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-primary [&_a]:underline"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
+
+const countWords = (text: string) => {
+  return text?.trim().split(/\s+/).filter(Boolean).length || 0;
+};
+
+const parseProsConsFromString = (raw?: string): { pros: string[]; cons: string[] } => {
+  if (!raw) return { pros: [], cons: [] };
+  const parts = raw.split(/\n---\n/);
+  const prosList = (parts[0] || "")
+    .trim()
+    .split("\n")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const consList = (parts[1] || "")
+    .trim()
+    .split("\n")
+    .map((c) => c.trim())
+    .filter(Boolean);
+  return { pros: prosList, cons: consList };
+};
+
+const parseFaqsFromString = (raw?: string) => {
+  if (!raw) return [];
+  const blocks = raw.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  const items = [];
+
+  for (const block of blocks) {
+    const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+    const qLine = lines.find((line) => /^q:\s*/i.test(line));
+    const aIndex = lines.findIndex((line) => /^a:\s*/i.test(line));
+
+    if (qLine && aIndex >= 0) {
+      const question = qLine.replace(/^q:\s*/i, "").trim();
+      const answer = lines.slice(aIndex).join("\n").replace(/^a:\s*/i, "").trim();
+      if (question && answer) items.push({ question, answer });
+    }
+  }
+
+  return items;
+};
+
 const ModelOverview = () => {
   useScrollToTop();
   const { brand, model: modelSlug } = useParams<{ brand: string; model: string }>();
@@ -63,7 +114,8 @@ const ModelOverview = () => {
   const [selectedCity, setSelectedCity] = useState<string>(city || "Delhi NCR");
   const [selectedFuelType, setSelectedFuelType] = useState<string>("petrol");
   const [activeTab, setActiveTab] = useState<"overview" | "variants" | "specs" | "colors" | "photos" | "faq">("overview");
-    const [specs, setSpecs] = useState<any | null>(null);
+  const [activePhotoTab, setActivePhotoTab] = useState<"gallery" | "interior" | "exterior" | "video">("gallery");
+  const [specs, setSpecs] = useState<any | null>(null);
   const [cities, setCities] = useState<Array<{ id: string; name: string; state: string; slug: string }>>([]);
   const [loadingCities, setLoadingCities] = useState(false);
 
@@ -500,6 +552,215 @@ const ModelOverview = () => {
                                 </Card>
                             )}
 
+                            {/* Model Overview Content */}
+                            {modelData?.modelOverview && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Model Overview</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.modelOverview)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Variant Lineup */}
+                            {modelData?.variantLineup && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Variant Lineup & Pricing</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.variantLineup)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Engine & Transmission Overview */}
+                            {modelData?.engineTransmission && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Engine & Transmission</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.engineTransmission)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Mileage Explanation */}
+                            {modelData?.mileageExplanation && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Mileage & Efficiency</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.mileageExplanation)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Features Highlight Content */}
+                            {modelData?.featuresHighlight && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Features & Equipment</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.featuresHighlight)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Safety Overview */}
+                            {modelData?.safetyOverview && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Safety Features</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.safetyOverview)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Interior Overview */}
+                            {modelData?.interiorOverview && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Interior Design</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.interiorOverview)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Exterior Overview */}
+                            {modelData?.exteriorOverview && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Exterior Design</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.exteriorOverview)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Ride & Handling */}
+                            {modelData?.rideHandling && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Ride & Handling</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.rideHandling)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Ownership Cost Insight */}
+                            {modelData?.ownershipCost && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Ownership Cost</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.ownershipCost)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Pros & Cons */}
+                            {modelData?.modelProsCons && (() => {
+                              const { pros, cons } = parseProsConsFromString(modelData.modelProsCons);
+                              return (pros.length > 0 || cons.length > 0) ? (
+                                <div className="space-y-4">
+                                  <div>
+                                    <h3 className="text-xl font-bold mb-4">Strengths & Considerations</h3>
+                                    <p className="text-sm text-muted-foreground">What makes {modelData.name} stand out</p>
+                                  </div>
+                                  <div className="grid md:grid-cols-2 gap-6">
+                                    {pros.length > 0 && (
+                                      <Card className="p-6 md:p-8 border-l-4 border-l-green-500 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50/50 to-transparent dark:from-green-950/20">
+                                        <div className="flex items-center gap-3 mb-5">
+                                          <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                                            <span className="text-lg font-bold text-green-600">✓</span>
+                                          </div>
+                                          <h4 className="text-lg font-semibold text-green-700 dark:text-green-400">Pros</h4>
+                                        </div>
+                                        <ul className="space-y-3">
+                                          {pros.map((pro, index) => (
+                                            <li key={index} className="text-sm text-muted-foreground flex gap-3">
+                                              <span className="text-green-600 font-bold mt-0.5">•</span>
+                                              <span>{pro}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </Card>
+                                    )}
+                                    {cons.length > 0 && (
+                                      <Card className="p-6 md:p-8 border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50/50 to-transparent dark:from-orange-950/20">
+                                        <div className="flex items-center gap-3 mb-5">
+                                          <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+                                            <span className="text-lg font-bold text-orange-600">!</span>
+                                          </div>
+                                          <h4 className="text-lg font-semibold text-orange-700 dark:text-orange-400">Cons</h4>
+                                        </div>
+                                        <ul className="space-y-3">
+                                          {cons.map((con, index) => (
+                                            <li key={index} className="text-sm text-muted-foreground flex gap-3">
+                                              <span className="text-orange-600 font-bold mt-0.5">•</span>
+                                              <span>{con}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </Card>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : null;
+                            })()}
+
+                            {/* Competitors Section */}
+                            {modelData?.competitorsSection && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Competitors & Comparison</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.competitorsSection)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Expert Verdict */}
+                            {modelData?.expertVerdict && (
+                                <Card className="shadow-premium-sm border-l-4 border-l-blue-500 bg-blue-50/30 dark:bg-blue-950/20">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                                            <span>⭐</span> Expert Verdict
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.expertVerdict)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Hero Section Content */}
+                            {modelData?.heroSectionContent && (
+                                <Card className="shadow-premium-sm">
+                                    <CardHeader>
+                                        <CardTitle className="text-xl font-bold text-primary">Quick Overview</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {renderHtmlContent(modelData.heroSectionContent)}
+                                    </CardContent>
+                                </Card>
+                            )}
+
                             {/* On-road price breakdown removed per request */}
                         </div>
                     )}
@@ -567,7 +828,13 @@ const ModelOverview = () => {
                                   colorImages={colorImages}
                                   modelName={modelData?.name || ""}
                                   brandName={modelData?.brandName}
-                                  onColorChange={setSelectedColor}
+                                  onColorChange={(color) => {
+                                    if (typeof color === 'string') {
+                                      setSelectedColor(color);
+                                    } else if (color && 'name' in color) {
+                                      setSelectedColor(color.name);
+                                    }
+                                  }}
                                 />
                               ) : (
                                 <div className="space-y-6">
@@ -585,7 +852,7 @@ const ModelOverview = () => {
                                     <div className="flex items-center justify-between">
                                       <p className="font-semibold text-sm">Available Colors ({colors.length}):</p>
                                     </div>
-                                    <ColorSwatches colors={colors} onColorChange={setSelectedColor} />
+                                    <ColorSwatches colors={colors} onColorChange={(color) => typeof color === 'string' ? setSelectedColor(color) : setSelectedColor(color.name || '')} />
                                   </div>
                                 </div>
                               )}
@@ -594,33 +861,147 @@ const ModelOverview = () => {
                     )}
 
                      {activeTab === "photos" && (
-                        <div ref={photosRef} className="space-y-8">
-                            {mediaData.videoUrl && (
-                                 <div>
-                                    <h3 className="text-xl font-bold mb-4">Official Video</h3>
-                                    <VideoEmbed videoUrl={mediaData.videoUrl} title="Official Video" />
-                                 </div>
-                            )}
-                            <div>
-                                 <h3 className="text-xl font-bold mb-4">Image Gallery</h3>
-                                 <PhotoGallery photos={galleryImages} modelName={modelData.name} brandName={modelData.brandName} />
+                        <div ref={photosRef} className="space-y-6">
+                            {/* Photo Tabs */}
+                            <div className="border-b border-border">
+                                <div className="flex gap-6 overflow-x-auto">
+                                    <button
+                                        onClick={() => setActivePhotoTab("gallery")}
+                                        className={cn(
+                                            "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                                            activePhotoTab === "gallery"
+                                                ? "border-b-primary text-foreground"
+                                                : "border-b-transparent text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        Image Gallery
+                                    </button>
+                                    {modelData?.interiorImages && modelData.interiorImages.length > 0 && (
+                                        <button
+                                            onClick={() => setActivePhotoTab("interior")}
+                                            className={cn(
+                                                "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                                                activePhotoTab === "interior"
+                                                    ? "border-b-primary text-foreground"
+                                                    : "border-b-transparent text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            Interior Photo
+                                        </button>
+                                    )}
+                                    {modelData?.exteriorImages && modelData.exteriorImages.length > 0 && (
+                                        <button
+                                            onClick={() => setActivePhotoTab("exterior")}
+                                            className={cn(
+                                                "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                                                activePhotoTab === "exterior"
+                                                    ? "border-b-primary text-foreground"
+                                                    : "border-b-transparent text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            Exterior Photo
+                                        </button>
+                                    )}
+                                    {(modelData?.youtubeUrl || modelData?.videoUrl) && (
+                                        <button
+                                            onClick={() => setActivePhotoTab("video")}
+                                            className={cn(
+                                                "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                                                activePhotoTab === "video"
+                                                    ? "border-b-primary text-foreground"
+                                                    : "border-b-transparent text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            Video
+                                        </button>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* Image Gallery Tab */}
+                            {activePhotoTab === "gallery" && (
+                                <div className="space-y-4">
+                                    <PhotoGallery photos={galleryImages} modelName={modelData.name} brandName={modelData.brandName} />
+                                </div>
+                            )}
+
+                            {/* Interior Photos Tab */}
+                            {activePhotoTab === "interior" && modelData?.interiorImages && modelData.interiorImages.length > 0 && (
+                                <div className="space-y-4">
+                                    <PhotoGallery photos={modelData.interiorImages} modelName={modelData.name} brandName={modelData.brandName} />
+                                </div>
+                            )}
+
+                            {/* Exterior Photos Tab */}
+                            {activePhotoTab === "exterior" && modelData?.exteriorImages && modelData.exteriorImages.length > 0 && (
+                                <div className="space-y-4">
+                                    <PhotoGallery photos={modelData.exteriorImages} modelName={modelData.name} brandName={modelData.brandName} />
+                                </div>
+                            )}
+
+                            {/* Video Tab */}
+                            {activePhotoTab === "video" && (
+                                <div className="space-y-6">
+                                    {modelData?.youtubeUrl && (
+                                        <div className="space-y-3">
+                                            <h3 className="text-lg font-semibold">YouTube Video</h3>
+                                            <VideoEmbed videoUrl={modelData.youtubeUrl} title={modelData.name} />
+                                        </div>
+                                    )}
+                                    {modelData?.videoUrl && (
+                                        <div className="space-y-3">
+                                            <h3 className="text-lg font-semibold">Model Showcase Video</h3>
+                                            <video
+                                                width="100%"
+                                                height="auto"
+                                                controls
+                                                className="rounded-lg bg-black"
+                                                poster={modelData.image}
+                                            >
+                                                <source src={modelData.videoUrl} type="video/mp4" />
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
 
                     {activeTab === "faq" && (
-                         <div ref={faqRef}>
+                         <div ref={faqRef} className="space-y-6">
                             <h2 className="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
-                            <Accordion type="single" collapsible className="w-full">
-                                <AccordionItem value="item-1">
-                                    <AccordionTrigger>What is the on-road price of {modelData.name}?</AccordionTrigger>
-                                    <AccordionContent>On-road price includes Ex-showroom price + RTO + Insurance. Click the "Check On-Road Price" button to get a detailed breakdown.</AccordionContent>
-                                </AccordionItem>
-                                 <AccordionItem value="item-2">
-                                    <AccordionTrigger>What is the mileage?</AccordionTrigger>
-                                    <AccordionContent>The {modelData.name} delivers an ARAI-certified mileage of up to {primaryMileage} km/l depending on the fuel type.</AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
+                            
+                            {/* FAQ Content from Model */}
+                            {modelData?.modelFaqs && (() => {
+                              const faqItems = parseFaqsFromString(modelData.modelFaqs);
+                              return faqItems.length > 0 ? (
+                                <Accordion type="single" collapsible className="w-full">
+                                  {faqItems.map((faq, index) => (
+                                    <AccordionItem key={index} value={`item-${index}`}>
+                                      <AccordionTrigger>{faq.question}</AccordionTrigger>
+                                      <AccordionContent className="text-muted-foreground">
+                                        {faq.answer}
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  ))}
+                                </Accordion>
+                              ) : null;
+                            })()}
+
+                            {/* Default FAQs - Show if no custom FAQs */}
+                            {!modelData?.modelFaqs && (
+                                <Accordion type="single" collapsible className="w-full">
+                                    <AccordionItem value="item-1">
+                                        <AccordionTrigger>What is the on-road price of {modelData.name}?</AccordionTrigger>
+                                        <AccordionContent>On-road price includes Ex-showroom price + RTO + Insurance. Click the "Check On-Road Price" button to get a detailed breakdown.</AccordionContent>
+                                    </AccordionItem>
+                                    <AccordionItem value="item-2">
+                                        <AccordionTrigger>What is the mileage?</AccordionTrigger>
+                                        <AccordionContent>The {modelData.name} delivers an ARAI-certified mileage of up to {primaryMileage} km/l depending on the fuel type.</AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
+                            )}
                         </div>
                     )}
                 </div>

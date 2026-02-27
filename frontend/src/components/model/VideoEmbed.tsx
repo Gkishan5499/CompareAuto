@@ -10,7 +10,14 @@ interface VideoEmbedProps {
 const VideoEmbed = ({ videoUrl, title }: VideoEmbedProps) => {
   // Parse YouTube and Vimeo URLs to get embed-friendly formats
   const getEmbedUrl = (url: string): string | null => {
+    if (!url) return null;
+    
     try {
+      // Handle shorthand YouTube IDs (just the video ID)
+      if (url.length === 11 && !/[\/\.\?=]/.test(url)) {
+        return `https://www.youtube.com/embed/${url}?rel=0`;
+      }
+
       const urlObj = new URL(url);
 
       // YouTube handling
@@ -18,9 +25,11 @@ const VideoEmbed = ({ videoUrl, title }: VideoEmbedProps) => {
         let videoId = "";
         
         if (urlObj.hostname.includes("youtu.be")) {
-          videoId = urlObj.pathname.slice(1);
+          videoId = urlObj.pathname.slice(1).split("?")[0];
         } else if (urlObj.searchParams.has("v")) {
           videoId = urlObj.searchParams.get("v") || "";
+        } else if (urlObj.hostname.includes("youtube.com") && urlObj.pathname.includes("/embed/")) {
+          videoId = urlObj.pathname.split("/embed/")[1].split("?")[0];
         }
 
         return videoId ? `https://www.youtube.com/embed/${videoId}?rel=0` : null;

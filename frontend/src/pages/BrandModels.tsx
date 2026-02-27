@@ -23,6 +23,138 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type FaqItem = { question: string; answer: string };
+
+const truncateToWords = (text: string, wordLimit: number) => {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= wordLimit) return { text, isTruncated: false };
+  return {
+    text: words.slice(0, wordLimit).join(" ") + "...",
+    isTruncated: true,
+  };
+};
+
+const splitParagraphs = (text?: string) => {
+  if (!text) return [];
+  return text
+    .split(/\n\s*\n/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+};
+
+const parseFaqs = (raw?: string): FaqItem[] => {
+  if (!raw) return [];
+  const blocks = raw.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  const items: FaqItem[] = [];
+
+  for (const block of blocks) {
+    const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+    const qLine = lines.find((line) => /^q:\s*/i.test(line));
+    const aIndex = lines.findIndex((line) => /^a:\s*/i.test(line));
+
+    if (qLine && aIndex >= 0) {
+      const question = qLine.replace(/^q:\s*/i, "").trim();
+      const answer = lines.slice(aIndex).join("\n").replace(/^a:\s*/i, "").trim();
+      if (question && answer) items.push({ question, answer });
+      continue;
+    }
+  }
+
+  return items;
+};
+
+const parseProsConsFromString = (raw?: string): { pros: string[]; cons: string[] } => {
+  if (!raw) return { pros: [], cons: [] };
+  const parts = raw.split(/\n---\n/);
+  const prosList = (parts[0] || "")
+    .trim()
+    .split("\n")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const consList = (parts[1] || "")
+    .trim()
+    .split("\n")
+    .map((c) => c.trim())
+    .filter(Boolean);
+  return { pros: prosList, cons: consList };
+};
+
+// Template content generators
+const getTemplateOverview = (brandName: string) => {
+  return `${brandName} is a leading car manufacturer known for quality, innovation, and reliability. The brand offers a diverse range of vehicles designed to meet the needs of different customer segments, from budget-conscious buyers to premium car enthusiasts.\n\n${brandName} combines cutting-edge technology with practical design to deliver vehicles that perform exceptionally in Indian driving conditions. With a strong focus on customer satisfaction and after-sales service, ${brandName} has established itself as a trusted name in the automotive industry.`;
+};
+
+const getTemplatePositioning = (brandName: string) => {
+  return `${brandName} positions itself as a customer-centric brand that values quality and affordability. The brand's commitment to innovation and durability makes it a preferred choice for millions of Indian families looking for reliable transportation solutions with excellent value for money.`;
+};
+
+const getTemplateWarrantyService = (brandName: string) => {
+  return `${brandName} provides comprehensive warranty coverage on its vehicles and offers an extensive network of service centers across India. The brand is committed to providing reliable after-sales support, genuine spare parts, and skilled technician services to ensure long-term vehicle reliability and customer satisfaction.`;
+};
+
+const getTemplateProsCons = (): { pros: string[]; cons: string[] } => {
+  return {
+    pros: [
+      "Reliable and fuel-efficient vehicles",
+      "Affordable pricing across segments",
+      "Strong resale value in the market",
+      "Comprehensive warranty and after-sales support",
+      "Wide range of color and variant options",
+      "Good performance in Indian road conditions"
+    ],
+    cons: [
+      "Limited advanced technology features in base models",
+      "Interior space could be better in compact cars",
+      "Competitive market limits exclusive features",
+      "Service center wait times during peak seasons",
+      "Some models have limited cargo space"
+    ]
+  };
+};
+
+const getTemplateHistory = (brandName: string) => {
+  return `${brandName} has a rich history of innovation and excellence in the automotive industry. Over the years, the brand has evolved to meet changing customer preferences, introducing new models and technologies while maintaining its core values of quality and reliability. Today, ${brandName} continues to lead the market with a commitment to sustainability and customer-centric innovation.`;
+};
+
+const getTemplateHeroIntro = (brandName: string, modelsCount: number, variantsCount: number) => {
+  return `Discover the complete ${brandName} lineup. From efficient city commuters to premium SUVs. Compare ${modelsCount} models and ${variantsCount} variants to find your perfect match.`;
+};
+
+const getTemplatePopularModelsIntro = (brandName: string) => {
+  return `Explore the most popular ${brandName} models trusted by millions of Indian customers for their reliability, performance, and value for money.`;
+};
+
+const getTemplateLatestUpcomingIntro = (brandName: string) => {
+  return `Stay updated with the latest ${brandName} launches and upcoming models bringing innovative features and cutting-edge technology to the Indian market.`;
+};
+
+const getTemplateFaqs = (brandName: string, startingPrice: number | null): FaqItem[] => {
+  return [
+    {
+      question: `Which ${brandName} model is best for city driving?`,
+      answer: "Compact models and smaller SUVs from " + brandName + " are easiest to maneuver in tight traffic and parking. Consider models with good fuel efficiency and easier parking assistance features."
+    },
+    {
+      question: `Does ${brandName} offer CNG options?`,
+      answer: `Use the fuel filter above to see all CNG models from ${brandName}. CNG vehicles offer excellent fuel economy and lower emissions, making them ideal for daily commuting.`
+    },
+    {
+      question: "What is the starting price?",
+      answer: startingPrice 
+        ? `Prices for ${brandName} vehicles start from ₹${(startingPrice / 100000).toFixed(2)} Lakh ex-showroom. On-road prices vary based on your location and applicable taxes.`
+        : `Pricing for ${brandName} vehicles varies based on model, variant, and location. Visit a nearby dealership for detailed pricing information.`
+    },
+    {
+      question: "What warranty does " + brandName + " offer?",
+      answer: `${brandName} offers comprehensive warranty coverage on its vehicles. Standard warranty typically includes engine, transmission, and suspension components. Visit a ${brandName} dealership for specific warranty details and extended warranty options.`
+    },
+    {
+      question: "Are " + brandName + " vehicles reliable?",
+      answer: `${brandName} has earned a reputation for reliability and durability. With proper maintenance and genuine spare parts, ${brandName} vehicles are designed to deliver exceptional performance over many years.`
+    }
+  ];
+};
+
 const BrandModels = () => {
   const { brand } = useParams<{ brand: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,8 +162,22 @@ const BrandModels = () => {
   const { data: allModels = [], isLoading: modelsLoading } = useModelsByBrand(brand || "");
   const { data: allBrands = [] } = useBrands();
   const { city } = useCity();
+  const [isHeroExpanded, setIsHeroExpanded] = useState(false);
   const brandLogo = getBrandLogo(brandData?.name);
   const brandInitial = getBrandInitial(brandData?.name);
+  const brandProsCons = useMemo(
+    () => parseProsConsFromString(brandData?.brandProsCons),
+    [brandData?.brandProsCons]
+  );
+  const heroIntro = brandData?.heroIntro?.trim();
+  const popularModelsIntro = brandData?.popularModelsIntro?.trim();
+  const latestUpcomingIntro = brandData?.latestUpcomingIntro?.trim();
+  const brandOverview = brandData?.brandOverview?.trim();
+  const brandPositioning = brandData?.brandPositioning?.trim();
+  const warrantyServiceNetwork = brandData?.warrantyServiceNetwork?.trim();
+  const brandHistory = brandData?.brandHistory?.trim();
+  const brandFaqs = brandData?.brandFaqs?.trim();
+  const faqItems = useMemo(() => parseFaqs(brandFaqs), [brandFaqs]);
 
   const [sort, setSort] = useState<string>(searchParams.get("sort") || "popular");
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -180,7 +326,7 @@ const BrandModels = () => {
     if (brandData) {
       updateMetaTags({
         title: `${brandData.name} Cars – Prices, Models & Variants`,
-        description: `Explore ${brandData.name} cars in India.`,
+        description: heroIntro || brandOverview || `Explore ${brandData.name} cars in India.`,
         keywords: [`${brandData.name} cars`, `${brandData.name} price`],
         canonical: `${window.location.origin}/${brand}`,
         ogImage: DEFAULT_OG_IMAGE,
@@ -334,10 +480,31 @@ const BrandModels = () => {
                     <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
                         {brandData.name} Cars
                     </h1>
-                    <p className="text-muted-foreground max-w-2xl leading-relaxed">
-                        Discover the complete {brandData.name} lineup. From efficient city commuters to premium SUVs. 
-                        Compare {modelsCount} models and {variantsCount} variants to find your perfect match.
-                    </p>
+                    <div className="text-muted-foreground max-w-2xl leading-relaxed">
+                        {(() => {
+                          const fullText = heroIntro || getTemplateHeroIntro(brandData.name, modelsCount, variantsCount);
+                          const { text, isTruncated } = truncateToWords(fullText, 50);
+                          
+                          return (
+                            <>
+                              <p>{isHeroExpanded ? fullText : text}</p>
+                              {isTruncated && (
+                                <button
+                                  onClick={() => setIsHeroExpanded(!isHeroExpanded)}
+                                  className="text-primary hover:underline text-sm font-medium mt-2 inline-flex items-center gap-1"
+                                >
+                                  {isHeroExpanded ? (
+                                    <>View Less</>
+                                  ) : (
+                                    <>View More</>
+                                  )}
+                                  <ArrowRight className={cn("w-3 h-3 transition-transform", isHeroExpanded && "rotate-90")} />
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
+                    </div>
                     
                     {/* Quick Stats Pills */}
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
@@ -577,53 +744,181 @@ const BrandModels = () => {
             </section>
         )}
 
-        {/* 6) FAQ SECTION */}
-        <section className="bg-white dark:bg-slate-900 rounded-2xl border p-6 md:p-10">
-            <h2 className="text-2xl font-bold mb-6 text-center">Frequently Asked Questions</h2>
-            <div className="grid md:grid-cols-2 gap-10">
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1">
-                          
-                          <AccordionTrigger className="text-lg font-medium py-6 hover:no-underline hover:text-primary">
-                          Which {brandData.name} model is best for city driving?</AccordionTrigger>
-                        <AccordionContent  className="text-muted-foreground pb-6 leading-relaxed">
-                            <p className="mb-4">
-                                For city driving, compact models like hatchbacks or compact SUVs are preferred due to their 
-                                shorter turning radius and ease of parking.
-                            </p>
-                            
- 
-                          [Image of car dimensions blueprint]
-
-                            <p className="text-xs text-muted-foreground mt-2">
-                                *Comparing dimensions helps understand maneuverability in tight city traffic.
-                            </p>
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="item-2">
-                        <AccordionTrigger className="text-lg font-medium py-6 hover:no-underline hover:text-primary">Does {brandData.name} offer CNG options?</AccordionTrigger>
-                        <AccordionContent  className="text-muted-foreground pb-6 leading-relaxed">
-                            Yes, select the "Fuel Type" filter at the top of this page and choose "CNG" to see all available models.
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="item-3">
-                        <AccordionTrigger className="text-lg font-medium py-6 hover:no-underline hover:text-primary">What is the starting price?</AccordionTrigger>
-                        <AccordionContent  className="text-muted-foreground pb-6 leading-relaxed">
-                             Prices start from ₹{formatINR(startingPrice || 0, true)}. Note that these are Ex-showroom prices.
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-                <div className="hidden md:flex items-center justify-center bg-slate-50 dark:bg-slate-950 rounded-xl p-6">
-                    <div className="text-center">
-                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Info className="w-6 h-6 text-primary" />
+{(brandOverview || brandPositioning || warrantyServiceNetwork || brandProsCons.pros.length > 0 || brandProsCons.cons.length > 0 || brandHistory) && (
+            <section className="space-y-8">
+                {/* Brand Overview - Full Width Prominent Card */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-primary/5 border border-primary/10 p-8 md:p-12">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full -mr-48 -mt-48 blur-3xl" />
+                    <div className="relative z-10">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider mb-4">
+                            <span className="w-2 h-2 bg-primary rounded-full" />
+                            About {brandData.name}
                         </div>
-                        <h4 className="font-semibold">Need more help?</h4>
-                        <p className="text-sm text-muted-foreground mb-4">Visit a dealership near you.</p>
-                        <Button variant="outline" size="sm">Locate Dealer</Button>
+                        <h2 className="text-2xl md:text-3xl font-bold mb-4">{brandData.name} Overview</h2>
+                        <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_li]:mb-2 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mb-2 [&_strong]:font-semibold [&_em]:italic [&_a]:text-primary [&_a]:underline">
+                            {brandOverview ? (
+                                <div dangerouslySetInnerHTML={{ __html: brandOverview }} />
+                            ) : (
+                                splitParagraphs(getTemplateOverview(brandData.name)).map((paragraph, index) => (
+                                    <p key={`overview-${index}`} className="text-base">{paragraph}</p>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
+
+                {/* Key Information - 2 Column Grid */}
+                <div className="grid md:grid-cols-2 gap-6">
+                    {/* Brand Positioning */}
+                    <Card className="p-6 hover:shadow-lg transition-shadow">
+                        <div className="flex items-start gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                                <span className="text-lg">🎯</span>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold">Brand Positioning</h3>
+                                <p className="text-xs text-muted-foreground">Market Position</p>
+                            </div>
+                        </div>
+                        <div className="prose prose-sm max-w-none text-sm text-muted-foreground leading-relaxed [&_p]:mb-3 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-3 [&_li]:mb-1 [&_h1]:text-base [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-primary [&_a]:underline">
+                            {brandPositioning ? (
+                                <div dangerouslySetInnerHTML={{ __html: brandPositioning }} />
+                            ) : (
+                                <p>{getTemplatePositioning(brandData.name)}</p>
+                            )}
+                        </div>
+                    </Card>
+
+                    {/* Warranty & Service */}
+                    <Card className="p-6 hover:shadow-lg transition-shadow">
+                        <div className="flex items-start gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                                <span className="text-lg">🔧</span>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold">Warranty & Service</h3>
+                                <p className="text-xs text-muted-foreground">Support & Coverage</p>
+                            </div>
+                        </div>
+                        <div className="prose prose-sm max-w-none text-sm text-muted-foreground leading-relaxed [&_p]:mb-3 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-3 [&_li]:mb-1 [&_h1]:text-base [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-primary [&_a]:underline">
+                            {warrantyServiceNetwork ? (
+                                <div dangerouslySetInnerHTML={{ __html: warrantyServiceNetwork }} />
+                            ) : (
+                                <p>{getTemplateWarrantyService(brandData.name)}</p>
+                            )}
+                        </div>
+                    </Card>
+                </div>
+
+                {/* Brand History */}
+                <Card className="p-6 md:p-8 hover:shadow-lg transition-shadow">
+                    <div className="flex items-start gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                            <span className="text-lg">📖</span>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-semibold">Brand History</h3>
+                            <p className="text-xs text-muted-foreground">Evolution & Journey</p>
+                        </div>
+                    </div>
+                        <div className="prose prose-sm max-w-none text-sm text-muted-foreground leading-relaxed [&_p]:mb-3 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-3 [&_li]:mb-1 [&_h1]:text-base [&_h1]:font-bold [&_h1]:mb-2 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mb-1 [&_strong]:font-semibold [&_em]:italic [&_a]:text-primary [&_a]:underline">
+                        {brandHistory ? (
+                            <div dangerouslySetInnerHTML={{ __html: brandHistory }} />
+                        ) : (
+                            <p>{getTemplateHistory(brandData.name)}</p>
+                        )}
+                    </div>
+                </Card>
+
+                {/* Pros & Cons - Full Width Section */}
+                {(brandProsCons.pros.length > 0 || getTemplateProsCons().pros.length > 0 || brandProsCons.cons.length > 0 || getTemplateProsCons().cons.length > 0) && (
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-xl font-bold mb-1">Strengths & Considerations</h3>
+                            <p className="text-sm text-muted-foreground">What makes {brandData.name} stand out</p>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {/* Pros Card */}
+                            {(brandProsCons.pros.length > 0 || getTemplateProsCons().pros.length > 0) && (
+                                <Card className="p-6 md:p-8 border-l-4 border-l-green-500 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50/50 to-transparent dark:from-green-950/20">
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                                            <span className="text-lg font-bold text-green-600">✓</span>
+                                        </div>
+                                        <h4 className="text-lg font-semibold text-green-700 dark:text-green-400">Pros</h4>
+                                    </div>
+                                    <ul className="space-y-3">
+                                        {(brandProsCons.pros.length > 0 ? brandProsCons.pros : getTemplateProsCons().pros).map((pro, index) => (
+                                            <li key={index} className="text-sm text-muted-foreground flex gap-3">
+                                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                                <span>{pro}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </Card>
+                            )}
+
+                            {/* Cons Card */}
+                            {(brandProsCons.cons.length > 0 || getTemplateProsCons().cons.length > 0) && (
+                                <Card className="p-6 md:p-8 border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50/50 to-transparent dark:from-orange-950/20">
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+                                            <span className="text-lg font-bold text-orange-600">!</span>
+                                        </div>
+                                        <h4 className="text-lg font-semibold text-orange-700 dark:text-orange-400">Considerations</h4>
+                                    </div>
+                                    <ul className="space-y-3">
+                                        {(brandProsCons.cons.length > 0 ? brandProsCons.cons : getTemplateProsCons().cons).map((con, index) => (
+                                            <li key={index} className="text-sm text-muted-foreground flex gap-3">
+                                                <span className="text-orange-600 font-bold mt-0.5">•</span>
+                                                <span>{con}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </Card>
+                            )}
+                        </div>
+                    </div>
+                )}
+              </section>
+          )}
+
+        {/* 6) FAQ SECTION */}
+        <section className="space-y-6">
+            <div className="text-center space-y-2 mb-8">
+                <h2 className="text-3xl font-bold">Frequently Asked Questions</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">Find answers to common questions about {brandData.name} vehicles</p>
             </div>
+            <Accordion type="single" collapsible className="w-full max-w-4xl mx-auto">
+              {(faqItems.length > 0 ? faqItems : getTemplateFaqs(brandData.name, startingPrice)).map((item, index) => (
+                  <AccordionItem key={`faq-${index}`} value={`item-${index + 1}`} className="mb-3 border border-slate-200 dark:border-slate-700 rounded-lg px-4 overflow-hidden data-[state=open]:bg-slate-50 dark:data-[state=open]:bg-slate-800/50 transition-colors">
+                    <AccordionTrigger className="text-base font-semibold py-4 hover:no-underline hover:text-primary">
+                      <span className="flex items-start gap-3 text-left">
+                        <span className="text-lg font-bold text-primary mt-0.5">Q.</span>
+                        <span>{item.question}</span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground pb-4 pt-0 leading-relaxed whitespace-pre-line">
+                      <span className="flex gap-3">
+                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0">A.</span>
+                        <span>{item.answer}</span>
+                      </span>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))
+              }
+            </Accordion>
+            
+            <Card className="bg-gradient-to-br from-primary/5 to-primary/0 border-primary/20 p-8 mt-8 text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Info className="w-8 h-8 text-primary" />
+                </div>
+                <h4 className="text-lg font-semibold mb-2">Didn't find your answer?</h4>
+                <p className="text-sm text-muted-foreground mb-4">Our {brandData.name} dealership team is ready to help you with personalized assistance.</p>
+                <Button className="gap-2">
+                    📍 Find a Nearby Dealer
+                </Button>
+            </Card>
         </section>
 
         {/* 7) RELATED BRANDS */}
