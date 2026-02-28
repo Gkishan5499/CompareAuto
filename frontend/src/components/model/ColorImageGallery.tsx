@@ -176,34 +176,6 @@ const ColorImageGallery = ({
 
   return (
     <div className="space-y-6">
-      {/* Tabs to switch between monotone and dual tone */}
-      {hasMonotone && hasDualTone && (
-        <div className="flex gap-2 border-b">
-          <button
-            onClick={() => handleColorModeChange("monotone")}
-            className={cn(
-              "px-4 py-2 font-medium transition-colors",
-              colorMode === "monotone"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Single Tone ({colors.length})
-          </button>
-          <button
-            onClick={() => handleColorModeChange("dual")}
-            className={cn(
-              "px-4 py-2 font-medium transition-colors",
-              colorMode === "dual"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Dual Tone ({dualToneColors.length})
-          </button>
-        </div>
-      )}
-
       {/* Photo Gallery for selected color */}
       {selectedImages.length > 0 ? (
         <div className="rounded-lg overflow-hidden border border-border">
@@ -224,10 +196,42 @@ const ColorImageGallery = ({
 
       {/* Color Selection Buttons */}
       <div className="space-y-3">
-        <p className="font-semibold text-sm">
-          Available Colors ({colorMode === "monotone" ? colors.length : dualToneColors.length}):
-        </p>
-        <div className="flex flex-wrap gap-4">
+        {/* Available Colors heading with tabs in center */}
+        <div className="flex items-center justify-center gap-6 flex-wrap">
+          <p className="font-semibold text-sm">
+            Available Colors ({colorMode === "monotone" ? colors.length : dualToneColors.length}):
+          </p>
+          
+          {/* Tabs to switch between monotone and dual tone */}
+          {hasMonotone && hasDualTone && (
+            <div className="flex gap-2 border-b">
+              <button
+                onClick={() => handleColorModeChange("monotone")}
+                className={cn(
+                  "px-4 py-2 font-medium transition-colors text-sm",
+                  colorMode === "monotone"
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Single Tone ({colors.length})
+              </button>
+              <button
+                onClick={() => handleColorModeChange("dual")}
+                className={cn(
+                  "px-4 py-2 font-medium transition-colors text-sm",
+                  colorMode === "dual"
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Dual Tone ({dualToneColors.length})
+              </button>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex flex-wrap gap-4 justify-center">
           {colorMode === "monotone" && colors && colors.length > 0
             ? colors.map((color) => {
                 const colorClass = getColorClass(color);

@@ -97,6 +97,7 @@ const VariantDetail = () => {
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | DualToneColor>("White");
   const [selectedCity, setSelectedCity] = useState<string>(city || "Delhi NCR");
+  const [activePhotoTab, setActivePhotoTab] = useState<"gallery" | "interior" | "exterior" | "video" | "360">("gallery");
   const [cities, setCities] = useState<Array<{ id: string; name: string; state: string; slug: string }>>([]);
   const [loadingCities, setLoadingCities] = useState(false);
 
@@ -1362,16 +1363,136 @@ const VariantDetail = () => {
 
                   {/* MEDIA TAB */}
                   <TabsContent value="media" className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
-                    {mediaData.videoUrl && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4">Official Video</h3>
-                        <VideoEmbed videoUrl={mediaData.videoUrl} title="Official Video" />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4">Image Gallery</h3>
-                      <PhotoGallery photos={galleryImages} modelName={modelData.name} brandName={modelData.brandName} />
-                    </div>
+                    {(() => {
+                      const interiorImages = ((variantData as any)?.interiorImages && Array.isArray((variantData as any).interiorImages)
+                        ? (variantData as any).interiorImages
+                        : modelData?.interiorImages) || [];
+                      const exteriorImages = ((variantData as any)?.exteriorImages && Array.isArray((variantData as any).exteriorImages)
+                        ? (variantData as any).exteriorImages
+                        : modelData?.exteriorImages) || [];
+                      const videoUrl = (variantData as any)?.youtubeUrl || (variantData as any)?.videoUrl || mediaData.videoUrl || modelData?.youtubeUrl || modelData?.videoUrl;
+                      const spin360Url = mediaData.spin360Url;
+                      const spinFrames = mediaData.spinFrames;
+
+                      return (
+                        <div className="space-y-6">
+                          <div className="border-b border-border">
+                            <div className="flex gap-6 overflow-x-auto">
+                              <button
+                                onClick={() => setActivePhotoTab("gallery")}
+                                className={cn(
+                                  "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                                  activePhotoTab === "gallery"
+                                    ? "border-b-primary text-foreground"
+                                    : "border-b-transparent text-muted-foreground hover:text-foreground"
+                                )}
+                              >
+                                Image Gallery
+                              </button>
+                              {interiorImages.length > 0 && (
+                                <button
+                                  onClick={() => setActivePhotoTab("interior")}
+                                  className={cn(
+                                    "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                                    activePhotoTab === "interior"
+                                      ? "border-b-primary text-foreground"
+                                      : "border-b-transparent text-muted-foreground hover:text-foreground"
+                                  )}
+                                >
+                                  Interior Photo
+                                </button>
+                              )}
+                              {exteriorImages.length > 0 && (
+                                <button
+                                  onClick={() => setActivePhotoTab("exterior")}
+                                  className={cn(
+                                    "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                                    activePhotoTab === "exterior"
+                                      ? "border-b-primary text-foreground"
+                                      : "border-b-transparent text-muted-foreground hover:text-foreground"
+                                  )}
+                                >
+                                  Exterior Photo
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setActivePhotoTab("video")}
+                                className={cn(
+                                  "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                                  activePhotoTab === "video"
+                                    ? "border-b-primary text-foreground"
+                                    : "border-b-transparent text-muted-foreground hover:text-foreground"
+                                )}
+                              >
+                                Video
+                              </button>
+                              {(spin360Url || (spinFrames && spinFrames.length > 0)) && (
+                                <button
+                                  onClick={() => setActivePhotoTab("360")}
+                                  className={cn(
+                                    "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                                    activePhotoTab === "360"
+                                      ? "border-b-primary text-foreground"
+                                      : "border-b-transparent text-muted-foreground hover:text-foreground"
+                                  )}
+                                >
+                                  360° View
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {activePhotoTab === "gallery" && (
+                            <div>
+                              <h3 className="text-lg font-semibold mb-4">Image Gallery</h3>
+                              <PhotoGallery photos={galleryImages} modelName={modelData.name} brandName={modelData.brandName} />
+                            </div>
+                          )}
+
+                          {activePhotoTab === "interior" && interiorImages.length > 0 && (
+                            <div>
+                              <h3 className="text-lg font-semibold mb-4">Interior Photo</h3>
+                              <PhotoGallery photos={interiorImages} modelName={modelData.name} brandName={modelData.brandName} />
+                            </div>
+                          )}
+
+                          {activePhotoTab === "exterior" && exteriorImages.length > 0 && (
+                            <div>
+                              <h3 className="text-lg font-semibold mb-4">Exterior Photo</h3>
+                              <PhotoGallery photos={exteriorImages} modelName={modelData.name} brandName={modelData.brandName} />
+                            </div>
+                          )}
+
+                          {activePhotoTab === "video" && (
+                            <div>
+                              <h3 className="text-lg font-semibold mb-4">Official Video</h3>
+                              {videoUrl ? (
+                                <VideoEmbed videoUrl={videoUrl} title={`${modelData.name} ${variantData.name} Official Video`} />
+                              ) : (
+                                <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-12 text-center border-2 border-dashed">
+                                  <div className="space-y-3">
+                                    <div className="text-5xl">🎥</div>
+                                    <p className="text-slate-600 dark:text-slate-400 font-medium">No video available</p>
+                                    <p className="text-sm text-muted-foreground">Video content will be added soon</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {activePhotoTab === "360" && (spin360Url || (spinFrames && spinFrames.length > 0)) && (
+                            <div>
+                              <h3 className="text-lg font-semibold mb-4">360° Interactive View</h3>
+                              <Viewer360 
+                                spin360Url={spin360Url} 
+                                spinFrames={spinFrames} 
+                                modelName={modelData.name} 
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </TabsContent>
 
                 </div>
