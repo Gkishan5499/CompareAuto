@@ -13,6 +13,18 @@ export interface IVariant extends Document {
   mileage: number;
   seating: number;
   colors: string[];
+  image?: string;
+  images?: string[];
+  heroSectionContent?: string;
+  variantOverview?: string;
+  keyFeaturesSummary?: string;
+  uniqueVsLowerVariant?: string;
+  engineTransmissionSummary?: string;
+  featureDifferencesTable?: string;
+  valueForMoneyAnalysis?: string;
+  variantProsCons?: string;
+  whoShouldBuy?: string;
+  variantFaqs?: string;
 }
 
 const VariantSchema = new Schema<IVariant>(
@@ -28,7 +40,19 @@ const VariantSchema = new Schema<IVariant>(
     engine: { type: String },
     mileage: { type: Number },
     seating: { type: Number },
-    colors: { type: [String], default: [] }
+    colors: { type: [String], default: [] },
+    image: { type: String, default: "" },
+    images: { type: [String], default: [] },
+    heroSectionContent: { type: String, default: "" },
+    variantOverview: { type: String, default: "" },
+    keyFeaturesSummary: { type: String, default: "" },
+    uniqueVsLowerVariant: { type: String, default: "" },
+    engineTransmissionSummary: { type: String, default: "" },
+    featureDifferencesTable: { type: String, default: "" },
+    valueForMoneyAnalysis: { type: String, default: "" },
+    variantProsCons: { type: String, default: "" },
+    whoShouldBuy: { type: String, default: "" },
+    variantFaqs: { type: String, default: "" }
   },
   { timestamps: true }
 );

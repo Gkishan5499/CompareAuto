@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { getUpcomingModels } from "@/lib/data";
 import { upcomingCarsApi } from "@/lib/api";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
-import { Calendar, IndianRupee, SlidersHorizontal } from "lucide-react";
+import { Calendar, IndianRupee, SlidersHorizontal, Search } from "lucide-react";
 import { formatINR } from "@/lib/guards";
 import { EnquiryForm } from "@/components/enquiry/EnquiryForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,6 +18,7 @@ const UpcomingCars = () => {
   const [allUpcoming, setAllUpcoming] = useState<any[]>([]);
   const [selectedModel, setSelectedModel] = useState<any>(null);
   const [isEnquiryOpen, setIsEnquiryOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     bodyType: "all",
     priceRange: "all",
@@ -39,6 +41,15 @@ const UpcomingCars = () => {
   const upcomingModels = useMemo(() => {
     let result = [...allUpcoming];
 
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(m => {
+        const brandName = (m.brandName || "").toLowerCase();
+        const modelName = (m.name || "").toLowerCase();
+        return brandName.includes(query) || modelName.includes(query);
+      });
+    }
+
     if (filters.bodyType !== "all") {
       result = result.filter(m => m.bodyType === filters.bodyType);
     }
@@ -59,7 +70,7 @@ const UpcomingCars = () => {
     }
 
     return result;
-  }, [allUpcoming, filters]);
+  }, [allUpcoming, filters, searchQuery]);
 
   useEffect(() => {
     updateMetaTags({
@@ -123,6 +134,20 @@ const UpcomingCars = () => {
       {/* Filters Section */}
       <section className="py-6 bg-muted/20">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          {/* Search Bar */}
+          <div className="mb-6">
+            <Label className="text-sm mb-2 block">Search by Brand or Model</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search (e.g., Toyota, Innova, BMW...)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4"
+              />
+            </div>
+          </div>
+
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex-1 min-w-[200px]">
               <Label className="text-sm mb-2 block">Body Type</Label>
@@ -188,7 +213,10 @@ const UpcomingCars = () => {
             <div className="flex items-end">
               <Button 
                 variant="outline" 
-                onClick={() => setFilters({ bodyType: "all", priceRange: "all", launchMonth: "all" })}
+                onClick={() => {
+                  setFilters({ bodyType: "all", priceRange: "all", launchMonth: "all" });
+                  setSearchQuery("");
+                }}
                 className="whitespace-nowrap"
               >
                 Clear Filters

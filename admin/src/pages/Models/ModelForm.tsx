@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import client from "../../api/client";
 import { useApiCreate, useApiUpdate } from "../../hooks/useapi";
@@ -192,11 +193,29 @@ export default function ModelForm() {
     delete form.imageFile;
     delete form.videoFile;
 
-    if (id) updateModel.mutate(form);
-    else createModel.mutate(form);
+    if (id) {
+      updateModel.mutate(form, {
+        onSuccess: () => {
+          toast.success("Model updated successfully!");
+          setShowPreview(true);
+        },
+        onError: (error: any) => {
+          toast.error(error?.response?.data?.message || "Failed to update model");
+        },
+      });
+    } else {
+      createModel.mutate(form, {
+        onSuccess: () => {
+          toast.success("Model created successfully!");
+          setShowPreview(true);
+        },
+        onError: (error: any) => {
+          toast.error(error?.response?.data?.message || "Failed to create model");
+        },
+      });
+    }
 
     setLastSavedData(form);
-    setShowPreview(true);
   };
 
   // FAQ handlers
@@ -223,10 +242,10 @@ export default function ModelForm() {
     <div className="p-6 max-w-4xl mx-auto bg-white rounded shadow">
       <h1 className="text-2xl font-semibold mb-6">{id ? "Edit Model" : "Add New Model"}</h1>
 
-      {/* Success Preview */}
+      {/* Success Preview - Fixed at Top */}
       {showPreview && lastSavedData && (
-        <div className="mb-6 p-6 bg-emerald-50 border border-emerald-200 rounded-lg space-y-4">
-          <div className="flex items-center justify-between mb-4">
+        <div className="fixed top-0 left-0 right-0 z-50 p-4 bg-emerald-50 border-b-2 border-emerald-300 shadow-lg">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-6 h-6 text-emerald-600" />
               <h3 className="text-lg font-semibold text-emerald-900">✓ Model Saved Successfully!</h3>
@@ -254,7 +273,7 @@ export default function ModelForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className={`space-y-6 ${showPreview ? 'pt-20' : ''}`}>
         {/* Basic Info Section */}
         <div className="border-b pb-6">
           <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
@@ -373,7 +392,7 @@ export default function ModelForm() {
         {/* Model Page Content Section */}
         <div className="border-b pb-6">
           <h2 className="text-lg font-semibold mb-4">Model Page Content</h2>
-          <div className="space-y-6">
+          <div className="space-y-6 max-h-none overflow-visible">
             {/* Hero Section */}
             <div>
               <label className="text-sm font-semibold block mb-2">
@@ -601,7 +620,10 @@ export default function ModelForm() {
             {/* FAQs - Dynamic Form */}
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">FAQs</h3>
+                <div>
+                  <h3 className="text-lg font-semibold">FAQs ({faqs.length})</h3>
+                  <p className="text-xs text-gray-500 mt-1">Add as many FAQs as needed</p>
+                </div>
                 <Button
                   type="button"
                   onClick={addFaq}
@@ -613,11 +635,11 @@ export default function ModelForm() {
               </div>
 
               {faqs.length > 0 ? (
-                <div className="space-y-4">
-                  {faqs.map((faq) => (
+                <div className="space-y-4 max-h-none overflow-visible">
+                  {faqs.map((faq, index) => (
                     <div key={faq.id} className="border rounded-lg p-4 bg-slate-50">
                       <div className="flex justify-between items-start mb-3">
-                        <label className="text-sm font-medium">Question</label>
+                        <label className="text-sm font-medium">Question {index + 1}</label>
                         <button
                           type="button"
                           onClick={() => removeFaq(faq.id)}
@@ -657,13 +679,25 @@ export default function ModelForm() {
 
         {/* Submit Buttons */}
         <div className="flex gap-2">
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-            {id ? "Update Model" : "Create Model"}
+          <Button 
+            type="submit" 
+            className="bg-blue-600 hover:bg-blue-700"
+            disabled={updateModel.isPending || createModel.isPending}
+          >
+            {updateModel.isPending || createModel.isPending ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                {id ? "Updating..." : "Creating..."}
+              </>
+            ) : (
+              id ? "Update Model" : "Create Model"
+            )}
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => navigate("/models")}
+            disabled={updateModel.isPending || createModel.isPending}
           >
             Cancel
           </Button>
