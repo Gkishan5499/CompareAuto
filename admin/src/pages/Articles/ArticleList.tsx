@@ -7,7 +7,6 @@ import { Badge } from "../../components/ui/badge";
 import { useApiList, useApiDelete } from "../../hooks/useapi";
 import { Edit, Trash2, Plus, Search, Filter } from "lucide-react";
 import dayjs from "dayjs";
-import { toast } from "sonner";
 
 interface Article {
   _id: string;
@@ -46,7 +45,6 @@ export default function ArticleList() {
   const handleDelete = async (id: string) => {
     if (confirm("Delete this article?")) {
       await deleteArticle.mutateAsync(id);
-      toast.success("Article deleted");
     }
   };
 
@@ -116,7 +114,7 @@ export default function ArticleList() {
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/articles/${article.id}/edit`)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(article.id)} disabled={deleteArticle.isPending}>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(article.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>

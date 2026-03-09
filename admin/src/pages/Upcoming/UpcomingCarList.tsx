@@ -156,7 +156,6 @@ export default function UpcomingCarList() {
                           size="sm"
                           className="gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                           onClick={() => handleDelete(car.id)}
-                          disabled={deleteMutation.isPending && deleteId === car.id}
                         >
                           <Trash2 className="h-4 w-4" />
                           Delete

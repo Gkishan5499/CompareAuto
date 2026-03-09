@@ -14,9 +14,9 @@ export default function UsedCarList() {
   const [displayCount, setDisplayCount] = useState(20);
 
   const filtered = useMemo(() => {
-    if (!query) return cars;
+    if (!query) return cars as any[];
     const q = query.toLowerCase();
-    return cars.filter((c: any) => (
+    return (cars as any[]).filter((c: any) => (
       c.title?.toLowerCase().includes(q) ||
       c.brand?.toLowerCase().includes(q) ||
       c.carmodel?.toLowerCase().includes(q) ||

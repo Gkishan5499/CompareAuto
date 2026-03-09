@@ -10,7 +10,7 @@ export default function UsedCarForm() {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
   const { data: cars = [] } = useApiList(["used-cars"], "/api/used-cars");
-  const existing = cars.find((c: any) => c.id === id);
+  const existing = (cars as any[]).find((c: any) => c.id === id);
 
   const [form, setForm] = useState<any>({
     id: "",

@@ -6,8 +6,16 @@ import { useApiDelete, useApiList } from "../../hooks/useapi";
 import { Search } from "lucide-react";
 
 
+interface Model {
+  id: string;
+  name: string;
+  brandName: string;
+  bodyType: string;
+  image: string;
+}
+
 export default function ModelList() {
-  const { data: models = [], isLoading } = useApiList(["models"], "/api/models");
+  const { data: models = [], isLoading } = useApiList<Model[]>(["models"], "/api/models");
   const deleteModel = useApiDelete(["models"], "/api/models");
   
   const [searchQuery, setSearchQuery] = useState("");

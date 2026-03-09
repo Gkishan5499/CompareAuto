@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import client from "../api/client";
+import { toast } from "sonner";
 
 // ✅ FIXED: Added <T> here so you can pass types like useApiList<Brand[]>(...)
 export const useApiList = <T>(key: string[], url: string) => {
@@ -34,6 +35,12 @@ export const useApiDelete = (key: string[], url: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string | number) => (await client.delete(`${url}/${id}`)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: key }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: key });
+      toast.success("Deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to delete");
+    },
   });
 };

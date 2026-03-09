@@ -42,6 +42,7 @@ import UpcomingCarList from "./pages/Upcoming/UpcomingCarList";
 import UpcomingCarForm from "./pages/Upcoming/UpcomingCarForm";
 import UserList from "./pages/Users/UserList";
 import UserForm from "./pages/Users/UserForm";
+import { Toaster } from "sonner";
 
 const queryClient = new QueryClient();
 
@@ -508,6 +509,7 @@ export default function App() {
 
         </Routes>
       </BrowserRouter>
+      <Toaster richColors position="top-right" />
     </AuthProvider>
   </QueryClientProvider>
   );
