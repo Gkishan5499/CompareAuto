@@ -23,6 +23,7 @@ export default function UserList() {
     const query = searchQuery.toLowerCase();
     return users.filter((u: any) =>
       u.username?.toLowerCase().includes(query) ||
+      u.email?.toLowerCase().includes(query) ||
       u.role?.toLowerCase().includes(query)
     );
   }, [users, searchQuery]);
@@ -40,7 +41,7 @@ export default function UserList() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
           type="text"
-          placeholder="Search by username or role..."
+          placeholder="Search by username, email or role..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -51,6 +52,7 @@ export default function UserList() {
         <thead className="bg-gray-100">
           <tr>
             <th className="p-2 text-left">Username</th>
+            <th className="p-2 text-left">Email</th>
             <th className="p-2 text-left">Role</th>
             <th className="p-2">Actions</th>
           </tr>
@@ -58,7 +60,7 @@ export default function UserList() {
         <tbody>
           {filteredUsers.length === 0 ? (
             <tr>
-              <td colSpan={3} className="p-8 text-center text-gray-500">
+              <td colSpan={4} className="p-8 text-center text-gray-500">
                 No users found
               </td>
             </tr>
@@ -66,6 +68,7 @@ export default function UserList() {
             filteredUsers.map((u: any) => (
               <tr key={u._id || u.id || u.username} className="border">
                 <td className="p-2">{u.username}</td>
+                <td className="p-2">{u.email || "-"}</td>
                 <td className="p-2">{u.role || "editor"}</td>
                 <td className="p-2 flex gap-4 justify-center">
                   <button

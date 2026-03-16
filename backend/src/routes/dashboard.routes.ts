@@ -9,6 +9,8 @@ import UpcomingCar from "../models/UpcomingCar.model";
 import Dealer from "../models/Dealer.model";
 import Review from "../models/Review.model";
 import Variant from "../models/Variant.model";
+import verifyAdmin from "../middleware/verifyAdmin";
+import requirePermission from "../middleware/requirePermission";
 
 const router = Router();
 
@@ -23,7 +25,7 @@ const loadJsonCount = async (fileName: string) => {
   }
 };
 
-router.get("/stats", async (req, res) => {
+router.get("/stats", verifyAdmin, requirePermission("dashboard"), async (req, res) => {
   try {
     const [brands, models, variantsDb, usedCars, articles, upcoming, dealers, reviews] = await Promise.all([
       Brand.countDocuments(),

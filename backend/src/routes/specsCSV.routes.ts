@@ -5,6 +5,7 @@ import { Router } from "express";
 import multer from "multer";
 import { uploadSpecsCsv } from "../controllers/space/specsCSV.controller";
 import verifyAdmin from "../middleware/verifyAdmin";
+import requirePermission from "../middleware/requirePermission";
 
 const router = Router();
 
@@ -27,6 +28,7 @@ const upload = multer({
 router.post(
   "/upload",
   verifyAdmin,
+  requirePermission("specs"),
   upload.single("file"),
   uploadSpecsCsv
 );

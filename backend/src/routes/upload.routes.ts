@@ -3,6 +3,7 @@ import multer from "multer";
 import cloudinary from "../config/cloudinary";
 import fs from "fs";
 import path from "path";
+import verifyAdmin from "../middleware/verifyAdmin";
 
 const router = Router();
 
@@ -43,7 +44,7 @@ const handleUpload = async (req: any, res: any) => {
   }
 };
 
-router.post("/", upload.single("file"), handleUpload);
-router.post("/single", upload.single("file"), handleUpload);
+router.post("/", verifyAdmin, upload.single("file"), handleUpload);
+router.post("/single", verifyAdmin, upload.single("file"), handleUpload);
 
 export default router;

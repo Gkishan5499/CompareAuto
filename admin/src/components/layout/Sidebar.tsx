@@ -1,37 +1,33 @@
 import { NavLink } from "react-router-dom";
 import { LayoutDashboard, CarFront, Layers, Settings, FileSpreadsheet, MapPin, Database, Image, Mail, FileText, MessageSquare, Palette, TextAlignEnd, CalendarClock, Users } from "lucide-react";
 import { useAuth } from "../../auth/AuthProvider";
+import { hasPermission, type PermissionKey } from "../../lib/permissions";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/brands", label: "Brands", icon: CarFront },
-  { to: "/models", label: "Models", icon: Layers },
-  { to: "/variants", label: "Variants", icon: Layers },
-  { to: "/specs", label: "Car Specs", icon: Database },
-  { to: "/pricing", label: "Pricing & Taxes", icon: TextAlignEnd },
-  { to: "/hero-carousel", label: "Hero Carousel", icon: Image },
-  { to: "/enquiries", label: "Enquiries", icon: Mail },
-  { to: "/articles", label: "Articles", icon: FileText },
-  { to: "/comments", label: "Comments", icon: MessageSquare },
-  { to: "/used-cars", label: "Used Cars", icon: CarFront },
-  { to: "/upcoming", label: "Upcoming Cars", icon: CalendarClock },
-  { to: "/dealers", label: "Dealers", icon: MapPin },
-  { to: "/branding", label: "Branding", icon: Palette },
-  { to: "/import", label: "Import CSV", icon: FileSpreadsheet },
-  { to: "/users", label: "Users", icon: Users },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" as PermissionKey },
+  { to: "/brands", label: "Brands", icon: CarFront, permission: "brands" as PermissionKey },
+  { to: "/models", label: "Models", icon: Layers, permission: "models" as PermissionKey },
+  { to: "/variants", label: "Variants", icon: Layers, permission: "variants" as PermissionKey },
+  { to: "/specs", label: "Car Specs", icon: Database, permission: "specs" as PermissionKey },
+  { to: "/pricing", label: "Pricing & Taxes", icon: TextAlignEnd, permission: "pricing" as PermissionKey },
+  { to: "/hero-carousel", label: "Hero Carousel", icon: Image, permission: "heroCarousel" as PermissionKey },
+  { to: "/enquiries", label: "Enquiries", icon: Mail, permission: "enquiries" as PermissionKey },
+  { to: "/articles", label: "Articles", icon: FileText, permission: "articles" as PermissionKey },
+  { to: "/comments", label: "Comments", icon: MessageSquare, permission: "comments" as PermissionKey },
+  { to: "/used-cars", label: "Used Cars", icon: CarFront, permission: "usedCars" as PermissionKey },
+  { to: "/upcoming", label: "Upcoming Cars", icon: CalendarClock, permission: "upcomingCars" as PermissionKey },
+  { to: "/dealers", label: "Dealers", icon: MapPin, permission: "dealers" as PermissionKey },
+  { to: "/branding", label: "Branding", icon: Palette, permission: "branding" as PermissionKey },
+  { to: "/import", label: "Import CSV", icon: FileSpreadsheet, permission: "importCsv" as PermissionKey },
+  { to: "/users", label: "Users", icon: Users, permission: "users" as PermissionKey },
+  { to: "/settings", label: "Settings", icon: Settings, permission: "settings" as PermissionKey },
 ];
 
 export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
-
-  const filteredNav = nav.filter((item) => {
-    if (item.to === "/specs" || item.to === "/import" || item.to === "/users") {
-      return isAdmin;
-    }
-    return true;
-  });
+  const filteredNav = nav.filter((item) => hasPermission(user, item.permission));
+  const canImport = hasPermission(user, "importCsv");
+  const canBrands = hasPermission(user, "brands");
 
   return (
     <aside className={`${collapsed ? "w-20" : "w-64"} fixed h-screen bg-white shadow-lg border-r z-50 flex flex-col transition-all`}> 
@@ -64,9 +60,13 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
       <div className="p-3 border-t text-sm text-muted-foreground">
         {!collapsed && <div>Quick actions</div>}
         <div className="mt-2 flex gap-2">
-          <NavLink to="/brands" className="text-sm text-blue-600 hover:underline">Add brand</NavLink>
-          {!collapsed && <span>|</span>}
-          <NavLink to="/import" className="text-sm text-green-600 hover:underline">Import CSV</NavLink>
+          {canBrands && (
+            <NavLink to="/brands" className="text-sm text-blue-600 hover:underline">Add brand</NavLink>
+          )}
+          {!collapsed && canBrands && canImport && <span>|</span>}
+          {canImport && (
+            <NavLink to="/import" className="text-sm text-green-600 hover:underline">Import CSV</NavLink>
+          )}
         </div>
       </div>
     </aside>

@@ -6,13 +6,15 @@ import {
   updateArticle,
   deleteArticle
 } from "../controllers/article.controller";
+import verifyAdmin from "../middleware/verifyAdmin";
+import requirePermission from "../middleware/requirePermission";
 
 const router = Router();
 
 router.get("/", getAllArticles);
 router.get("/:id", getArticleById);
-router.post("/", createArticle);
-router.put("/:id", updateArticle);
-router.delete("/:id", deleteArticle);
+router.post("/", verifyAdmin, requirePermission("articles"), createArticle);
+router.put("/:id", verifyAdmin, requirePermission("articles"), updateArticle);
+router.delete("/:id", verifyAdmin, requirePermission("articles"), deleteArticle);
 
 export default router;

@@ -14,6 +14,8 @@ import {
   deleteCarModel
   , bulkCreateCarModels
 } from "../controllers/carModel.controller";
+import verifyAdmin from "../middleware/verifyAdmin";
+import requirePermission from "../middleware/requirePermission";
 
 const router = Router();
 
@@ -27,11 +29,11 @@ router.get("/body-type/:bodyType", getCarModelsByBodyType);
 router.get("/fuel-type/:fuelType", getCarModelsByFuelType);
 router.get("/slug/:slug", getCarModelBySlug);
 router.get("/:id", getCarModelById);
-router.post("/bulk", bulkCreateCarModels);
+router.post("/bulk", verifyAdmin, requirePermission("models"), bulkCreateCarModels);
 
 // Admin routes
-router.post("/", createCarModel);
-router.put("/:id", updateCarModel);
-router.delete("/:id", deleteCarModel);
+router.post("/", verifyAdmin, requirePermission("models"), createCarModel);
+router.put("/:id", verifyAdmin, requirePermission("models"), updateCarModel);
+router.delete("/:id", verifyAdmin, requirePermission("models"), deleteCarModel);
 
 export default router;

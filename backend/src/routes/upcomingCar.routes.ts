@@ -1,5 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
+import verifyAdmin from "../middleware/verifyAdmin";
+import requirePermission from "../middleware/requirePermission";
 import {
   getAllUpcomingCars,
   getUpcomingCarById,
@@ -14,9 +16,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.get("/", getAllUpcomingCars);
 router.get("/:id", getUpcomingCarById);
-router.post("/", createUpcomingCar);
-router.put("/:id", updateUpcomingCar);
-router.delete("/:id", deleteUpcomingCar);
-router.post("/upload-csv", upload.single("file"), uploadUpcomingCarsCsv);
+router.post("/", verifyAdmin, requirePermission("upcomingCars"), createUpcomingCar);
+router.put("/:id", verifyAdmin, requirePermission("upcomingCars"), updateUpcomingCar);
+router.delete("/:id", verifyAdmin, requirePermission("upcomingCars"), deleteUpcomingCar);
+router.post("/upload-csv", verifyAdmin, requirePermission("upcomingCars"), upload.single("file"), uploadUpcomingCarsCsv);
 
 export default router;

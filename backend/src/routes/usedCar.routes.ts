@@ -7,14 +7,16 @@ import {
   updateUsedCar,
   deleteUsedCar
 } from "../controllers/usedCar.controller";
+import verifyAdmin from "../middleware/verifyAdmin";
+import requirePermission from "../middleware/requirePermission";
 
 const router = Router();
 
 router.get("/", getAllUsedCars);
 router.get("/:id", getUsedCarById);
 router.get("/city/:city", getUsedCarsByCity);
-router.post("/", createUsedCar);
-router.put("/:id", updateUsedCar);
-router.delete("/:id", deleteUsedCar);
+router.post("/", verifyAdmin, requirePermission("usedCars"), createUsedCar);
+router.put("/:id", verifyAdmin, requirePermission("usedCars"), updateUsedCar);
+router.delete("/:id", verifyAdmin, requirePermission("usedCars"), deleteUsedCar);
 
 export default router;

@@ -9,6 +9,7 @@ import {
 } from "../controllers/space/specs.controller";
 
 import verifyAdmin from "../middleware/verifyAdmin";
+import requirePermission from "../middleware/requirePermission";
 
 const router = Router();
 
@@ -23,9 +24,9 @@ router.get("/:variantId", getSpecsByVariant);
 /**
  * Admin Protected Endpoints
  */
-router.post("/", verifyAdmin, createSpecs);
-router.post("/bulk", verifyAdmin, bulkCreateSpecs);
-router.put("/:variantId", verifyAdmin, updateSpecs);
-router.delete("/:variantId", verifyAdmin, deleteSpecs);
+router.post("/", verifyAdmin, requirePermission("specs"), createSpecs);
+router.post("/bulk", verifyAdmin, requirePermission("specs"), bulkCreateSpecs);
+router.put("/:variantId", verifyAdmin, requirePermission("specs"), updateSpecs);
+router.delete("/:variantId", verifyAdmin, requirePermission("specs"), deleteSpecs);
 
 export default router;

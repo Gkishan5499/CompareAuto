@@ -7,10 +7,19 @@ import { useApiCreate, useApiUpdate } from "../../hooks/useapi";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
+import { toast } from "sonner";
+import {
+  ACCESS_OPTIONS,
+  ALL_PERMISSIONS,
+  DEFAULT_EDITOR_PERMISSIONS,
+  type PermissionKey,
+} from "../../lib/permissions";
 
 interface UserFormValues {
   username: string;
+  email: string;
   role: string;
+  permissions: PermissionKey[];
   password?: string;
 }
 
@@ -18,8 +27,8 @@ export default function UserForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<UserFormValues>({
-    defaultValues: { role: "editor" },
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<UserFormValues>({
+    defaultValues: { role: "editor", permissions: DEFAULT_EDITOR_PERMISSIONS },
   });
 
   const { data } = useQuery({
@@ -32,7 +41,11 @@ export default function UserForm() {
     if (!data) return;
     reset({
       username: data.username || "",
+      email: data.email || "",
       role: data.role || "editor",
+      permissions: (Array.isArray(data.permissions) && data.permissions.length > 0)
+        ? data.permissions
+        : (data.role === "admin" ? ALL_PERMISSIONS : DEFAULT_EDITOR_PERMISSIONS),
       password: "",
     });
   }, [data, reset]);
@@ -43,23 +56,59 @@ export default function UserForm() {
   const onSubmit = async (form: UserFormValues) => {
     const payload: UserFormValues = {
       username: form.username,
+      email: form.email.trim().toLowerCase(),
       role: form.role,
+      permissions: form.role === "admin" ? ALL_PERMISSIONS : (form.permissions || []),
     };
+
+    if (payload.role !== "admin" && payload.permissions.length === 0) {
+      toast.error("Select at least one access permission");
+      return;
+    }
 
     if (form.password && form.password.trim()) {
       payload.password = form.password;
     }
 
-    if (id) {
-      await update.mutateAsync(payload);
-    } else {
-      await create.mutateAsync(payload);
-    }
+    try {
+      if (id) {
+        await update.mutateAsync(payload);
+        toast.success("User updated successfully");
+      } else {
+        const created = await create.mutateAsync(payload);
+        if (created?.emailNotificationSent) {
+          toast.success("User created and confirmation email sent");
+        } else {
+          toast.warning("User created, but confirmation email was not sent");
+        }
+      }
 
-    navigate("/users");
+      navigate("/users");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to save user");
+    }
   };
 
   const roleValue = watch("role");
+  const selectedPermissions = watch("permissions") || [];
+
+  useEffect(() => {
+    const hasSamePermissions = (a: string[], b: string[]) => {
+      if (a.length !== b.length) return false;
+      return a.every((item) => b.includes(item));
+    };
+
+    if (roleValue === "admin") {
+      if (!hasSamePermissions(selectedPermissions, ALL_PERMISSIONS)) {
+        setValue("permissions", ALL_PERMISSIONS, { shouldValidate: true });
+      }
+      return;
+    }
+
+    if (!selectedPermissions || selectedPermissions.length === 0) {
+      setValue("permissions", DEFAULT_EDITOR_PERMISSIONS, { shouldValidate: true });
+    }
+  }, [roleValue, selectedPermissions, setValue]);
 
   return (
     <div className="max-w-xl bg-white p-6 rounded shadow">
@@ -78,16 +127,68 @@ export default function UserForm() {
         </div>
 
         <div className="space-y-1">
+          <Label htmlFor="user-email">Email</Label>
+          <Input
+            id="user-email"
+            type="email"
+            autoComplete="email"
+            {...register("email", {
+              required: "Email is required",
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: "Enter a valid email address",
+              },
+            })}
+            placeholder="user@example.com"
+          />
+          {errors.email && (
+            <p className="text-sm text-red-600">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1">
           <Label htmlFor="user-role">Role</Label>
           <select
             id="user-role"
-            {...register("role")}
+            {...register("role", { required: "Role is required" })}
             value={roleValue}
             className="w-full h-10 rounded-md border bg-transparent px-3 py-2 text-sm"
           >
             <option value="admin">admin</option>
             <option value="editor">editor</option>
           </select>
+          {errors.role && (
+            <p className="text-sm text-red-600">{errors.role.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label>Access Permissions</Label>
+          {roleValue === "admin" ? (
+            <p className="text-sm text-gray-600">Admin role gets full access automatically.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border p-3">
+              {ACCESS_OPTIONS.filter((item) => item.key !== "users").map((item) => (
+                <label key={item.key} className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    value={item.key}
+                    className="h-4 w-4"
+                    {...register("permissions", {
+                      validate: (value) => {
+                        if (watch("role") === "admin") return true;
+                        return (value && value.length > 0) || "Select at least one access permission";
+                      },
+                    })}
+                  />
+                  <span>{item.label}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          {errors.permissions && (
+            <p className="text-sm text-red-600">{errors.permissions.message as string}</p>
+          )}
         </div>
 
         <div className="space-y-1">

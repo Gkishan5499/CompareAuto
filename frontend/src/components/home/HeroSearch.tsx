@@ -51,7 +51,7 @@ const HeroSearch = () => {
 
   // Filter states
   const [selectedFilters, setSelectedFilters] = useState({
-    budget: "",
+    budget: [], // now an array for multi-select
     bodyType: "",
     fuelType: "",
     transmission: ""
@@ -177,17 +177,21 @@ const HeroSearch = () => {
   };
 
   const handleFilterSelect = (filterType: string, value: string) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [filterType]: prev[filterType as keyof typeof prev] === value ? "" : value
-    }));
-
-    // // close dropdown automatically
-    // setShowFilters(prev => ({
-    //   ...prev,
-    //   [filterType]: false
-    // }));
-
+    if (filterType === "budget") {
+      setSelectedFilters(prev => {
+        const current = prev.budget as string[];
+        const exists = current.includes(value);
+        return {
+          ...prev,
+          budget: exists ? current.filter(v => v !== value) : [...current, value]
+        };
+      });
+    } else {
+      setSelectedFilters(prev => ({
+        ...prev,
+        [filterType]: prev[filterType as keyof typeof prev] === value ? "" : value
+      }));
+    }
   };
 
   // const toggleFilterDropdown = (filterType: string) => {
@@ -221,18 +225,25 @@ const HeroSearch = () => {
 
     if (searchQuery) params.append("q", searchQuery);
 
-    const budgetRange = selectedFilters.budget ? BUDGET_RANGES[selectedFilters.budget] : undefined;
+    // Multi-budget logic
+    const selectedBudgets = selectedFilters.budget as string[];
     if (tab === "new") {
-      if (budgetRange) {
-        params.append("priceMin", String(budgetRange.min));
-        params.append("priceMax", String(budgetRange.max));
+      if (selectedBudgets.length > 0) {
+        // Find min of all mins and max of all maxes
+        let min = Math.min(...selectedBudgets.map(b => BUDGET_RANGES[b].min));
+        let max = Math.max(...selectedBudgets.map(b => BUDGET_RANGES[b].max));
+        params.append("priceMin", String(min));
+        params.append("priceMax", String(max));
       }
       if (selectedFilters.bodyType) params.append("body", selectedFilters.bodyType);
       if (selectedFilters.fuelType) params.append("fuel", selectedFilters.fuelType);
       if (selectedFilters.transmission) params.append("transmission", selectedFilters.transmission);
     } else {
       if (city) params.append("city", city);
-      if (budgetRange) params.append("priceMax", String(budgetRange.maxLakh));
+      if (selectedBudgets.length > 0) {
+        let maxLakh = Math.max(...selectedBudgets.map(b => BUDGET_RANGES[b].maxLakh));
+        params.append("priceMax", String(maxLakh));
+      }
     }
 
     return params.toString();
@@ -453,7 +464,7 @@ const HeroSearch = () => {
                 onClick={() => toggleFilterDropdown("budget")}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                  selectedFilters.budget
+                  (selectedFilters.budget as string[]).length > 0
                     ? "bg-accent-muted border-accent text-primary shadow-gold"
                     : "bg-card border-border text-foreground hover:border-primary"
                 )}
@@ -461,25 +472,42 @@ const HeroSearch = () => {
                 <IndianRupee className="h-4 w-4" />
                 <span>Budget</span>
                 <ChevronDown className="h-4 w-4" />
+                {(selectedFilters.budget as string[]).length > 0 && (
+                  <span className="ml-2 flex flex-wrap gap-1">
+                    {(selectedFilters.budget as string[]).map(b => (
+                      <Badge key={b} variant="outline">{b}</Badge>
+                    ))}
+                  </span>
+                )}
               </button>
               {showFilters.budget && (
                 <div className="absolute left-0 mt-2 w-56 bg-card rounded-lg shadow-premium-xl border border-border z-50">
-                  {BUDGET_OPTIONS.map((option) => (
+                  {BUDGET_OPTIONS.map((option) => {
+                    const selected = (selectedFilters.budget as string[]).includes(option);
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => handleFilterSelect("budget", option)}
+                        className={cn(
+                          "w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0",
+                          selected && "bg-accent-muted text-primary font-medium border-l-4 border-l-accent"
+                        )}
+                      >
+                        {option}
+                        {selected && <span className="ml-2">✓</span>}
+                      </button>
+                    );
+                  })}
+                  {(selectedFilters.budget as string[]).length > 0 && (
                     <button
-                      key={option}
                       type="button"
-                      onClick={() => {
-                        handleFilterSelect("budget", option);
-                        toggleFilterDropdown("budget");
-                      }}
-                      className={cn(
-                        "w-full text-left px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-b-0",
-                        selectedFilters.budget === option && "bg-accent-muted text-primary font-medium border-l-4 border-l-accent"
-                      )}
+                      onClick={() => setSelectedFilters(prev => ({ ...prev, budget: [] }))}
+                      className="w-full text-left px-4 py-2 bg-muted text-muted-foreground hover:bg-accent border-t border-border rounded-b-lg"
                     >
-                      {option}
+                      Clear All
                     </button>
-                  ))}
+                  )}
                 </div>
               )}
             </div>

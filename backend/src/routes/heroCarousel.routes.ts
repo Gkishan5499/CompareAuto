@@ -1,4 +1,6 @@
 import express from "express";
+import verifyAdmin from "../middleware/verifyAdmin";
+import requirePermission from "../middleware/requirePermission";
 import {
   getAllHeroImages,
   getActiveHeroImages,
@@ -15,11 +17,11 @@ const router = express.Router();
 router.get("/active", getActiveHeroImages);
 
 // Admin routes
-router.get("/", getAllHeroImages);
-router.get("/:id", getHeroImageById);
-router.post("/", createHeroImage);
-router.put("/:id", updateHeroImage);
-router.delete("/:id", deleteHeroImage);
-router.post("/reorder", reorderHeroImages);
+router.get("/", verifyAdmin, requirePermission("heroCarousel"), getAllHeroImages);
+router.get("/:id", verifyAdmin, requirePermission("heroCarousel"), getHeroImageById);
+router.post("/", verifyAdmin, requirePermission("heroCarousel"), createHeroImage);
+router.put("/:id", verifyAdmin, requirePermission("heroCarousel"), updateHeroImage);
+router.delete("/:id", verifyAdmin, requirePermission("heroCarousel"), deleteHeroImage);
+router.post("/reorder", verifyAdmin, requirePermission("heroCarousel"), reorderHeroImages);
 
 export default router;

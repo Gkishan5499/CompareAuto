@@ -200,44 +200,44 @@ export default function App() {
           <Route
             path="/specs"
             element={
-              <AdminRoute>
+              <ProtectedRoute>
                 <DashboardLayout>
                   <SpecList />
                 </DashboardLayout>
-              </AdminRoute>
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/specs/new"
             element={
-              <AdminRoute>
+              <ProtectedRoute>
                 <DashboardLayout>
                   <SpecForm />
                 </DashboardLayout>
-              </AdminRoute>
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/specs/:variantId/edit"
             element={
-              <AdminRoute>
+              <ProtectedRoute>
                 <DashboardLayout>
                   <SpecForm />
                 </DashboardLayout>
-              </AdminRoute>
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/specs/import"
             element={
-              <AdminRoute>
+              <ProtectedRoute>
                 <DashboardLayout>
                   <SpecCSVImport />
                 </DashboardLayout>
-              </AdminRoute>
+              </ProtectedRoute>
             }
           />
 
