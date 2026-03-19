@@ -57,7 +57,7 @@ const FuelTypeStrip = () => {
             <div className="inline-flex items-center gap-2 text-primary font-medium text-sm mb-2 uppercase tracking-wider">
               <Flame className="w-4 h-4" /> Power Your Drive
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">
               Explore by Fuel Type
             </h2>
             <p className="text-muted-foreground mt-2 max-w-2xl text-base">

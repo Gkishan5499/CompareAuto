@@ -3,20 +3,17 @@ import { Loader2 } from "lucide-react";
 import { updateMetaTags, injectStructuredData, generateOrganizationSchema, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import HeroSearch from "@/components/home/HeroSearch";
 import ExploreBodyTypes from "@/components/home/ExploreBodyTypes";
-const BodyTypesStrip = lazy(() => import("@/components/home/BodyTypesStrip"));
 const FuelTypeStrip = lazy(() => import("@/components/home/FuelTypeStrip"));
 const TopPicks = lazy(() => import("@/components/home/TopPicks"));
 const RecentModelsSlider = lazy(() => import("@/components/home/RecentModelsSlider"));
-const UpcomingTimeline = lazy(() => import("@/components/home/UpcomingTimeline"));
-const BrandsStrip = lazy(() => import("@/components/home/BrandsStrip"));
+const PopularBrandsRow = lazy(() => import("@/components/home/PopularBrandsRow"));
 const QuickToolsRibbon = lazy(() => import("@/components/home/QuickToolsRibbon"));
 import CompareBar from "@/components/home/CompareBar";
 import AdSlot from "@/components/ads/AdSlot";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // Lazy load non-critical sections to improve Initial Load Time (LCP)
 const TrendingComparisons = lazy(() => import("@/components/home/TrendingComparisons"));
-const TrendingCollections = lazy(() => import("@/components/home/TrendingCollections"));
+const CarsByBudget = lazy(() => import("@/components/home/CarsByBudget"));
 const LatestNews = lazy(() => import("@/components/home/LatestNews"));
 const WhyCompareAuto = lazy(() => import("@/components/home/WhyCompareAuto"));
 
@@ -58,31 +55,35 @@ const Index = () => {
         {/* Recent and Upcoming sections stacked with tighter mobile spacing */}
         <div className="flex flex-col gap-8 sm:gap-10">
           <Suspense fallback={<SectionLoader label="Loading recent models..." />}>
-            <RecentModelsSlider />
-          </Suspense>
-          <Suspense fallback={<SectionLoader label="Loading upcoming cars..." />}>
-            <UpcomingTimeline />
-          </Suspense>
-          <Suspense fallback={<SectionLoader label="Loading comparisons..." />}>
             <TrendingComparisons />
           </Suspense>
-          {/* <Suspense fallback={<SectionLoader label="Loading trending picks..." />}>
-            <TrendingCollections />
-          </Suspense> */}
+          <Suspense fallback={<SectionLoader label="Loading budget cars..." />}>
+            <CarsByBudget />
+          </Suspense>
+          {/* <Suspense fallback={<SectionLoader label="Loading upcoming cars..." />}><UpcomingTimeline /></Suspense> */}
+          {/* <Suspense fallback={<SectionLoader label="Loading trending picks..." />}><TrendingCollections /></Suspense> */}
         </div>
-
 
         {/* 2. DISCOVERY STRIPS */}
         <div className="flex flex-col gap-4 sm:gap-6">
           <ExploreBodyTypes />
-          <Suspense fallback={<SectionLoader label="Loading fuel types..." />}> 
+          <Suspense fallback={<SectionLoader label="Loading fuel types..." />}>
             <FuelTypeStrip />
           </Suspense>
         </div>
 
+        <section className="border-t border-slate-100 dark:border-slate-800">
+          <Suspense fallback={<SectionLoader label="Loading popular brands..." />}>
+            <PopularBrandsRow />
+          </Suspense>
+        </section>
+
         {/* 3. EDITORIAL & RANKINGS */}
-        <Suspense fallback={<SectionLoader label="Loading top picks..." />}> 
+        <Suspense fallback={<SectionLoader label="Loading top picks..." />}>
           <TopPicks />
+        </Suspense>
+        <Suspense fallback={<SectionLoader label="Loading comparisons..." />}>
+          <RecentModelsSlider />
         </Suspense>
 
         {/* Ad Slot: Mid Billboard (High Visibility) */}
@@ -94,12 +95,6 @@ const Index = () => {
               sizeMap={{ desktop: "970x250", tablet: "728x90", mobile: "320x100" }}
             />
           </div>
-        </section>
-
-        <section className="border-t border-slate-100 dark:border-slate-800">
-          <Suspense fallback={<SectionLoader label="Loading brands..." />}> 
-            <BrandsStrip />
-          </Suspense>
         </section>
 
         {/* 5. LAZY LOADED SECTIONS (Performance Optimization) */}
@@ -119,18 +114,6 @@ const Index = () => {
     </div>
   );
 };
-
-// Simple Skeleton for lazy sections
-const SectionSkeleton = () => (
-  <div className="container mx-auto px-4 max-w-7xl py-12 sm:py-16 space-y-6 sm:space-y-8">
-    <Skeleton className="h-8 w-1/3 mx-auto" />
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Skeleton className="h-64 rounded-xl" />
-      <Skeleton className="h-64 rounded-xl" />
-      <Skeleton className="h-64 rounded-xl" />
-    </div>
-  </div>
-);
 
 const SectionLoader = ({ label }: { label: string }) => (
   <div className="container mx-auto px-4 max-w-7xl py-12 sm:py-16">

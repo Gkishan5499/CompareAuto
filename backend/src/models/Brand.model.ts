@@ -10,6 +10,8 @@ export interface IBrand extends Document {
   heroIntro?: string;
   popularModelsIntro?: string;
   latestUpcomingIntro?: string;
+  bodyTypeSectionIntro?: string;
+  budgetSectionIntro?: string;
   brandOverview?: string;
   brandPositioning?: string;
   warrantyServiceNetwork?: string;
@@ -29,6 +31,8 @@ const BrandSchema = new Schema<IBrand>(
     heroIntro: { type: String, default: "" },
     popularModelsIntro: { type: String, default: "" },
     latestUpcomingIntro: { type: String, default: "" },
+    bodyTypeSectionIntro: { type: String, default: "" },
+    budgetSectionIntro: { type: String, default: "" },
     brandOverview: { type: String, default: "" },
     brandPositioning: { type: String, default: "" },
     warrantyServiceNetwork: { type: String, default: "" },

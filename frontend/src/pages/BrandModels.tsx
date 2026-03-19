@@ -8,7 +8,7 @@ import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import FilterBar from "@/components/brands/FilterBar";
 import ModelCard from "@/components/home/ModelCard";
 import { useBrandBySlug, useModelsByBrand, useBrands } from "@/lib/api-hooks";
-import { modelsApi, variantsApi } from "@/lib/api";
+import { modelsApi, variantsApi, upcomingCarsApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { updateMetaTags, injectStructuredData, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import { formatINR, parseINRToRupees } from "@/lib/guards";
@@ -19,7 +19,7 @@ import { getBrandLogo, getBrandInitial } from "@/lib/brandLogos";
 import { 
   CarFront, Layers, Banknote, ArrowRight, 
   SortAsc, LayoutGrid, List as ListIcon, 
-  Info, Star, TrendingUp, Calendar 
+  Info, Star, TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +61,34 @@ const parseFaqs = (raw?: string): FaqItem[] => {
   }
 
   return items;
+};
+
+const normalizeText = (value?: string) => (value || "").trim().toLowerCase();
+
+const matchesBrand = (model: any, brandData: any, brandSlug?: string) => {
+  if (!brandData) return false;
+
+  const byId =
+    model?.brandId &&
+    brandData?.id &&
+    normalizeText(String(model.brandId)) === normalizeText(String(brandData.id));
+
+  const bySlugInBrandId =
+    model?.brandId &&
+    (brandData?.slug || brandSlug) &&
+    normalizeText(String(model.brandId)) === normalizeText(String(brandData?.slug || brandSlug));
+
+  const byName =
+    model?.brandName &&
+    brandData?.name &&
+    normalizeText(String(model.brandName)) === normalizeText(String(brandData.name));
+
+  const bySlug =
+    model?.brandSlug &&
+    brandSlug &&
+    normalizeText(String(model.brandSlug)) === normalizeText(String(brandSlug));
+
+  return Boolean(byId || bySlugInBrandId || byName || bySlug);
 };
 
 const parseProsConsFromString = (raw?: string): { pros: string[]; cons: string[] } => {
@@ -172,6 +200,8 @@ const BrandModels = () => {
   const heroIntro = brandData?.heroIntro?.trim();
   const popularModelsIntro = brandData?.popularModelsIntro?.trim();
   const latestUpcomingIntro = brandData?.latestUpcomingIntro?.trim();
+  const bodyTypeSectionIntro = brandData?.bodyTypeSectionIntro?.trim();
+  const budgetSectionIntro = brandData?.budgetSectionIntro?.trim();
   const brandOverview = brandData?.brandOverview?.trim();
   const brandPositioning = brandData?.brandPositioning?.trim();
   const warrantyServiceNetwork = brandData?.warrantyServiceNetwork?.trim();
@@ -181,6 +211,8 @@ const BrandModels = () => {
 
   const [sort, setSort] = useState<string>(searchParams.get("sort") || "popular");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [activeBodyTypeTab, setActiveBodyTypeTab] = useState<string>("");
+  const [activeBudgetTab, setActiveBudgetTab] = useState<string>("");
   const [spotlightOnRoadPrice, setSpotlightOnRoadPrice] = useState<{ min: number; max: number } | null>(null);
   const [spotlightVariantPriceRange, setSpotlightVariantPriceRange] = useState<{ min: number; max: number } | null>(null);
   
@@ -189,21 +221,26 @@ const BrandModels = () => {
     queryKey: ["models", "new", brand],
     queryFn: async () => {
       const allNew = await modelsApi.getNew();
-      return allNew.filter((m: any) => m.brandId === brandData?.id);
+      return allNew.filter((m: any) => matchesBrand(m, brandData, brand));
     },
     enabled: !!brandData?.id,
     staleTime: 5 * 60 * 1000,
   });
   
   const { data: upcomingModels = [] } = useQuery({
-    queryKey: ["models", "upcoming", brand],
+    queryKey: ["upcoming-cars", "brand", brand],
     queryFn: async () => {
-      const allUpcoming = await modelsApi.getUpcoming();
-      return allUpcoming.filter((m: any) => m.brandId === brandData?.id);
+      const allUpcoming = await upcomingCarsApi.getAll();
+      return allUpcoming.filter((m: any) => matchesBrand(m, brandData, brand));
     },
     enabled: !!brandData?.id,
     staleTime: 5 * 60 * 1000,
   });
+
+  const brandUpcomingModels = useMemo(() => {
+    if (upcomingModels.length > 0) return upcomingModels;
+    return allModels.filter((m: any) => m?.status === "upcoming");
+  }, [allModels, upcomingModels]);
 
   const { data: allVariants = [] } = useQuery({
     queryKey: ["variants", "brand", brand, allModels.map((m: any) => m.id).join(",")],
@@ -320,6 +357,163 @@ const BrandModels = () => {
     }
     return arr;
   }, [filteredModels, sort]);
+
+  const sourceModelsForSections = useMemo(() => {
+    return sortedModels.length > 0 ? sortedModels : allModels;
+  }, [sortedModels, allModels]);
+
+  const variantPricesByModelId = useMemo(() => {
+    const priceMap = new Map<string, number[]>();
+
+    allVariants.forEach((variant: any) => {
+      const modelId = variant?.modelId ? String(variant.modelId) : "";
+      const parsedPrice = parseINRToRupees(variant?.price);
+      if (!modelId || !parsedPrice || parsedPrice <= 0) return;
+
+      const existing = priceMap.get(modelId) || [];
+      existing.push(parsedPrice);
+      priceMap.set(modelId, existing);
+    });
+
+    priceMap.forEach((prices, modelId) => {
+      const uniqueSorted = Array.from(new Set(prices)).sort((a, b) => a - b);
+      priceMap.set(modelId, uniqueSorted);
+    });
+
+    return priceMap;
+  }, [allVariants]);
+
+  const getModelPrices = (model: any): number[] => {
+    const modelId = model?.id ? String(model.id) : "";
+    const variantPrices = variantPricesByModelId.get(modelId) || [];
+    if (variantPrices.length > 0) return variantPrices;
+
+    const minPrice = model.status === "upcoming" ? model.expectedPriceMin || 0 : model.priceRange?.min || 0;
+    const maxPrice = model.status === "upcoming" ? model.expectedPriceMax || 0 : model.priceRange?.max || 0;
+    if (minPrice > 0 && maxPrice > 0 && maxPrice !== minPrice) return [minPrice, maxPrice];
+    if (minPrice > 0) return [minPrice];
+    return [];
+  };
+
+  const modelsByBodyType = useMemo(() => {
+    const grouped = new Map<
+      string,
+      {
+        key: string;
+        label: string;
+        count: number;
+        minPrice: number;
+        models: any[];
+      }
+    >();
+
+    sourceModelsForSections.forEach((model: any) => {
+      const rawBodyType = (model?.bodyType || "").trim();
+      if (!rawBodyType || rawBodyType.toLowerCase() === "other") return;
+      const key = rawBodyType.toLowerCase();
+      const label = rawBodyType;
+      const prices = getModelPrices(model);
+      const modelMinPrice = prices.length > 0 ? prices[0] : 0;
+
+      const existing = grouped.get(key);
+      if (existing) {
+        existing.count += 1;
+        existing.models.push(model);
+        if (modelMinPrice > 0 && (existing.minPrice === 0 || modelMinPrice < existing.minPrice)) {
+          existing.minPrice = modelMinPrice;
+        }
+      } else {
+        grouped.set(key, {
+          key,
+          label,
+          count: 1,
+          minPrice: modelMinPrice > 0 ? modelMinPrice : 0,
+          models: [model],
+        });
+      }
+    });
+
+    return Array.from(grouped.values())
+      .map((item) => ({
+        ...item,
+        models: [...item.models].sort((a: any, b: any) => {
+          const aPrice = getModelPrices(a)[0] || 0;
+          const bPrice = getModelPrices(b)[0] || 0;
+          if (aPrice === 0 && bPrice === 0) return (a?.name || "").localeCompare(b?.name || "");
+          if (aPrice === 0) return 1;
+          if (bPrice === 0) return -1;
+          return aPrice - bPrice;
+        }),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+  }, [sourceModelsForSections, variantPricesByModelId]);
+
+  const budgetBuckets = useMemo(() => {
+    const ranges = [
+      { key: "0-5", label: "Under 5 Lakh", min: 0, max: 500000, filterValue: "0-5" },
+      { key: "5-10", label: "5 - 10 Lakh", min: 500000, max: 1000000, filterValue: "5-10" },
+      { key: "10-20", label: "10 - 20 Lakh", min: 1000000, max: 2000000, filterValue: "10-20" },
+      { key: "20-40", label: "20 - 40 Lakh", min: 2000000, max: 4000000, filterValue: "20-40" },
+      { key: "40-plus", label: "Above 40 Lakh", min: 4000000, max: Number.POSITIVE_INFINITY, filterValue: "40-+" },
+    ];
+
+    return ranges
+      .map((range) => {
+        const models = sourceModelsForSections.filter((model: any) => {
+          const prices = getModelPrices(model);
+          const price = prices.length > 0 ? prices[0] : 0;
+          if (price <= 0) return false;
+          return price >= range.min && price < range.max;
+        });
+
+        return {
+          ...range,
+          count: models.length,
+          models: [...models].sort((a: any, b: any) => {
+            const aPrice = getModelPrices(a)[0] || 0;
+            const bPrice = getModelPrices(b)[0] || 0;
+            if (aPrice === 0 && bPrice === 0) return (a?.name || "").localeCompare(b?.name || "");
+            if (aPrice === 0) return 1;
+            if (bPrice === 0) return -1;
+            return aPrice - bPrice;
+          }),
+        };
+      })
+      .filter((bucket) => bucket.count > 0);
+  }, [sourceModelsForSections, variantPricesByModelId]);
+
+  useEffect(() => {
+    if (!modelsByBodyType.length) {
+      setActiveBodyTypeTab("");
+      return;
+    }
+
+    const stillExists = modelsByBodyType.some((item) => item.key === activeBodyTypeTab);
+    if (!stillExists) {
+      setActiveBodyTypeTab(modelsByBodyType[0].key);
+    }
+  }, [modelsByBodyType, activeBodyTypeTab]);
+
+  useEffect(() => {
+    if (!budgetBuckets.length) {
+      setActiveBudgetTab("");
+      return;
+    }
+
+    const stillExists = budgetBuckets.some((bucket) => bucket.key === activeBudgetTab);
+    if (!stillExists) {
+      setActiveBudgetTab(budgetBuckets[0].key);
+    }
+  }, [budgetBuckets, activeBudgetTab]);
+
+  const activeBodyTypeGroup = useMemo(() => {
+    return modelsByBodyType.find((item) => item.key === activeBodyTypeTab) || modelsByBodyType[0];
+  }, [modelsByBodyType, activeBodyTypeTab]);
+
+  const activeBudgetGroup = useMemo(() => {
+    return budgetBuckets.find((bucket) => bucket.key === activeBudgetTab) || budgetBuckets[0];
+  }, [budgetBuckets, activeBudgetTab]);
 
   // SEO & Structured Data (omitted detailed implementation for brevity, keeping hook calls)
   useEffect(() => {
@@ -551,7 +745,7 @@ const BrandModels = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    {sortedModels.length > 0 ? "All Models" : "No Models Found"}
+                  {sortedModels.length > 0 ? "Popular Models" : "No Models Found"}
                     <Badge variant="outline" className="ml-1">{sortedModels.length}</Badge>
                  </h2>
 
@@ -614,6 +808,128 @@ const BrandModels = () => {
                 </Card>
             )}
         </section>
+
+        {(modelsByBodyType.length > 0 || budgetBuckets.length > 0) && (
+        <section className="space-y-10">
+          {modelsByBodyType.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold">Cars by Body Type</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {bodyTypeSectionIntro || `Browse ${brandData.name} by body style with exact model-wise prices. Use this section to compare hatchbacks, SUVs, sedans, and more in one place, then open the matching list by selecting the body type card.`}
+            </p>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {modelsByBodyType.map((item) => (
+                    <Button
+                      key={item.key}
+                      size="sm"
+                      variant={activeBodyTypeTab === item.key ? "default" : "outline"}
+                      onClick={() => setActiveBodyTypeTab(item.key)}
+                    >
+                      {item.label} ({item.count})
+                    </Button>
+                  ))}
+                </div>
+
+                {activeBodyTypeGroup && (
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-lg">{activeBodyTypeGroup.label}</h4>
+                        <Badge variant="outline">{activeBodyTypeGroup.count} models</Badge>
+                        </div>
+                      <div className="flex items-center justify-between gap-2">
+                        {activeBodyTypeGroup.minPrice > 0 ? (
+                          <p className="text-sm text-muted-foreground">Starts from ₹{formatINR(activeBodyTypeGroup.minPrice, true)}</p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Price details on model page</p>
+                        )}
+                        <Button size="sm" variant="outline" onClick={() => setSelectedBodyType(activeBodyTypeGroup.label)}>
+                          View {activeBodyTypeGroup.label}
+                        </Button>
+                      </div>
+                      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        {activeBodyTypeGroup.models.map((model: any) => (
+                          <div key={model.id || model.slug}>
+                            <ModelCard model={model} />
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+          </div>
+          )}
+
+          {budgetBuckets.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold">Cars by Budget</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {budgetSectionIntro || `See exact ${brandData.name} prices grouped by budget slabs. Each row lists model names with their current price range so buyers can quickly shortlist cars by affordability.`}
+            </p>
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {budgetBuckets.map((bucket) => (
+                    <Button
+                      key={bucket.key}
+                      size="sm"
+                      variant={activeBudgetTab === bucket.key ? "default" : "outline"}
+                      onClick={() => setActiveBudgetTab(bucket.key)}
+                    >
+                      {bucket.label} ({bucket.count})
+                    </Button>
+                  ))}
+                </div>
+
+                {activeBudgetGroup && (
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-lg">{activeBudgetGroup.label}</h4>
+                        <Badge variant="outline">{activeBudgetGroup.count} models</Badge>
+                      </div>
+                      <div className="flex justify-end">
+                        <Button size="sm" variant="outline" onClick={() => setSelectedPriceRange(activeBudgetGroup.filterValue)}>
+                          View {activeBudgetGroup.label}
+                        </Button>
+                      </div>
+                      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        {activeBudgetGroup.models.map((model: any) => (
+                          <div key={model.id || model.slug}>
+                            <ModelCard model={model} />
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+          </div>
+          )}
+        </section>
+        )}
+
+        {brandUpcomingModels.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-2xl font-bold">Upcoming {brandData.name} Cars</h3>
+              <Link to={`/upcoming-cars?brand=${brand}`}>
+                <Button size="sm" variant="outline">View All Upcoming</Button>
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {latestUpcomingIntro || `Explore upcoming launches from ${brandData.name} with expected pricing and launch timelines.`}
+            </p>
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {brandUpcomingModels.slice(0, 6).map((model: any) => (
+                <div key={model.id || model.slug}>
+                  <ModelCard model={model} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <AdSlot id="brand_mid_leaderboard" />
 
@@ -688,9 +1004,9 @@ const BrandModels = () => {
             </section>
         )}
 
-        {/* 5) DISCOVER MORE (Tabs for New/Upcoming) */}
-        {(newModels.length > 0 || upcomingModels.length > 0) && (
-            <section className="grid md:grid-cols-2 gap-8">
+        {/* 5) DISCOVER MORE */}
+        {newModels.length > 0 && (
+          <section>
                 {newModels.length > 0 && (
                      <Card className="p-6">
                         <div className="flex items-center justify-between mb-6">
@@ -709,31 +1025,6 @@ const BrandModels = () => {
                                      <div className="flex-1">
                                          <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">{model.name}</h4>
                                          <p className="text-xs text-muted-foreground">Launched Recently</p>
-                                     </div>
-                                     <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary" />
-                                 </Link>
-                             ))}
-                        </div>
-                     </Card>
-                )}
-
-                {upcomingModels.length > 0 && (
-                     <Card className="p-6">
-                        <div className="flex items-center justify-between mb-6">
-                             <h3 className="text-lg font-bold flex items-center gap-2">
-                                <Calendar className="w-5 h-5 text-amber-500" /> Coming Soon
-                             </h3>
-                             <Link to={`/upcoming-cars?brand=${brand}`} className="text-xs text-primary hover:underline">View All</Link>
-                        </div>
-                        <div className="space-y-4">
-                             {upcomingModels.slice(0, 3).map((model: any) => (
-                                 <Link key={model.id} to={`/${brand}/${model.slug}`} className="flex items-center gap-4 group">
-                                     <div className="w-16 h-10 bg-muted rounded flex items-center justify-center">
-                                         <CarFront className="w-5 h-5 text-muted-foreground" />
-                                     </div>
-                                     <div className="flex-1">
-                                         <h4 className="font-semibold text-sm group-hover:text-primary transition-colors">{model.name}</h4>
-                                         <p className="text-xs text-muted-foreground">Expected: {model.expectedLaunchDate || "Soon"}</p>
                                      </div>
                                      <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary" />
                                  </Link>

@@ -26,8 +26,9 @@ interface BrandFormValues {
   logo: string;
   logoFile?: FileList; // For the file input
   heroIntro?: string;
-  popularModelsIntro?: string;
   latestUpcomingIntro?: string;
+  bodyTypeSectionIntro?: string;
+  budgetSectionIntro?: string;
   brandOverview?: string;
   brandPositioning?: string;
   warrantyServiceNetwork?: string;
@@ -128,7 +129,6 @@ export default function BrandForm() {
       console.log("=== FETCHED BRAND DATA ===");
       console.log("Full data:", data);
       console.log("heroIntro:", data.heroIntro);
-      console.log("popularModelsIntro:", data.popularModelsIntro);
       console.log("brandOverview:", data.brandOverview);
       console.log("brandPositioning:", data.brandPositioning);
       console.log("warrantyServiceNetwork:", data.warrantyServiceNetwork);
@@ -143,8 +143,9 @@ export default function BrandForm() {
         country: data.country,
         logo: data.logo,
         heroIntro: data.heroIntro || "",
-        popularModelsIntro: data.popularModelsIntro || "",
         latestUpcomingIntro: data.latestUpcomingIntro || "",
+        bodyTypeSectionIntro: data.bodyTypeSectionIntro || "",
+        budgetSectionIntro: data.budgetSectionIntro || "",
         brandOverview: data.brandOverview || "",
         brandPositioning: data.brandPositioning || "",
         warrantyServiceNetwork: data.warrantyServiceNetwork || "",
@@ -204,8 +205,9 @@ export default function BrandForm() {
       country: allValues.country,
       logo: finalLogoUrl,
       heroIntro: allValues.heroIntro || "",
-      popularModelsIntro: allValues.popularModelsIntro || "",
       latestUpcomingIntro: allValues.latestUpcomingIntro || "",
+      bodyTypeSectionIntro: allValues.bodyTypeSectionIntro || "",
+      budgetSectionIntro: allValues.budgetSectionIntro || "",
       brandOverview: allValues.brandOverview || "",
       brandPositioning: allValues.brandPositioning || "",
       warrantyServiceNetwork: allValues.warrantyServiceNetwork || "",
@@ -235,8 +237,9 @@ export default function BrandForm() {
       country: payload.country,
       logo: payload.logo,
       heroIntro: payload.heroIntro || "",
-      popularModelsIntro: payload.popularModelsIntro || "",
       latestUpcomingIntro: payload.latestUpcomingIntro || "",
+      bodyTypeSectionIntro: payload.bodyTypeSectionIntro || "",
+      budgetSectionIntro: payload.budgetSectionIntro || "",
       brandOverview: payload.brandOverview || "",
       brandPositioning: payload.brandPositioning || "",
       warrantyServiceNetwork: payload.warrantyServiceNetwork || "",
@@ -371,16 +374,22 @@ export default function BrandForm() {
                   <p className="text-sm text-slate-600 mt-1 bg-slate-50 p-2 rounded">{lastSavedData.heroIntro}</p>
                 </div>
               )}
-              {lastSavedData.popularModelsIntro && (
-                <div>
-                  <p className="font-medium text-slate-700 text-sm">Popular Models Intro ({countWords(lastSavedData.popularModelsIntro)} words)</p>
-                  <p className="text-sm text-slate-600 mt-1 bg-slate-50 p-2 rounded">{lastSavedData.popularModelsIntro}</p>
-                </div>
-              )}
               {lastSavedData.latestUpcomingIntro && (
                 <div>
                   <p className="font-medium text-slate-700 text-sm">Latest/Upcoming Intro ({countWords(lastSavedData.latestUpcomingIntro)} words)</p>
                   <p className="text-sm text-slate-600 mt-1 bg-slate-50 p-2 rounded">{lastSavedData.latestUpcomingIntro}</p>
+                </div>
+              )}
+              {lastSavedData.bodyTypeSectionIntro && (
+                <div>
+                  <p className="font-medium text-slate-700 text-sm">Body Type Section Intro ({countWords(lastSavedData.bodyTypeSectionIntro)} words)</p>
+                  <p className="text-sm text-slate-600 mt-1 bg-slate-50 p-2 rounded">{lastSavedData.bodyTypeSectionIntro}</p>
+                </div>
+              )}
+              {lastSavedData.budgetSectionIntro && (
+                <div>
+                  <p className="font-medium text-slate-700 text-sm">Budget Section Intro ({countWords(lastSavedData.budgetSectionIntro)} words)</p>
+                  <p className="text-sm text-slate-600 mt-1 bg-slate-50 p-2 rounded">{lastSavedData.budgetSectionIntro}</p>
                 </div>
               )}
               {lastSavedData.brandOverview && (
@@ -504,18 +513,6 @@ export default function BrandForm() {
 
         <div>
           <label className="text-sm font-semibold block mb-1">
-            Popular Models Intro ({countWords(watch("popularModelsIntro") || "")} words)
-          </label>
-          <Textarea
-            value={watch("popularModelsIntro") || ""}
-            onChange={(e) => setValue("popularModelsIntro", e.target.value)}
-            placeholder="Intro above the popular models grid"
-            rows={3}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-semibold block mb-1">
             Latest / Upcoming Intro ({countWords(watch("latestUpcomingIntro") || "")} words)
           </label>
           <Textarea
@@ -523,6 +520,30 @@ export default function BrandForm() {
             onChange={(e) => setValue("latestUpcomingIntro", e.target.value)}
             placeholder="Intro for the latest and upcoming cars section"
             rows={3}
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-semibold block mb-1">
+            Cars by Body Type Intro ({countWords(watch("bodyTypeSectionIntro") || "")} words)
+          </label>
+          <Textarea
+            value={watch("bodyTypeSectionIntro") || ""}
+            onChange={(e) => setValue("bodyTypeSectionIntro", e.target.value)}
+            placeholder="Around 100 words shown below Cars by Body Type heading"
+            rows={4}
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-semibold block mb-1">
+            Cars by Budget Intro ({countWords(watch("budgetSectionIntro") || "")} words)
+          </label>
+          <Textarea
+            value={watch("budgetSectionIntro") || ""}
+            onChange={(e) => setValue("budgetSectionIntro", e.target.value)}
+            placeholder="Around 100 words shown below Cars by Budget heading"
+            rows={4}
           />
         </div>
 

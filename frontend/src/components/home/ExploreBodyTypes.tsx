@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useModels, useVariants } from "@/lib/api-hooks";
 import { Car, CarFront, Truck, Bus, Zap, Sparkles, Boxes, LayoutGrid } from "lucide-react";
 
@@ -106,26 +107,40 @@ const ExploreBodyTypes = ({ showHeader = true }: ExploreBodyTypesProps) => {
   };
 
   const isLoading = modelsLoading || variantsLoading;
+  const visibleBodyTypes = useMemo(
+    () => (showHeader ? bodyTypes.slice(0, 5) : bodyTypes),
+    [bodyTypes, showHeader]
+  );
+  const hasMoreBodyTypes = showHeader && bodyTypes.length > visibleBodyTypes.length;
 
   return (
     <section className="py-12 md:py-16 bg-gradient-to-b from-background to-muted/20 border-t">
       <div className="container mx-auto px-4 max-w-7xl">
         {showHeader && (
           <div className="mb-8 md:mb-10">
-            <div className="inline-flex items-center gap-2 text-primary font-medium text-sm mb-2 uppercase tracking-wider">
-              <LayoutGrid className="w-4 h-4" /> Browse by Body Type
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 text-primary font-medium text-sm mb-2 uppercase tracking-wider">
+                  <LayoutGrid className="w-4 h-4" /> Browse by Body Type
+                </div>
+                <h3 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-3">
+                  Explore by <span className="text-primary">Body Type</span>
+                </h3>
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Browse cars by their body style and design
+                </p>
+              </div>
+              {hasMoreBodyTypes && (
+                <Link to="/body" className="hidden md:block">
+                  <Button variant="outline">View more body types</Button>
+                </Link>
+              )}
             </div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-3">
-              Explore by <span className="text-primary">Body Type</span>
-            </h3>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Browse cars by their body style and design
-            </p>
           </div>
         )}
 
         <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {bodyTypes.map((type) => {
+          {visibleBodyTypes.map((type) => {
             const config = bodyTypeConfig[type.slug];
             const Icon = config?.icon || Car;
             const description = config?.description || "";
@@ -168,7 +183,7 @@ const ExploreBodyTypes = ({ showHeader = true }: ExploreBodyTypesProps) => {
         </div>
 
         <div className="md:hidden flex overflow-x-auto gap-4 pb-4 -mx-4 px-4 snap-x snap-mandatory no-scrollbar">
-          {bodyTypes.map((type) => {
+          {visibleBodyTypes.map((type) => {
             const config = bodyTypeConfig[type.slug];
             const Icon = config?.icon || Car;
             const description = config?.description || "";
@@ -205,6 +220,14 @@ const ExploreBodyTypes = ({ showHeader = true }: ExploreBodyTypesProps) => {
             );
           })}
         </div>
+
+        {hasMoreBodyTypes && (
+          <div className="mt-6 text-center md:hidden">
+            <Link to="/body">
+              <Button variant="outline">View more body types</Button>
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -3,25 +3,104 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import ModelCard from "@/components/home/ModelCard";
-import { useModels } from "@/lib/api-hooks";
+import { useModels, useVariants } from "@/lib/api-hooks";
 import { Trophy, ArrowRight, Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseINRToRupees } from "@/lib/guards";
+
+const getModelKeys = (model: any) => {
+  return [model?.id, model?._id, model?.slug].filter(Boolean).map((value) => String(value));
+};
+
+const getVariantModelKeys = (variant: any) => {
+  return [
+    variant?.modelId,
+    variant?.model,
+    variant?.modelSlug,
+    variant?.model?.id,
+    variant?.model?._id,
+    variant?.model?.slug,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value));
+};
 
 const TopPicks = () => {
-  const { data: allModels = [], isLoading } = useModels();
+  const { data: allModels = [], isLoading: modelsLoading } = useModels();
+  const { data: allVariants = [], isLoading: variantsLoading } = useVariants("");
 
   const topModels = useMemo(() => {
-    return [...allModels]
-      .sort((a: any, b: any) => {
-        const aRating = a.rating || 0;
-        const bRating = b.rating || 0;
-        const aReviews = a.reviews || 0;
-        const bReviews = b.reviews || 0;
-        // Weighted sort: Rating has high impact, review count breaks ties
-        return (bRating * 100 + bReviews) - (aRating * 100 + aReviews);
+    const metricsByModelKey = new Map<string, { minPrice: number; maxMileage: number }>();
+
+    allVariants.forEach((variant: any) => {
+      const keys = getVariantModelKeys(variant);
+      if (keys.length === 0) return;
+
+      const parsedPrice = parseINRToRupees(variant?.price);
+      const price = parsedPrice && parsedPrice > 0 ? parsedPrice : 0;
+      const mileage = Number(variant?.mileage ?? 0);
+
+      keys.forEach((key) => {
+        const current = metricsByModelKey.get(key) ?? { minPrice: 0, maxMileage: 0 };
+        const minPrice =
+          price > 0 && (current.minPrice === 0 || price < current.minPrice)
+            ? price
+            : current.minPrice;
+        const maxMileage = mileage > current.maxMileage ? mileage : current.maxMileage;
+        metricsByModelKey.set(key, { minPrice, maxMileage });
+      });
+    });
+
+    const candidates = allModels.map((model: any) => {
+      const keys = getModelKeys(model);
+      let minPrice = 0;
+      let maxMileage = 0;
+
+      keys.forEach((key) => {
+        const metrics = metricsByModelKey.get(key);
+        if (!metrics) return;
+        if (metrics.minPrice > 0 && (minPrice === 0 || metrics.minPrice < minPrice)) {
+          minPrice = metrics.minPrice;
+        }
+        if (metrics.maxMileage > maxMileage) {
+          maxMileage = metrics.maxMileage;
+        }
+      });
+
+      if (minPrice === 0) {
+        const fallback = parseINRToRupees(model?.priceRange?.min ?? model?.expectedPriceMin ?? model?.price);
+        minPrice = fallback && fallback > 0 ? fallback : 0;
+      }
+      if (maxMileage === 0) {
+        maxMileage = Number(model?.mileage ?? 0);
+      }
+
+      return { model, minPrice, maxMileage };
+    });
+
+    const validCandidates = candidates.filter((item) => item.minPrice > 0 || item.maxMileage > 0);
+    if (validCandidates.length === 0) return [];
+
+    const minPrice = Math.min(...validCandidates.map((item) => item.minPrice || Number.MAX_SAFE_INTEGER));
+    const maxPrice = Math.max(...validCandidates.map((item) => item.minPrice || 0));
+    const minMileage = Math.min(...validCandidates.map((item) => item.maxMileage));
+    const maxMileage = Math.max(...validCandidates.map((item) => item.maxMileage));
+
+    return validCandidates
+      .map((item) => {
+        const priceScore =
+          maxPrice > minPrice ? (maxPrice - item.minPrice) / (maxPrice - minPrice) : 1;
+        const mileageScore =
+          maxMileage > minMileage ? (item.maxMileage - minMileage) / (maxMileage - minMileage) : 0;
+        const score = mileageScore * 0.55 + priceScore * 0.45;
+        return { ...item, score };
       })
-      .slice(0, 4);
-  }, [allModels]);
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+      .map((item) => item.model);
+  }, [allModels, allVariants]);
+
+  const isLoading = modelsLoading || variantsLoading;
 
   return (
     <section className="py-16 md:py-24 bg-background relative overflow-hidden border-b">
@@ -40,20 +119,20 @@ const TopPicks = () => {
               <Trophy className="w-4 h-4" /> Editors' Choice
             </div>
             <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
-              Top Picks <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">For You</span>
+              Popular <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Cars</span>
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Curated selections based on popularity, expert ratings, and customer satisfaction. 
-              Find out what everyone is driving.
+              Curated using a value-first mix of price and mileage.
+              Discover cars that balance affordability with efficiency.
             </p>
           </div>
 
-          <Link to="/brands?sort=popular">
+          {/* <Link to="/brands?sort=popular">
             <Button variant="outline" className="group border-primary/20 hover:bg-primary/5 hidden md:flex">
               View All Rankings
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Button>
-          </Link>
+          </Link> */}
         </div>
 
         {/* Grid */}

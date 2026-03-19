@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertCircle, CheckCircle, Loader } from "lucide-react";
+import client from "@/api/client";
 
 interface StateTaxConfig {
   _id: string;
@@ -72,9 +73,6 @@ const PricingManagement = () => {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvUploading, setCsvUploading] = useState(false);
 
-  const apiBase = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
-  const apiUrl = (path: string) => `${apiBase}${path}`;
-
   // Fetch Summary
   useEffect(() => {
     fetchPricingSummary();
@@ -83,9 +81,7 @@ const PricingManagement = () => {
   const fetchPricingSummary = async () => {
     try {
       setLoading(true);
-      const response = await fetch(apiUrl("/api/admin/pricing/summary"));
-      if (!response.ok) throw new Error("Failed to fetch summary");
-      const data = await response.json();
+      const { data } = await client.get("/api/admin/pricing/summary");
       setPricingSummary(data);
       setStateTaxConfigs(data.taxConfigs);
     } catch (error) {
@@ -98,18 +94,11 @@ const PricingManagement = () => {
   const handleUpdateAllPrices = async () => {
     try {
       setLoading(true);
-      const response = await fetch(apiUrl("/api/admin/pricing/variants/update-all"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: priceUpdateType,
-          value: parseFloat(priceUpdateValue.toString()),
-          filters: priceUpdateFilter ? { modelId: priceUpdateFilter } : undefined,
-        }),
+      const { data } = await client.post("/api/admin/pricing/variants/update-all", {
+        type: priceUpdateType,
+        value: parseFloat(priceUpdateValue.toString()),
+        filters: priceUpdateFilter ? { modelId: priceUpdateFilter } : undefined,
       });
-
-      if (!response.ok) throw new Error("Failed to update prices");
-      const data = await response.json();
 
       setMessage({ type: "success", text: `Updated ${data.variantsUpdated} variant prices` });
       setPriceUpdateValue(0);
@@ -124,14 +113,7 @@ const PricingManagement = () => {
   const handleUpdateStateTax = async () => {
     try {
       setLoading(true);
-      const response = await fetch(apiUrl("/api/admin/pricing/taxes/update"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editFormData),
-      });
-
-      if (!response.ok) throw new Error("Failed to update state tax");
-      const data = await response.json();
+      const { data } = await client.post("/api/admin/pricing/taxes/update", editFormData);
 
       setMessage({ type: "success", text: data.message });
       setEditingState(null);
@@ -150,13 +132,7 @@ const PricingManagement = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(apiUrl("/api/state-tax-config/apply-updates"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!response.ok) throw new Error("Failed to apply updates");
-      const data = await response.json();
+      const { data } = await client.post("/api/state-tax-config/apply-updates", {});
 
       setMessage({ 
         type: "success", 
@@ -181,12 +157,7 @@ const PricingManagement = () => {
       const form = new FormData();
       form.append("file", csvFile);
 
-      const resp = await fetch(apiUrl("/api/state-tax-config/import-csv"), {
-        method: "POST",
-        body: form,
-      });
-      if (!resp.ok) throw new Error("Import failed");
-      const data = await resp.json();
+      const { data } = await client.post("/api/state-tax-config/import-csv", form);
       setMessage({
         type: "success",
         text: `Imported ${data.updated + data.created} (updated ${data.updated}, created ${data.created}, skipped ${data.skipped})`,
@@ -406,16 +377,10 @@ const PricingManagement = () => {
                                 onClick={async () => {
                                   try {
                                     setLoading(true);
-                                    const response = await fetch(apiUrl("/api/admin/pricing/taxes/update"), {
-                                      method: "POST",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({ ...config, ...inlineEditData }),
-                                    });
-                                    if (response.ok) {
-                                      setMessage({ type: "success", text: "Updated successfully" });
-                                      setInlineEditingId(null);
-                                      fetchPricingSummary();
-                                    }
+                                    await client.post("/api/admin/pricing/taxes/update", { ...config, ...inlineEditData });
+                                    setMessage({ type: "success", text: "Updated successfully" });
+                                    setInlineEditingId(null);
+                                    fetchPricingSummary();
                                   } catch (error) {
                                     setMessage({ type: "error", text: "Failed to update" });
                                   } finally {
@@ -799,16 +764,10 @@ const PricingManagement = () => {
                               onClick={async () => {
                                 try {
                                   setLoading(true);
-                                  const response = await fetch(apiUrl("/api/admin/pricing/taxes/update"), {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ ...config, ...inlineEditData }),
-                                  });
-                                  if (response.ok) {
-                                    setMessage({ type: "success", text: "Updated successfully" });
-                                    setInlineEditingId(null);
-                                    fetchPricingSummary();
-                                  }
+                                  await client.post("/api/admin/pricing/taxes/update", { ...config, ...inlineEditData });
+                                  setMessage({ type: "success", text: "Updated successfully" });
+                                  setInlineEditingId(null);
+                                  fetchPricingSummary();
                                 } catch (error) {
                                   setMessage({ type: "error", text: "Failed to update" });
                                 } finally {
