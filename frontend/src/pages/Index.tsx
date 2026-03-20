@@ -44,7 +44,7 @@ const Index = () => {
 
         {/* Ad Slot: Top Leaderboard */}
         <section className="w-full bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-          <div className="container mx-auto px-4 max-w-7xl py-4 sm:py-5">
+          <div className="container mx-auto px-4 max-w-7xl py-1 sm:py-3">
             <AdSlot
               id="home_top_leaderboard"
               sizeMap={{ desktop: "728x90", tablet: "468x60", mobile: "320x50" }}
@@ -87,7 +87,7 @@ const Index = () => {
         </Suspense>
 
         {/* Ad Slot: Mid Billboard (High Visibility) */}
-        <section className="py-6 sm:py-8 bg-muted/20 border-y border-dashed border-slate-200 dark:border-slate-800">
+        <section className="py-2 sm:py-3 bg-muted/20 border-y border-dashed border-slate-200 dark:border-slate-800">
           <div className="container mx-auto px-4 max-w-7xl text-center">
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2 block">Sponsored</span>
             <AdSlot

@@ -1,9 +1,16 @@
 import { Link } from "react-router-dom";
-import { TrendingUp, ArrowRight, Scale, Flame, BarChart3 } from "lucide-react";
+import { ArrowRight, Flame } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useComparisons, useModels } from "@/lib/api-hooks";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { useComparisons, useModels, useVariants } from "@/lib/api-hooks";
+import { formatINR, parseINRToRupees } from "@/lib/guards";
 import { cn } from "@/lib/utils";
 
 interface TrendingComparisonsProps {
@@ -16,7 +23,7 @@ interface TrendingComparisonsProps {
 }
 
 const TrendingComparisons = ({
-  limit = 4,
+  limit = 6,
   offset = 0,
   showViewAll = true,
   variant = "home",
@@ -25,6 +32,7 @@ const TrendingComparisons = ({
 }: TrendingComparisonsProps) => {
   const { data: comparisonsData = [], isLoading: comparisonsLoading } = useComparisons();
   const { data: models = [], isLoading: modelsLoading } = useModels();
+  const { data: variants = [], isLoading: variantsLoading } = useVariants("");
 
   const normalizeToken = (value: string) => {
     return value
@@ -35,40 +43,153 @@ const TrendingComparisons = ({
   };
 
   const modelTokenMap = new Map<string, string>();
+  const modelBySlug = new Map<string, any>();
+  const compactModelTokenMap = new Map<string, string>();
+  const modelKeyToSlug = new Map<string, string>();
   models.forEach((model) => {
     const slug = model.slug;
     const id = model.id;
+    const _id = model._id;
     const name = model.name;
+    const brandName = model.brandName || "";
 
+    modelBySlug.set(slug, model);
+    modelKeyToSlug.set(String(slug), slug);
+    if (id) modelKeyToSlug.set(String(id), slug);
+    if (_id) modelKeyToSlug.set(String(_id), slug);
     modelTokenMap.set(normalizeToken(slug), slug);
     modelTokenMap.set(normalizeToken(id), slug);
     modelTokenMap.set(normalizeToken(name), slug);
+    modelTokenMap.set(normalizeToken(`${brandName} ${name}`), slug);
+
+    const compactKeys = [slug, id, name, `${brandName} ${name}`]
+      .filter(Boolean)
+      .map((key) => normalizeToken(String(key)).replace(/\s+/g, ""));
+    compactKeys.forEach((key) => compactModelTokenMap.set(key, slug));
   });
+
+  const resolveModelSlug = (token: string): string | undefined => {
+    const normalized = normalizeToken(token);
+    const direct = modelTokenMap.get(normalized);
+    if (direct) return direct;
+
+    const compact = normalized.replace(/\s+/g, "");
+    const compactDirect = compactModelTokenMap.get(compact);
+    if (compactDirect) return compactDirect;
+
+    for (const [key, slug] of compactModelTokenMap.entries()) {
+      if (key.includes(compact) || compact.includes(key)) {
+        return slug;
+      }
+    }
+
+    return undefined;
+  };
+
+  const variantMinPriceByModelSlug = new Map<string, number>();
+  variants.forEach((variant: any) => {
+    const rawModelKey = String(variant?.modelId || variant?.model || variant?.modelSlug || "");
+    if (!rawModelKey) return;
+
+    const linkedSlug =
+      modelKeyToSlug.get(rawModelKey) ||
+      modelTokenMap.get(normalizeToken(rawModelKey)) ||
+      resolveModelSlug(rawModelKey);
+
+    if (!linkedSlug) return;
+
+    const variantPrice = parseINRToRupees(variant?.exShowroomPrice ?? variant?.price);
+    if (!variantPrice || variantPrice <= 0) return;
+
+    const currentMin = variantMinPriceByModelSlug.get(linkedSlug);
+    if (!currentMin || variantPrice < currentMin) {
+      variantMinPriceByModelSlug.set(linkedSlug, variantPrice);
+    }
+  });
+
+  const getModelImage = (model: any) => {
+    if (model?.image) return model.image;
+    if (Array.isArray(model?.gallery) && model.gallery.length > 0) return model.gallery[0];
+    return "/placeholder.svg";
+  };
+
+  const getModelExShowroomPrice = (model: any) => {
+    const modelSlug = model?.slug;
+    const rawPrice =
+      model?.exShowroomPrice ??
+      model?.priceRange?.min ??
+      model?.startingPrice ??
+      model?.minPrice ??
+      model?.price ??
+      (modelSlug ? variantMinPriceByModelSlug.get(modelSlug) : null) ??
+      model?.expectedPriceMin ??
+      null;
+
+    return parseINRToRupees(rawPrice);
+  };
 
   const baseComparisons = comparisonsData
     .map((comparison) => {
       const normalizedModels = (comparison.models || [])
-        .map((token: string) => modelTokenMap.get(normalizeToken(token)))
+        .map((token: string) => resolveModelSlug(token))
         .filter(Boolean) as string[];
 
       return {
         ...comparison,
         models: normalizedModels,
+        modelA: modelBySlug.get(normalizedModels[0]),
+        modelB: modelBySlug.get(normalizedModels[1]),
       };
     })
     .filter((comparison) => comparison.models.length >= 2)
     .sort((a, b) => b.views - a.views);
 
-  let comparisons = baseComparisons.slice(offset, offset + limit);
-  if (comparisons.length < limit && offset > 0) {
-    const remaining = limit - comparisons.length;
-    const fallback = baseComparisons.filter(
+  const model7xoSlug =
+    modelTokenMap.get(normalizeToken("7xo")) ||
+    modelTokenMap.get(normalizeToken("xuv 7xo")) ||
+    modelTokenMap.get(normalizeToken("mahindra xuv 7xo"));
+  const model3xoSlug =
+    modelTokenMap.get(normalizeToken("3xo")) ||
+    modelTokenMap.get(normalizeToken("xuv 3xo")) ||
+    modelTokenMap.get(normalizeToken("mahindra xuv 3xo"));
+
+  const has7xoVs3xo = baseComparisons.some((comparison) => {
+    const [first, second] = comparison.models;
+    if (!first || !second || !model7xoSlug || !model3xoSlug) return false;
+    return (
+      (first === model7xoSlug && second === model3xoSlug) ||
+      (first === model3xoSlug && second === model7xoSlug)
+    );
+  });
+
+  const manual7xoVs3xo =
+    model7xoSlug && model3xoSlug
+      ? {
+          id: "manual-7xo-vs-3xo",
+          name: "7XO vs 3XO",
+          views: 999999,
+          models: [model7xoSlug, model3xoSlug],
+          modelA: modelBySlug.get(model7xoSlug),
+          modelB: modelBySlug.get(model3xoSlug),
+        }
+      : null;
+
+  const comparisonsPool =
+    manual7xoVs3xo && !has7xoVs3xo
+      ? [manual7xoVs3xo, ...baseComparisons]
+      : baseComparisons;
+
+  const visibleLimit = Math.max(limit, 6);
+  let comparisons = comparisonsPool.slice(offset, offset + visibleLimit);
+  if (comparisons.length < visibleLimit && offset > 0) {
+    const remaining = visibleLimit - comparisons.length;
+    const fallback = comparisonsPool.filter(
       (item) => !comparisons.some((existing) => existing.id === item.id)
     );
     comparisons = [...comparisons, ...fallback.slice(0, remaining)];
   }
 
-  const isLoading = comparisonsLoading || modelsLoading;
+  const isLoading = comparisonsLoading || modelsLoading || variantsLoading;
   const isEmpty = !isLoading && comparisons.length === 0;
 
   const isCompareVariant = variant === "compare";
@@ -82,7 +203,8 @@ const TrendingComparisons = ({
   return (
     <section
       className={cn(
-        "py-16 md:py-24 border-t",
+        "border-t",
+        isCompareVariant ? "py-16 md:py-24" : "pt-6 pb-12 md:pt-8 md:pb-16",
         isCompareVariant
           ? "bg-gradient-to-br from-amber-50 via-white to-rose-50 border-amber-100"
           : "bg-background border-slate-100 dark:border-slate-800"
@@ -91,7 +213,7 @@ const TrendingComparisons = ({
       <div className="container mx-auto px-4 max-w-7xl">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-10 gap-6">
           <div className="max-w-2xl">
             <div
               className={cn(
@@ -129,15 +251,16 @@ const TrendingComparisons = ({
           )}
         </div>
 
-        {/* Comparison Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {comparisons.map((comparison, index) => (
-            <Link 
-              key={comparison.id} 
-              to={`/compare?models=${comparison.models.join(",")}`}
-              className="group h-full"
-            >
-              <Card className="h-full border-muted/60 hover:border-orange-500/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-card overflow-hidden relative">
+        {/* Comparison Carousel */}
+        <Carousel opts={{ align: "start" }} className="w-full">
+          <CarouselContent className="-ml-4">
+            {comparisons.map((comparison, index) => (
+              <CarouselItem key={comparison.id} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                <Link
+                  to={`/compare?models=${comparison.models.join(",")}`}
+                  className="group h-full block"
+                >
+                  <Card className="h-full border-muted/60 hover:border-orange-500/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-card overflow-hidden relative">
                 
                 {/* Hot Badge for #1 */}
                 {index === 0 && (
@@ -148,64 +271,88 @@ const TrendingComparisons = ({
                   </div>
                 )}
 
-                <CardContent className="p-6 flex flex-col h-full">
-                  
-                  {/* Visual VS Header */}
-                  <div className="flex items-center justify-center mb-6 relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-dashed border-slate-200 dark:border-slate-700"></div>
+                <CardContent className="p-4 md:p-5 h-full flex flex-col">
+                  <div className="relative mb-4">
+                    <div className="absolute left-1/2 top-4 bottom-4 w-px -translate-x-1/2 bg-slate-200 dark:bg-slate-700" />
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full border border-blue-500 bg-white dark:bg-slate-950 flex items-center justify-center">
+                      <span className="text-[10px] font-semibold text-blue-600">VS</span>
                     </div>
-                    <div className="relative z-10 w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 flex items-center justify-center group-hover:border-orange-500/50 group-hover:scale-110 transition-all duration-300 shadow-sm">
-                        <span className="text-xs font-black text-muted-foreground group-hover:text-orange-600">VS</span>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="min-w-0">
+                        <div className="h-24 md:h-28 mb-3 overflow-hidden flex items-center justify-center">
+                          <img
+                            src={getModelImage(comparison.modelA)}
+                            alt={comparison.modelA ? `${comparison.modelA.brandName || ""} ${comparison.modelA.name || ""}`.trim() : "Car A"}
+                            className="w-full h-full object-contain"
+                            loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.src = "/placeholder.svg";
+                            }}
+                          />
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-tight truncate">
+                          {comparison.modelA?.brandName || ""}
+                        </p>
+                        <p className="text-[1rem] md:text-2xl font-bold leading-tight truncate">
+                          {comparison.modelA?.name || comparison.models[0]}
+                        </p>
+                        <p className="text-lg md:text-xl font-semibold leading-tight mt-2 truncate">
+                          {formatINR(getModelExShowroomPrice(comparison.modelA), true)}
+                        </p>
+                        <p className="text-muted-foreground text-sm">ex-showroom</p>
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="h-24 md:h-28 mb-3 overflow-hidden flex items-center justify-center">
+                          <img
+                            src={getModelImage(comparison.modelB)}
+                            alt={comparison.modelB ? `${comparison.modelB.brandName || ""} ${comparison.modelB.name || ""}`.trim() : "Car B"}
+                            className="w-full h-full object-contain"
+                            loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.src = "/placeholder.svg";
+                            }}
+                          />
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-tight truncate">
+                          {comparison.modelB?.brandName || ""}
+                        </p>
+                        <p className="text-[1rem] md:text-2xl font-bold leading-tight truncate">
+                          {comparison.modelB?.name || comparison.models[1]}
+                        </p>
+                        <p className="text-lg md:text-xl font-semibold leading-tight mt-2 truncate">
+                          {formatINR(getModelExShowroomPrice(comparison.modelB), true)}
+                        </p>
+                        <p className="text-muted-foreground text-sm">ex-showroom</p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Title & Stats */}
-                  <div className="text-center mb-6">
-                    <h3 className="text-lg font-bold leading-snug mb-2 group-hover:text-orange-600 transition-colors">
-                      {comparison.name}
-                    </h3>
-                    <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
-                        <BarChart3 className="w-3 h-3" />
-                        {(comparison.views / 1000).toFixed(1)}k views
-                    </div>
-                  </div>
-
-                  {/* Features/Tags */}
-                  <div className="mt-auto space-y-3">
-                    <div className="grid grid-cols-2 gap-2 text-[10px] font-medium text-muted-foreground text-center">
-                        <div className="bg-slate-50 dark:bg-slate-900 py-1.5 rounded border border-slate-100 dark:border-slate-800">
-                            Specs
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-900 py-1.5 rounded border border-slate-100 dark:border-slate-800">
-                            Price
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-900 py-1.5 rounded border border-slate-100 dark:border-slate-800">
-                            Mileage
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-900 py-1.5 rounded border border-slate-100 dark:border-slate-800">
-                            Safety
-                        </div>
-                    </div>
-
-                    <Button variant="outline" size="sm" className="w-full group-hover:bg-orange-50 dark:group-hover:bg-orange-900/10 group-hover:text-orange-600 group-hover:border-orange-200 dark:group-hover:border-orange-800 transition-all">
-                      Compare Now
-                    </Button>
-                  </div>
-
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full h-11 text-xl border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-600"
+                  >
+                    Compare Now
+                  </Button>
                 </CardContent>
-              </Card>
-            </Link>
-          ))}
+                  </Card>
+                </Link>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="-left-3 md:-left-6" />
+          <CarouselNext className="-right-3 md:-right-6" />
+        </Carousel>
 
-          {comparisons.length === 0 && !isLoading && (
+        {comparisons.length === 0 && !isLoading && (
             <Card className="h-full border-muted/60 bg-card">
               <CardContent className="p-6 h-full flex items-center justify-center text-sm text-muted-foreground">
                 No battles available right now.
               </CardContent>
             </Card>
-          )}
-        </div>
+        )}
 
         {/* Mobile View All Button */}
         {showViewAll && (

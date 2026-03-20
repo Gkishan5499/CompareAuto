@@ -3,6 +3,13 @@ import { useParams, useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Breadcrumbs from "@/components/brands/Breadcrumbs";
 import FilterBar from "@/components/brands/FilterBar";
@@ -788,16 +795,27 @@ const BrandModels = () => {
             </div>
 
             {sortedModels.length > 0 ? (
-                <div className={cn(
-                    "grid gap-6",
-                    view === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-                )}>
+                view === "grid" ? (
+                  <Carousel opts={{ align: "start", loop: true }} className="w-full">
+                    <CarouselContent className="-ml-4">
+                      {sortedModels.map((model) => (
+                        <CarouselItem key={model.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4">
+                          <ModelCard model={model} />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="-left-4 md:-left-6 z-20 bg-background/95 hover:bg-background" />
+                    <CarouselNext className="-right-4 md:-right-6 z-20 bg-background/95 hover:bg-background" />
+                  </Carousel>
+                ) : (
+                  <div className="grid gap-6 grid-cols-1">
                     {sortedModels.map((model) => (
-                         <div key={model.id} className={view === "list" ? "bg-white dark:bg-slate-900 p-4 rounded-xl border" : ""}>
-                            <ModelCard model={model} />
-                        </div>
+                      <div key={model.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl border">
+                        <ModelCard model={model} />
+                      </div>
                     ))}
-                </div>
+                  </div>
+                )
             ) : (
                 <Card className="py-16 text-center border-dashed">
                     <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
@@ -894,13 +912,17 @@ const BrandModels = () => {
                           View {activeBudgetGroup.label}
                         </Button>
                       </div>
-                      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {activeBudgetGroup.models.map((model: any) => (
-                          <div key={model.id || model.slug}>
-                            <ModelCard model={model} />
-                          </div>
-                        ))}
-                      </div>
+                      <Carousel opts={{ align: "start", loop: true }} className="w-full">
+                        <CarouselContent className="-ml-4">
+                          {activeBudgetGroup.models.map((model: any) => (
+                            <CarouselItem key={model.id || model.slug} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4">
+                              <ModelCard model={model} />
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="-left-4 md:-left-6 z-20 bg-background/95 hover:bg-background" />
+                        <CarouselNext className="-right-4 md:-right-6 z-20 bg-background/95 hover:bg-background" />
+                      </Carousel>
                     </CardContent>
                   </Card>
                 )}
@@ -921,13 +943,17 @@ const BrandModels = () => {
             <p className="text-sm text-muted-foreground leading-relaxed">
               {latestUpcomingIntro || `Explore upcoming launches from ${brandData.name} with expected pricing and launch timelines.`}
             </p>
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {brandUpcomingModels.slice(0, 6).map((model: any) => (
-                <div key={model.id || model.slug}>
-                  <ModelCard model={model} />
-                </div>
-              ))}
-            </div>
+            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+              <CarouselContent className="-ml-4">
+                {brandUpcomingModels.slice(0, 6).map((model: any) => (
+                  <CarouselItem key={model.id || model.slug} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4">
+                    <ModelCard model={model} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="-left-4 md:-left-6 z-20 bg-background/95 hover:bg-background" />
+              <CarouselNext className="-right-4 md:-right-6 z-20 bg-background/95 hover:bg-background" />
+            </Carousel>
           </section>
         )}
 

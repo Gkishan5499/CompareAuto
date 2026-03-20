@@ -426,10 +426,17 @@ const Compare = () => {
             )}>
                  {/* Visual VS Dividers for Desktop */}
                  {maxSlots >= 2 && (
-                    <div className="hidden md:flex absolute left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-muted border items-center justify-center font-bold text-xs text-muted-foreground">VS</div>
+                                        <div
+                                            className={cn(
+                                                "hidden md:flex absolute top-[calc(50%+1.25rem)] -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-muted border items-center justify-center font-bold text-xs text-muted-foreground",
+                                                maxSlots === 2 ? "left-1/2" : "left-1/3"
+                                            )}
+                                        >
+                                            VS
+                                        </div>
                  )}
                  {maxSlots === 3 && (
-                    <div className="hidden md:flex absolute left-2/3 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-muted border items-center justify-center font-bold text-xs text-muted-foreground">VS</div>
+                          <div className="hidden md:flex absolute left-2/3 top-[calc(50%+1.25rem)] -translate-x-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-muted border items-center justify-center font-bold text-xs text-muted-foreground">VS</div>
                  )}
 
                 {slotIndices.map((idx) => {
@@ -456,11 +463,11 @@ const Compare = () => {
 
                             {/* The Visual Card */}
                             <div className={cn(
-                                "flex-1 rounded-xl border-2 transition-all relative overflow-hidden group",
+                                "flex-1 rounded-xl border-2 transition-all relative overflow-hidden group min-h-[380px]",
                                 variant ? "bg-slate-50/50 dark:bg-slate-900/50 border-primary/20 hover:border-primary/50" : "border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/10 flex items-center justify-center min-h-[160px]"
                             )}>
                                 {variant && model ? (
-                                    <div className="p-5 flex flex-col h-full items-center text-center">
+                                    <div className="p-5 md:p-6 flex flex-col h-full items-center text-center">
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
@@ -471,19 +478,19 @@ const Compare = () => {
                                         </Button>
 
                                         {/* Model Image */}
-                                        <div className="w-full h-32 flex items-center justify-center mb-4 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden">
+                                        <div className="w-full h-40 md:h-44 flex items-center justify-center mb-4 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden ring-1 ring-slate-200/70 dark:ring-slate-700/70">
                                             {model.image ? (
                                                 <img 
                                                     src={model.image} 
                                                     alt={`${model.brandName} ${model.name}`} 
-                                                    className="w-full h-full object-contain p-2"
+                                                    className="w-full h-full object-cover"
                                                     loading="lazy"
                                                 />
                                             ) : model.gallery && model.gallery.length > 0 ? (
                                                 <img 
                                                     src={model.gallery[0]} 
                                                     alt={`${model.brandName} ${model.name}`} 
-                                                    className="w-full h-full object-contain p-2"
+                                                    className="w-full h-full object-cover"
                                                     loading="lazy"
                                                 />
                                             ) : (
@@ -491,7 +498,7 @@ const Compare = () => {
                                             )}
                                         </div>
 
-                                        <div className="w-12 h-12 bg-white dark:bg-black rounded-full flex items-center justify-center shadow-sm p-2 mb-3 ring-1 ring-slate-100 dark:ring-slate-800">
+                                        <div className="w-12 h-12 bg-white dark:bg-black rounded-full flex items-center justify-center shadow-sm p-2  ring-1 ring-slate-100 dark:ring-slate-800">
                                             {brandLogo ? (
                                                 <img src={brandLogo} alt={model.brandName} className="w-full h-full object-contain" loading="lazy" />
                                             ) : (
@@ -499,12 +506,12 @@ const Compare = () => {
                                             )}
                                         </div>
                                         
-                                        <h3 className="font-bold text-slate-900 dark:text-slate-100 leading-tight mb-1">
+                                        <h3 className="font-bold text-lg md:text-xl text-slate-900 dark:text-slate-100 leading-tight line-clamp-2 min-h-[3.25rem]">
                                             {model.brandName} {model.name}
                                         </h3>
-                                        <p className="text-sm text-muted-foreground mb-3">{variant.name}</p>
+                                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 min-h-[2.5rem]">{variant.name}</p>
                                         
-                                        <div className="mt-auto pt-3 border-t w-full border-dashed border-slate-200 dark:border-slate-700">
+                                        <div className="mt-auto pt-2 border-t w-full border-dashed border-slate-200 dark:border-slate-700">
                                             <p className="text-lg font-bold text-primary">
                                                  {(() => {
                                                     const p = parseINRToRupees(variant.price);
