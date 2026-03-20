@@ -28,7 +28,7 @@ const Header = () => {
 
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/brands", label: "Brands" },
+    { to: "/brands", label: "Brands", openInNewTab: true },
     { to: "/compare", label: "Compare" },
     // { to: "/used-cars", label: "Used Cars" },
     { to: "/news", label: "News" },
@@ -69,6 +69,8 @@ const Header = () => {
               <Link
                 key={link.to}
                 to={link.to}
+                target={link.openInNewTab ? "_blank" : undefined}
+                rel={link.openInNewTab ? "noopener noreferrer" : undefined}
                 className={`relative px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
                   isActive(link.to)
                     ? "text-primary bg-primary/10 shadow-md scale-105"
@@ -118,6 +120,8 @@ const Header = () => {
                 <Link
                   key={link.to}
                   to={link.to}
+                  target={link.openInNewTab ? "_blank" : undefined}
+                  rel={link.openInNewTab ? "noopener noreferrer" : undefined}
                   className={`text-base font-semibold px-6 py-4 rounded-xl transition-all ${
                     isActive(link.to)
                       ? "text-primary bg-primary/10 border-l-4 border-primary shadow-sm"
