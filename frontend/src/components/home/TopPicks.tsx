@@ -103,7 +103,7 @@ const TopPicks = () => {
   const isLoading = modelsLoading || variantsLoading;
 
   return (
-    <section className="py-16 md:py-24 bg-background relative overflow-hidden border-b">
+    <section className="py-8 md:py-10 bg-background relative overflow-hidden border-b">
       {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />

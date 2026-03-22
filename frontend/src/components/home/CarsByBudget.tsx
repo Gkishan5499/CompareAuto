@@ -102,7 +102,7 @@ const CarsByBudget = () => {
   }, [models, activeBudget, variantMinPriceByModelKey]);
 
   return (
-    <section className="py-16 md:py-20 bg-background border-y border-slate-100 dark:border-slate-800">
+    <section className="py-12 md:py-10 bg-background border-y border-slate-100 dark:border-slate-800">
       <div className="container mx-auto px-4 max-w-7xl space-y-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>

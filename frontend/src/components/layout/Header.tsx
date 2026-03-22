@@ -27,12 +27,12 @@ const Header = () => {
   }, []);
 
   const navLinks = [
-    { to: "/", label: "Home" },
-    { to: "/brands", label: "Brands", openInNewTab: true },
-    { to: "/compare", label: "Compare" },
+    { to: "/", label: "Home", openInNewTab: false },
+    { to: "/brands", label: "Brands", openInNewTab: false },
+    { to: "/compare", label: "Compare", openInNewTab: false },
     // { to: "/used-cars", label: "Used Cars" },
-    { to: "/news", label: "News" },
-    { to: "/contact", label: "Contact" },
+    { to: "/news", label: "News", openInNewTab: false },
+    { to: "/contact", label: "Contact", openInNewTab: false },
   ];
 
   const isActive = (path: string) => location.pathname === path;

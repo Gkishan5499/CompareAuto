@@ -175,7 +175,7 @@ const Footer = () => {
       {/* 5. COPYRIGHT BAR */}
       <div className="border-t border-gray-200 bg-white py-8">
          <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
-            <p>&copy; {new Date().getFullYear()} CompareAuto.in. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} CompareAuto.in. All rights reserved | Developed By <a href="https://www.gautamstack.com" className=" text-orange-400 hover:text-blue-500 transition-colors font-semibold" target="_blank" rel="noopener noreferrer">GautamStack Digital</a></p>
             <div className="flex gap-6">
                <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
                <Link to="/terms-condition" className="hover:text-primary transition-colors">Terms of Service</Link>

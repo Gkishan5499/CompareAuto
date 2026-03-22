@@ -59,7 +59,7 @@ const AdSlot = ({ id, sizeMap, className = "" }: AdSlotProps) => {
       <img
         src={images.desktop}
         alt="Advertisement"
-        className={`hidden md:block w-full h-[70px] max-w-full mx-auto object-cover ${heightClasses[adType]}`}
+        className={`hidden md:block w-full h-[80px] max-w-full mx-auto object-cover ${heightClasses[adType]}`}
         loading="lazy"
       />
       

@@ -203,8 +203,8 @@ const TrendingComparisons = ({
   return (
     <section
       className={cn(
-        "border-t",
-        isCompareVariant ? "py-16 md:py-24" : "pt-6 pb-12 md:pt-8 md:pb-16",
+        "",
+        isCompareVariant ? "py-10 md:py-12" : "pt-4 pb-6 md:pt-4 md:pb-8",
         isCompareVariant
           ? "bg-gradient-to-br from-amber-50 via-white to-rose-50 border-amber-100"
           : "bg-background border-slate-100 dark:border-slate-800"
@@ -213,7 +213,7 @@ const TrendingComparisons = ({
       <div className="container mx-auto px-4 max-w-7xl">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-10 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-8 gap-6">
           <div className="max-w-2xl">
             <div
               className={cn(

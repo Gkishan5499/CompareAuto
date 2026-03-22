@@ -265,7 +265,7 @@ const HeroSearch = () => {
   const displayImages = heroImages;
 
   return (
-    <section className="relative w-full pb-8 md:pb-16 bg-background">
+    <section className="relative w-full pb-4 md:pb-6 bg-background">
 
       {/* ----------------------------------------------------------------------- */}
       {/* 1. HERO BANNER AREA (Image Only - Clean Modern Design) */}

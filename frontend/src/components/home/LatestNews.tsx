@@ -23,10 +23,10 @@ const LatestNews = () => {
   }, []);
 
   return (
-    <section className="py-10 md:py-14 bg-gradient-to-b from-muted/30 to-background">
+    <section className="py-8 md:py-10 bg-gradient-to-b from-muted/30 to-background">
       <div className="container mx-auto px-4 max-w-7xl">
-        <div className="text-center mb-12 md:mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
+        <div className="text-center mb-8 md:mb-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-2">
             <span className="text-sm font-medium text-primary">📰 Latest News</span>
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">

@@ -21,7 +21,7 @@ const BrandCard = memo(({ brand }: BrandCardProps) => {
   const count = brand.modelCount || 0;
 
   return (
-    <Link to={`/${brand.slug}`} target="_blank" rel="noopener noreferrer" className="block h-full">
+    <Link to={`/${brand.slug}`} className="block h-full">
       <Card className="group relative h-full overflow-hidden border-muted/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5">
         
         {/* Hover Background Gradient */}

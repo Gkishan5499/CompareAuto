@@ -98,6 +98,11 @@ const Compare = () => {
 
     useEffect(() => {
         const shouldAutoShow = localStorage.getItem("compareAutoShow") === "1";
+        const hasCompareQuery = Boolean(searchParams.get("v") || searchParams.get("models"));
+
+        if (hasCompareQuery) {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
 
         if (searchParams.get("models") && !searchParams.get("v")) {
             setLastThirdVariant(null);
@@ -118,7 +123,7 @@ const Compare = () => {
         if (!isSameSelection) {
             const nextCount = nextSelection.filter(Boolean).length;
             setSelectedVariants(nextSelection);
-            setShowCompareTable(shouldAutoShow && nextCount >= 2 ? true : false);
+            setShowCompareTable((shouldAutoShow || hasCompareQuery) && nextCount >= 2 ? true : false);
             setShowPrices(false);
             setOnRoadPrices([null, null, null]);
             if (shouldAutoShow) {
@@ -371,7 +376,7 @@ const Compare = () => {
 
 
         {/* 2) THE GARAGE (Pickers + Cards) */}
-        <section className="bg-white/90 dark:bg-card rounded-2xl shadow-sm border border-slate-200/70 p-6 backdrop-blur">
+        <section id="compare-builder" className="scroll-mt-24 bg-white/90 dark:bg-card rounded-2xl shadow-sm border border-slate-200/70 p-6 backdrop-blur">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                 <h2 className="font-semibold text-lg flex items-center gap-2 text-slate-900">
                     <CarFront className="w-5 h-5 text-primary" />

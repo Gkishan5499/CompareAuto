@@ -114,10 +114,10 @@ const ExploreBodyTypes = ({ showHeader = true }: ExploreBodyTypesProps) => {
   const hasMoreBodyTypes = showHeader && bodyTypes.length > visibleBodyTypes.length;
 
   return (
-    <section className="py-12 md:py-16 bg-gradient-to-b from-background to-muted/20 border-t">
+    <section className="py-6 md:py-8 bg-gradient-to-b from-background to-muted/20 border-t">
       <div className="container mx-auto px-4 max-w-7xl">
         {showHeader && (
-          <div className="mb-8 md:mb-10">
+          <div className="mb-6 md:mb-8">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="inline-flex items-center gap-2 text-primary font-medium text-sm mb-2 uppercase tracking-wider">
