@@ -103,7 +103,7 @@ const CarsByBudget = () => {
 
   return (
     <section className="py-12 md:py-10 bg-background border-y border-slate-100 dark:border-slate-800">
-      <div className="container mx-auto px-4 max-w-7xl space-y-6">
+      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem] space-y-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 text-primary font-medium text-sm mb-2 uppercase tracking-wider">

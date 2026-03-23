@@ -1,5 +1,3 @@
-import { Card } from "@/components/ui/card";
-
 interface AdSlotProps {
   id: string;
   sizeMap?: {
@@ -13,20 +11,20 @@ interface AdSlotProps {
 // Ad image mappings based on slot type
 const AD_IMAGES = {
   leaderboard: {
-    desktop: "/ads/leaderboard_970x90.png",
-    mobile: "/ads/leaderboard_mobile_320x100.png",
+    desktop: "/ads/leaderboard_970x90.jpeg",
+    mobile: "/ads/leaderboard_mobile_320x100.jpeg",
   },
   billboard: {
-    desktop: "/ads/billboard_970x250.png",
-    mobile: "/ads/leaderboard_mobile_320x100.png",
+    desktop: "/ads/billboard_970x250.jpeg",
+    mobile: "/ads/leaderboard_mobile_320x100.jpeg",
   },
   sidebar: {
-    desktop: "/ads/sidebar_300x250.png",
-    mobile: "/ads/leaderboard_mobile_320x100.png",
+    desktop: "/ads/sidebar_300x250.jpeg",
+    mobile: "/ads/leaderboard_mobile_320x100.jpeg",
   },
   default: {
-    desktop: "/ads/leaderboard_970x90.png",
-    mobile: "/ads/leaderboard_mobile_320x100.png",
+    desktop: "/ads/leaderboard_970x90.jpeg",
+    mobile: "/ads/leaderboard_mobile_320x100.jpeg",
   },
 };
 
@@ -41,35 +39,39 @@ const AdSlot = ({ id, sizeMap, className = "" }: AdSlotProps) => {
 
   const adType = getAdType();
   const images = AD_IMAGES[adType];
-  const heightClasses: Record<keyof typeof AD_IMAGES, string> = {
-    leaderboard: "max-h-16 md:max-h-20",
-    billboard: "max-h-28 md:max-h-36",
-    sidebar: "max-h-32 md:max-h-40",
-    default: "max-h-16 md:max-h-20",
+  const desktopAspectClasses: Record<keyof typeof AD_IMAGES, string> = {
+    leaderboard: "aspect-[970/90] max-w-[970px]",
+    billboard: "aspect-[970/250] max-w-[970px]",
+    sidebar: "aspect-[300/250] max-w-[300px]",
+    default: "aspect-[970/90] max-w-[970px]",
   };
 
   return (
     <div
       id={`ad-slot-${id}`}
-      className={`ad-slot-placeholder overflow-hidden ${className}`}
+      className={`ad-slot-placeholder w-full ${className}`}
       data-ad-slot={id}
       data-sizes={JSON.stringify(sizeMap || {})}
     >
       {/* Desktop Ad */}
-      <img
-        src={images.desktop}
-        alt="Advertisement"
-        className={`hidden md:block w-full h-[80px] max-w-full mx-auto object-cover ${heightClasses[adType]}`}
-        loading="lazy"
-      />
+      <div className={`hidden md:block w-full mx-auto ${desktopAspectClasses[adType]}`}>
+        <img
+          src={images.desktop}
+          alt="Advertisement"
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
+      </div>
       
       {/* Mobile Ad */}
-      <img
-        src={images.mobile}
-        alt="Advertisement"
-        className={`block md:hidden w-full h-auto max-w-full mx-auto object-contain ${heightClasses[adType]}`}
-        loading="lazy"
-      />
+      <div className="block md:hidden w-full max-w-[320px] aspect-[320/100] mx-auto">
+        <img
+          src={images.mobile}
+          alt="Advertisement"
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
+      </div>
     </div>
   );
 };

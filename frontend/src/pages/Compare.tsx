@@ -346,7 +346,7 @@ const Compare = () => {
             <div className="relative overflow-hidden border-b bg-gradient-to-br from-white via-white to-amber-50/60">
                 <div className="absolute -top-24 -right-10 h-56 w-56 rounded-full bg-amber-200/40 blur-3xl" />
                 <div className="absolute -bottom-24 -left-10 h-56 w-56 rounded-full bg-rose-200/40 blur-3xl" />
-                <div className="container max-w-7xl mx-auto px-4 py-4 relative">
+                <div className="container max-w-7xl 2xl:max-w-[90rem] mx-auto px-4 py-4 relative">
                     <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Compare" }]} />
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mt-4">
                         <div className="max-w-3xl">
@@ -369,7 +369,7 @@ const Compare = () => {
                 </div>
             </div>
 
-    <div className="container max-w-6xl mx-auto px-4 mt-8 space-y-5">
+    <div className="container max-w-6xl 2xl:max-w-[90rem] mx-auto px-4 mt-8 space-y-5">
         
         {/* Ad Slot */}
         <AdSlot id="compare_top_billboard" />

@@ -69,14 +69,14 @@ const Footer = () => {
 
       {/* 2. MOBILE AD SLOT */}
       <div className="md:hidden bg-gray-100 border-b border-gray-200 py-4">
-         <div className="container mx-auto px-4 flex justify-center">
+         <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem] flex justify-center">
             <AdSlot id="footer_mobile_leaderboard" />
          </div>
       </div>
 
       {/* 3. KPI STRIP */}
       <div className="border-b border-gray-200 bg-gradient-to-b from-white to-gray-50">
-        <div className="container mx-auto px-4 py-10 md:py-12">
+        <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem] py-10 md:py-12">
            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-gray-200">
               {kpis.map((kpi, idx) => (
                  <div key={idx} className="space-y-1">
@@ -89,7 +89,7 @@ const Footer = () => {
       </div>
 
       {/* 4. MAIN LINKS CONTENT */}
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem] py-16">
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
             
             {/* BRAND COLUMN (4 Cols) */}
@@ -174,7 +174,7 @@ const Footer = () => {
 
       {/* 5. COPYRIGHT BAR */}
       <div className="border-t border-gray-200 bg-white py-8">
-         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
+         <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem] flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
             <p>&copy; {new Date().getFullYear()} CompareAuto.in. All rights reserved | Developed By <a href="https://www.gautamstack.com" className=" text-orange-400 hover:text-blue-500 transition-colors font-semibold" target="_blank" rel="noopener noreferrer">GautamStack Digital</a></p>
             <div className="flex gap-6">
                <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>

@@ -469,7 +469,7 @@ const ModelOverview = () => {
       
       {/* 1) HEADER & BREADCRUMBS */}
       <div className="bg-card border-b border-border sticky top-0 z-40 shadow-premium-sm">
-        <div className="container max-w-7xl mx-auto px-4 py-3">
+        <div className="container max-w-7xl 2xl:max-w-[90rem] mx-auto px-4 py-3">
           <Breadcrumbs
             items={[
               { label: "Home", href: "/" },
@@ -481,7 +481,7 @@ const ModelOverview = () => {
         </div>
       </div>
 
-      <div className="container max-w-7xl mx-auto px-4 mt-8 space-y-8">
+      <div className="container max-w-7xl 2xl:max-w-[90rem] mx-auto px-4 mt-8 space-y-8">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             

@@ -5,9 +5,17 @@ import { SearchAutocomplete } from "@/components/search/SearchAutocomplete";
 import { CityPicker } from "@/components/layout/CityPicker";
 import { useState, useEffect } from "react";
 
+const DEFAULT_LOGO = "/logo.png";
+const LOGO_STORAGE_KEY = "activeSiteLogo";
+
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [logo, setLogo] = useState("");
+  const [logo, setLogo] = useState(() => {
+    if (typeof window === "undefined") {
+      return DEFAULT_LOGO;
+    }
+    return localStorage.getItem(LOGO_STORAGE_KEY) || DEFAULT_LOGO;
+  });
   const location = useLocation();
 
   useEffect(() => {
@@ -17,7 +25,10 @@ const Header = () => {
         const res = await fetch(`${API_BASE}/site-settings/logo`);
         if (res.ok) {
           const data = await res.json();
-          setLogo(data.value);
+          if (data?.value) {
+            setLogo(data.value);
+            localStorage.setItem(LOGO_STORAGE_KEY, data.value);
+          }
         }
       } catch (err) {
         console.error("Failed to load logo", err);
@@ -41,26 +52,29 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-white/95 backdrop-blur-md">
       <div className="h-1 bg-gradient-to-r from-teal-500 via-teal-400 to-teal-500"></div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-6 max-w-7xl 2xl:max-w-[90rem]">
         <div className="flex h-20 items-center justify-between gap-6">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            {logo ? (
+          <Link to="/" className="flex items-center shrink-0">
+            <div className="h-12 w-[168px] md:h-14 md:w-[196px]">
               <img
-                src={logo}
+                src={logo || DEFAULT_LOGO}
                 alt="CompareAuto Logo"
-                className="h-12 w-auto md:h-14 object-contain"
+                className="h-full w-full object-contain"
+                width={196}
+                height={56}
                 loading="eager"
+                decoding="async"
+                onError={(e) => {
+                  if (logo !== DEFAULT_LOGO) {
+                    setLogo(DEFAULT_LOGO);
+                    localStorage.removeItem(LOGO_STORAGE_KEY);
+                  }
+                  e.currentTarget.src = DEFAULT_LOGO;
+                }}
               />
-            ) : (
-              <img
-                src="/logo.png"
-                alt="CompareAuto Logo"
-                className="h-12 w-auto md:h-14 object-contain"
-                loading="eager"
-              />
-            )}
+            </div>
           </Link>
 
           {/* Desktop Navigation */}

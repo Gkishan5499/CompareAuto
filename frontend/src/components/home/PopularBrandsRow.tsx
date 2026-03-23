@@ -54,7 +54,7 @@ const PopularBrandsRow = () => {
 
   return (
     <section className="py-6 md:py-8 bg-background">
-      <div className="container mx-auto px-4 max-w-7xl">
+      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem]">
         <div className="flex items-center gap-4 mb-8">
           <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground whitespace-nowrap">
             Popular brands

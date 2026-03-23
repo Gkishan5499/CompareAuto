@@ -649,7 +649,7 @@ const BrandModels = () => {
       
       {/* 1) BREADCRUMBS STRIP */}
       <div className="bg-white dark:bg-card border-b">
-        <div className="container max-w-6xl mx-auto px-4 py-3">
+        <div className="container max-w-6xl 2xl:max-w-[90rem] mx-auto px-4 py-3">
           <Breadcrumbs
             items={[
               { label: "Home", href: "/" },
@@ -660,7 +660,7 @@ const BrandModels = () => {
         </div>
       </div>
 
-      <div className="container max-w-6xl mx-auto px-4 mt-8 space-y-10">
+      <div className="container max-w-6xl 2xl:max-w-[90rem] mx-auto px-4 mt-8 space-y-10">
         
         {/* 2) BRAND PROFILE CARD */}
         <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border overflow-hidden p-6 md:p-8">

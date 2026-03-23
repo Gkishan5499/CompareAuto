@@ -115,7 +115,7 @@ const ExploreBodyTypes = ({ showHeader = true }: ExploreBodyTypesProps) => {
 
   return (
     <section className="py-6 md:py-8 bg-gradient-to-b from-background to-muted/20 border-t">
-      <div className="container mx-auto px-4 max-w-7xl">
+      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem]">
         {showHeader && (
           <div className="mb-6 md:mb-8">
             <div className="flex items-start justify-between gap-4">

@@ -227,7 +227,7 @@ const BodyType = () => {
   };
 
   return (
-    <div className="min-h-screen max-w-7xl mx-auto ">
+    <div className="min-h-screen max-w-7xl 2xl:max-w-[90rem] mx-auto ">
       {/* Breadcrumbs */}
       <section className="py-4 bg-muted/30">
         <div className="container mx-auto   px-4">
@@ -256,7 +256,7 @@ const BodyType = () => {
       {/* Header */}
       <section className="py-10 md:py-12 bg-gradient-to-b from-primary/5 to-background">
         <div className="container mx-auto  px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl">
+          <div className="max-w-6xl 2xl:max-w-[90rem]">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-3">
               <span className="text-sm font-medium text-primary">{filteredModels.length} {bodyTypeDisplay} {filteredModels.length === 1 ? "Model" : "Models"}</span>
             </div>

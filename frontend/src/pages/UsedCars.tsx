@@ -158,7 +158,7 @@ const UsedCars = () => {
       
       {/* 1. HERO SECTION */}
       <section className="bg-white dark:bg-card border-b pt-12 pb-10">
-        <div className="container mx-auto px-4 max-w-7xl text-center">
+        <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem] text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-4">
             <CheckCircle2 className="w-3 h-3" /> 100% Verified Listings
           </div>
@@ -207,12 +207,12 @@ const UsedCars = () => {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 max-w-7xl mt-8">
+      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem] mt-8">
         <AdSlot id="used_cars_top_leaderboard" sizeMap={{ mobile: "320x50", desktop: "728x90" }} />
       </div>
 
       {/* 2. MAIN CONTENT GRID */}
-      <div className="container mx-auto px-4 max-w-7xl py-10">
+      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem] py-10">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* LEFT SIDEBAR: FILTERS */}
@@ -288,13 +288,13 @@ const UsedCars = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 max-w-7xl mb-12">
+      <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem] mb-12">
         <AdSlot id="used_cars_mid_billboard" sizeMap={{ mobile: "300x250", desktop: "970x250" }} />
       </div>
 
       {/* 3. HOW IT WORKS */}
       <section className="bg-white dark:bg-card border-y py-16">
-        <div className="container mx-auto px-4 max-w-7xl">
+        <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem]">
             <div className="text-center max-w-2xl mx-auto mb-12">
                 <h2 className="text-3xl font-bold mb-4">Buying Used Cars Made Simple</h2>
                 <p className="text-muted-foreground">Three easy steps to drive home your dream car without the hassle.</p>
