@@ -1,4 +1,10 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
+
+export interface ICarModelColor {
+  name: string;
+  imagePath: string;
+  hexCode: string;
+}
 
 export interface ICarModel extends Document {
   id: string;
@@ -8,6 +14,7 @@ export interface ICarModel extends Document {
   slug: string;
   image: string;
   gallery: string[];
+  colors?: ICarModelColor[];
   interiorImages?: string[];
   exteriorImages?: string[];
   youtubeUrl?: string;
@@ -18,6 +25,8 @@ export interface ICarModel extends Document {
     min: number;
     max: number;
   };
+  /** MongoDB `_id` of each Variant belonging to this model (CarSpecs link via `variantId` = Variant `id`). */
+  variants?: Types.ObjectId[];
   variantCount: number;
   rating: number;
   reviews: number;
@@ -49,6 +58,16 @@ const CarModelSchema = new Schema<ICarModel>(
     slug: { type: String, required: true, unique: true },
     image: { type: String, default: "/cars/placeholder.png" },
     gallery: { type: [String], default: [] },
+    colors: {
+      type: [
+        {
+          name: { type: String, required: true },
+          imagePath: { type: String, default: "" },
+          hexCode: { type: String, default: "" },
+        },
+      ],
+      default: [],
+    },
     interiorImages: { type: [String], default: [] },
     exteriorImages: { type: [String], default: [] },
     youtubeUrl: { type: String, default: "" },
@@ -58,6 +77,10 @@ const CarModelSchema = new Schema<ICarModel>(
     priceRange: {
       min: Number,
       max: Number
+    },
+    variants: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Variant" }],
+      default: [],
     },
     variantCount: { type: Number, default: 0 },
     rating: { type: Number, default: 0 },

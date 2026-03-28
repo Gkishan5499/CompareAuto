@@ -1,8 +1,23 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document } from "mongoose";
+
+/** Leaf values in portal-style spec trees (label → value). */
+export type SpecLeaf = string;
+
+/** Nested groups (e.g. Safety → ADAS → line items); leaves are strings. */
+export type SpecNode = {
+  [key: string]: SpecNode | SpecLeaf;
+};
 
 // 1. Updated Interface – your grouped fields + dynamic fallback
 export interface ICarSpecs extends Document {
   variantId: string;
+
+  /** Portal-style specification tree (e.g. Engine Performance, Transmission). */
+  specification?: SpecNode;
+  /** Feature groups (e.g. Safety, Comfort, Infotainment). */
+  features?: SpecNode;
+  /** Condensed highlights (e.g. version summary). */
+  highlights?: SpecNode;
 
   // Existing clean groups
   overview?: {
@@ -226,12 +241,16 @@ const CarSpecsSchema = new Schema<ICarSpecs>(
       batteryWarranty: String,
     },
 
+    specification: { type: Schema.Types.Mixed },
+    features: { type: Schema.Types.Mixed },
+    highlights: { type: Schema.Types.Mixed },
+
     // ⭐ NEW: Accept ANY new fields dynamically
   },
   {
     timestamps: true,
     strict: false, // <-- KEY LINE: Allows extra fields (ALL your new columns)
-  }
+  },
 );
 
 // 3. Export Model
