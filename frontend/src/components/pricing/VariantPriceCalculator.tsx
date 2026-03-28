@@ -12,6 +12,8 @@ import { formatINR } from "@/lib/guards";
 import { getStateFromCity } from "@/lib/priceCalculations";
 import { Badge } from "@/components/ui/badge";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export interface VariantPriceCalculatorProps {
   variant: any;
   selectedCity: string;
@@ -44,7 +46,7 @@ export const VariantPriceCalculator = ({
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/pricing/calc`, {
+        const response = await fetch(`${API_BASE_URL}/pricing/calc`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

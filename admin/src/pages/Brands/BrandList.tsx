@@ -11,13 +11,22 @@ interface Brand {
   name: string;
   country: string;
   logo: string | null;
+  vehicleCategory?: "car" | "bike";
 }
 
 export default function BrandList() {
   const navigate = useNavigate();
+  const [vehicleCategory, setVehicleCategory] = useState<"all" | "car" | "bike">("all");
+  const brandsUrl = useMemo(
+    () =>
+      vehicleCategory === "all"
+        ? "/api/brands"
+        : `/api/brands?vehicleCategory=${vehicleCategory}`,
+    [vehicleCategory]
+  );
   
   // 2. Add Type to the hook for autocomplete support
-  const { data: brands = [], isLoading } = useApiList<Brand[]>(["brands"], "/api/brands");
+  const { data: brands = [], isLoading } = useApiList<Brand[]>(["brands", vehicleCategory], brandsUrl);
   const deleteBrand = useApiDelete(["brands"], "/api/brands");
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,16 +79,27 @@ export default function BrandList() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          type="text"
-          placeholder="Search by brand name, country, or ID..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search + Filters */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="relative sm:col-span-2">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search by brand name, country, or ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <select
+          value={vehicleCategory}
+          onChange={(e) => setVehicleCategory(e.target.value as "all" | "car" | "bike")}
+          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="all">All Categories</option>
+          <option value="car">Car</option>
+          <option value="bike">Bike</option>
+        </select>
       </div>
 
       <div className="text-sm text-gray-600">

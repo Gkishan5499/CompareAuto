@@ -5,12 +5,37 @@ import CarModel from "../models/CarModel.model";
 
 export const getAllBrands = async (req: Request, res: Response) => {
   try {
-    const brands = await Brand.find().sort({ name: 1 }).lean();
+    const vehicleCategory = String(req.query.vehicleCategory || "").trim().toLowerCase();
+    const filter: Record<string, any> = {};
+    if (vehicleCategory === "bike") {
+      filter.vehicleCategory = vehicleCategory;
+    } else if (vehicleCategory === "car") {
+      filter.$or = [
+        { vehicleCategory: "car" },
+        { vehicleCategory: { $exists: false } },
+        { vehicleCategory: null },
+        { vehicleCategory: "" },
+      ];
+    }
+
+    const brands = await Brand.find(filter).sort({ name: 1 }).lean();
     
     // Get model counts for each brand
     const brandIds = brands.map(b => b.id);
+    const modelMatch: Record<string, any> = { brandId: { $in: brandIds } };
+    if (vehicleCategory === "bike") {
+      modelMatch.vehicleCategory = "bike";
+    } else if (vehicleCategory === "car") {
+      modelMatch.$or = [
+        { vehicleCategory: "car" },
+        { vehicleCategory: { $exists: false } },
+        { vehicleCategory: null },
+        { vehicleCategory: "" },
+      ];
+    }
+
     const modelCounts = await CarModel.aggregate([
-      { $match: { brandId: { $in: brandIds } } },
+      { $match: modelMatch },
       { $group: { _id: "$brandId", count: { $sum: 1 } } }
     ]);
     
@@ -45,7 +70,10 @@ export const getBrandById = async (req: Request, res: Response) => {
 
 export const getBrandBySlug = async (req: Request, res: Response) => {
   try {
-    const brand = await Brand.findOne({ slug: req.params.slug }).lean();
+    const rawSlug = String(req.params.slug || "").trim().toLowerCase();
+    const altSlug = rawSlug.startsWith("bike-") ? rawSlug.replace(/^bike-/, "") : `bike-${rawSlug}`;
+
+    const brand = await Brand.findOne({ slug: { $in: [rawSlug, altSlug] } }).lean();
     if (!brand) return res.status(404).json({ message: "Brand not found" });
     
     // Get model count for this brand

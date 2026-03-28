@@ -4,7 +4,20 @@ import CarSpecs from "../models/carSpace/CarSpecs.model";
 
 export const getAllVariants = async (req: Request, res: Response) => {
   try {
-    const variants = await Variant.find().sort({ price: 1 });
+    const vehicleCategory = String(req.query.vehicleCategory || "").trim().toLowerCase();
+    const filter: Record<string, any> = {};
+    if (vehicleCategory === "bike") {
+      filter.vehicleCategory = vehicleCategory;
+    } else if (vehicleCategory === "car") {
+      filter.$or = [
+        { vehicleCategory: "car" },
+        { vehicleCategory: { $exists: false } },
+        { vehicleCategory: null },
+        { vehicleCategory: "" },
+      ];
+    }
+
+    const variants = await Variant.find(filter).sort({ price: 1 });
     res.json(variants);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch variants" });

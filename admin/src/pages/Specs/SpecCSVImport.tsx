@@ -7,6 +7,7 @@ import client from "../../api/client"; // your axios or fetch wrapper
 import { toast } from "sonner"; // optional
 
 export default function SpecsCSVImport() {
+  const [vehicleCategory, setVehicleCategory] = useState<"car" | "bike">("car");
   const [fileName, setFileName] = useState<string | null>(null);
   const [previewRows, setPreviewRows] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -84,6 +85,7 @@ export default function SpecsCSVImport() {
     try {
       const fd = new FormData();
       fd.append("file", f);
+      fd.append("vehicleCategory", vehicleCategory);
       // Build mapping object to send (resolve any __custom__ placeholders)
       const mappingToSend: Record<string, string> = {};
       Object.entries(mapping).forEach(([k, v]) => {
@@ -117,10 +119,25 @@ export default function SpecsCSVImport() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold">Import Full CarSpecs (CSV)</h2>
+      <h2 className="text-2xl font-semibold">Import Full {vehicleCategory === "bike" ? "Bike" : "Car"} Specs (CSV)</h2>
 
       <Card className="p-6">
         <div className="space-y-4">
+          <div>
+            <label className="block mb-2 text-sm font-medium">Vehicle Category</label>
+            <select
+              value={vehicleCategory}
+              onChange={(e) => setVehicleCategory(e.target.value as "car" | "bike")}
+              className="w-full max-w-xs bg-white border rounded p-2 text-sm"
+            >
+              <option value="car">Car (4 wheels)</option>
+              <option value="bike">Bike (2 wheels)</option>
+            </select>
+            <p className="text-xs text-muted-foreground mt-1">
+              The selected category tags all imported brand, model, variant, and specs records.
+            </p>
+          </div>
+
           <div>
             <label className="block mb-2 text-sm font-medium">Upload CSV</label>
             <div

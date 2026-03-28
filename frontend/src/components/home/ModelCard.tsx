@@ -12,6 +12,8 @@ import { getStateFromCity } from "@/lib/priceCalculations";
 import { variantsApi } from "@/lib/api";
 import { parseINRToRupees } from "@/lib/guards";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 interface ModelCardProps {
   model: Model;
 }
@@ -76,7 +78,7 @@ const ModelCard = memo(({ model }: ModelCardProps) => {
         const state = getStateFromCity(city);
 
         // Calculate min on-road price
-        const minResp = await fetch(`/api/pricing/calc`, {
+        const minResp = await fetch(`${API_BASE_URL}/pricing/calc`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ exShowroomPrice: minExShowroom, state }),
@@ -91,7 +93,7 @@ const ModelCard = memo(({ model }: ModelCardProps) => {
         // Calculate max on-road price if different from min
         let maxOnRoad = minOnRoad;
         if (maxExShowroom > 0 && maxExShowroom !== minExShowroom) {
-          const maxResp = await fetch(`/api/pricing/calc`, {
+          const maxResp = await fetch(`${API_BASE_URL}/pricing/calc`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ exShowroomPrice: maxExShowroom, state }),

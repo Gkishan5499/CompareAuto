@@ -11,11 +11,18 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import ModelCard from "@/components/home/ModelCard";
+import VehicleCategoryToggle from "@/components/home/VehicleCategoryToggle";
 
-const RecentModelsSlider = () => {
+interface RecentModelsSliderProps {
+  vehicleCategory?: "all" | "car" | "bike";
+  onVehicleCategoryChange?: (value: "all" | "car" | "bike") => void;
+}
+
+const RecentModelsSlider = ({ vehicleCategory = "all", onVehicleCategoryChange }: RecentModelsSliderProps) => {
+  const category = vehicleCategory === "all" ? undefined : vehicleCategory;
   const { data: recent = [], isLoading } = useQuery({
-    queryKey: ["models", "recent"],
-    queryFn: () => modelsApi.getNew(12),
+    queryKey: ["models", "recent", category || "all"],
+    queryFn: () => modelsApi.getNew(12, category),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -24,19 +31,26 @@ const RecentModelsSlider = () => {
   return (
     <section className="pt-4 pb-8 md:pt-8 md:pb-10 bg-slate-50/50 dark:bg-slate-900/40">
       <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem]">
-        <div className="flex items-end justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-3">
               <span className="text-sm font-medium text-primary">🆕 Recent Models</span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">Latest <span className="text-primary">Arrivals</span></h2>
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">
+              Latest <span className="text-primary">{vehicleCategory === "bike" ? "Bike" : "Arrivals"}</span>
+            </h2>
           </div>
-          <Link to="/new-cars" className="hidden md:block">
-            <Button variant="ghost" className="group">
-              View All New Cars
-              <span className="ml-1 group-hover:translate-x-1 transition-transform">→</span>
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            {onVehicleCategoryChange && (
+              <VehicleCategoryToggle value={vehicleCategory} onChange={onVehicleCategoryChange} />
+            )}
+            <Link to="/new-cars" className="hidden md:block">
+              <Button variant="ghost" className="group">
+                View All New Cars
+                <span className="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {isLoading ? (

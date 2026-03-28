@@ -7,6 +7,7 @@ import { useModels, useVariants } from "@/lib/api-hooks";
 import { Trophy, ArrowRight, Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseINRToRupees } from "@/lib/guards";
+import VehicleCategoryToggle from "@/components/home/VehicleCategoryToggle";
 
 const getModelKeys = (model: any) => {
   return [model?.id, model?._id, model?.slug].filter(Boolean).map((value) => String(value));
@@ -25,9 +26,14 @@ const getVariantModelKeys = (variant: any) => {
     .map((value) => String(value));
 };
 
-const TopPicks = () => {
-  const { data: allModels = [], isLoading: modelsLoading } = useModels();
-  const { data: allVariants = [], isLoading: variantsLoading } = useVariants("");
+interface TopPicksProps {
+  vehicleCategory?: "all" | "car" | "bike";
+  onVehicleCategoryChange?: (value: "all" | "car" | "bike") => void;
+}
+
+const TopPicks = ({ vehicleCategory = "all", onVehicleCategoryChange }: TopPicksProps) => {
+  const { data: allModels = [], isLoading: modelsLoading } = useModels(vehicleCategory);
+  const { data: allVariants = [], isLoading: variantsLoading } = useVariants("", vehicleCategory);
 
   const topModels = useMemo(() => {
     const metricsByModelKey = new Map<string, { minPrice: number; maxMileage: number }>();
@@ -123,16 +129,21 @@ const TopPicks = () => {
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
               Curated using a value-first mix of price and mileage.
-              Discover cars that balance affordability with efficiency.
+              Discover {vehicleCategory === "bike" ? "bikes" : "vehicles"} that balance affordability with efficiency.
             </p>
           </div>
 
-          {/* <Link to="/brands?sort=popular">
-            <Button variant="outline" className="group border-primary/20 hover:bg-primary/5 hidden md:flex">
-              View All Rankings
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link> */}
+          <div className="flex items-center gap-3">
+            {onVehicleCategoryChange && (
+              <VehicleCategoryToggle value={vehicleCategory} onChange={onVehicleCategoryChange} />
+            )}
+            {/* <Link to="/brands?sort=popular">
+              <Button variant="outline" className="group border-primary/20 hover:bg-primary/5 hidden md:flex">
+                View All Rankings
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link> */}
+          </div>
         </div>
 
         {/* Grid */}

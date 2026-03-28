@@ -6,8 +6,16 @@ import { useApiList, useApiDelete } from "../../hooks/useapi";
 import { Search } from "lucide-react";
 
 export default function VariantList() {
-  const { data: variants = [] } = useApiList<any[]>(["variants"], "/api/variants");
-  const { isLoading } = useApiList(["variants"], "/api/variants");
+  const [vehicleCategory, setVehicleCategory] = useState<"all" | "car" | "bike">("all");
+  const variantsUrl = useMemo(
+    () =>
+      vehicleCategory === "all"
+        ? "/api/variants"
+        : `/api/variants?vehicleCategory=${vehicleCategory}`,
+    [vehicleCategory]
+  );
+
+  const { data: variants = [], isLoading } = useApiList<any[]>(["variants", vehicleCategory], variantsUrl);
   const deleteVariant = useApiDelete(["variants"], "/api/variants");
   const navigate = useNavigate();
   
@@ -39,16 +47,27 @@ export default function VariantList() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-4 relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          type="text"
-          placeholder="Search by variant name, ID, model ID, or fuel type..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search + Filters */}
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="relative sm:col-span-2">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search by variant name, ID, model ID, or fuel type..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <select
+          value={vehicleCategory}
+          onChange={(e) => setVehicleCategory(e.target.value as "all" | "car" | "bike")}
+          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="all">All Categories</option>
+          <option value="car">Car</option>
+          <option value="bike">Bike</option>
+        </select>
       </div>
 
       <div className="mb-2 text-sm text-gray-600">

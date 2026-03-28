@@ -12,6 +12,7 @@ import {
 import { useComparisons, useModels, useVariants } from "@/lib/api-hooks";
 import { formatINR, parseINRToRupees } from "@/lib/guards";
 import { cn } from "@/lib/utils";
+import VehicleCategoryToggle from "@/components/home/VehicleCategoryToggle";
 
 interface TrendingComparisonsProps {
   limit?: number;
@@ -20,6 +21,8 @@ interface TrendingComparisonsProps {
   variant?: "home" | "compare";
   title?: string;
   subtitle?: string;
+  vehicleCategory?: "all" | "car" | "bike";
+  onVehicleCategoryChange?: (value: "all" | "car" | "bike") => void;
 }
 
 const TrendingComparisons = ({
@@ -29,10 +32,12 @@ const TrendingComparisons = ({
   variant = "home",
   title,
   subtitle,
+  vehicleCategory = "all",
+  onVehicleCategoryChange,
 }: TrendingComparisonsProps) => {
   const { data: comparisonsData = [], isLoading: comparisonsLoading } = useComparisons();
-  const { data: models = [], isLoading: modelsLoading } = useModels();
-  const { data: variants = [], isLoading: variantsLoading } = useVariants("");
+  const { data: models = [], isLoading: modelsLoading } = useModels(vehicleCategory);
+  const { data: variants = [], isLoading: variantsLoading } = useVariants("", vehicleCategory);
 
   const normalizeToken = (value: string) => {
     return value
@@ -241,14 +246,19 @@ const TrendingComparisons = ({
             <p className="text-muted-foreground text-lg leading-relaxed">{resolvedSubtitle}</p>
           </div>
 
-          {showViewAll && (
-            <Link to="/compare">
-              <Button variant="ghost" className="group hidden md:flex text-base">
-                View All Battles
-                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-          )}
+          <div className="flex items-center gap-3">
+            {onVehicleCategoryChange && (
+              <VehicleCategoryToggle value={vehicleCategory} onChange={onVehicleCategoryChange} />
+            )}
+            {showViewAll && (
+              <Link to="/compare">
+                <Button variant="ghost" className="group hidden md:flex text-base">
+                  View All Battles
+                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Comparison Carousel */}

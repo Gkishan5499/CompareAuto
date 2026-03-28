@@ -3,7 +3,20 @@ import CarModel from "../models/CarModel.model";
 
 export const getAllCarModels = async (req: Request, res: Response) => {
   try {
-    const models = await CarModel.find().sort({ name: 1 });
+    const vehicleCategory = String(req.query.vehicleCategory || "").trim().toLowerCase();
+    const filter: Record<string, any> = {};
+    if (vehicleCategory === "bike") {
+      filter.vehicleCategory = vehicleCategory;
+    } else if (vehicleCategory === "car") {
+      filter.$or = [
+        { vehicleCategory: "car" },
+        { vehicleCategory: { $exists: false } },
+        { vehicleCategory: null },
+        { vehicleCategory: "" },
+      ];
+    }
+
+    const models = await CarModel.find(filter).sort({ name: 1 });
     res.json(models);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch car models" });
@@ -63,8 +76,14 @@ export const getCarModelBySlug = async (req: Request, res: Response) => {
 
 export const getCarModelsByBrand = async (req: Request, res: Response) => {
   try {
-    const { brandId } = req.params;
-    const models = await CarModel.find({ brandId }).sort({ name: 1 });
+    const rawBrandId = String(req.params.brandId || "").trim().toLowerCase();
+    const altBrandId = rawBrandId.startsWith("bike-")
+      ? rawBrandId.replace(/^bike-/, "")
+      : `bike-${rawBrandId}`;
+
+    const models = await CarModel.find({
+      brandId: { $in: [rawBrandId, altBrandId] },
+    }).sort({ name: 1 });
     res.json(models);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch models" });
@@ -95,7 +114,20 @@ export const getCarModelsByFuelType = async (req: Request, res: Response) => {
 export const getPopularCarModels = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
-    const models = await CarModel.find({ status: { $ne: "upcoming" } })
+    const vehicleCategory = String(req.query.vehicleCategory || "").trim().toLowerCase();
+    const filter: Record<string, any> = { status: { $ne: "upcoming" } };
+    if (vehicleCategory === "bike") {
+      filter.vehicleCategory = vehicleCategory;
+    } else if (vehicleCategory === "car") {
+      filter.$or = [
+        { vehicleCategory: "car" },
+        { vehicleCategory: { $exists: false } },
+        { vehicleCategory: null },
+        { vehicleCategory: "" },
+      ];
+    }
+
+    const models = await CarModel.find(filter)
       .sort({ rating: -1, reviews: -1 })
       .limit(limit);
     res.json(models);
@@ -107,7 +139,20 @@ export const getPopularCarModels = async (req: Request, res: Response) => {
 export const getNewCarModels = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
-    const models = await CarModel.find({ status: { $ne: "upcoming" } })
+    const vehicleCategory = String(req.query.vehicleCategory || "").trim().toLowerCase();
+    const filter: Record<string, any> = { status: { $ne: "upcoming" } };
+    if (vehicleCategory === "bike") {
+      filter.vehicleCategory = vehicleCategory;
+    } else if (vehicleCategory === "car") {
+      filter.$or = [
+        { vehicleCategory: "car" },
+        { vehicleCategory: { $exists: false } },
+        { vehicleCategory: null },
+        { vehicleCategory: "" },
+      ];
+    }
+
+    const models = await CarModel.find(filter)
       .sort({ createdAt: -1 })
       .limit(limit);
     res.json(models);
@@ -119,7 +164,20 @@ export const getNewCarModels = async (req: Request, res: Response) => {
 export const getUpcomingCarModels = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
-    const models = await CarModel.find({ status: "upcoming" })
+    const vehicleCategory = String(req.query.vehicleCategory || "").trim().toLowerCase();
+    const filter: Record<string, any> = { status: "upcoming" };
+    if (vehicleCategory === "bike") {
+      filter.vehicleCategory = vehicleCategory;
+    } else if (vehicleCategory === "car") {
+      filter.$or = [
+        { vehicleCategory: "car" },
+        { vehicleCategory: { $exists: false } },
+        { vehicleCategory: null },
+        { vehicleCategory: "" },
+      ];
+    }
+
+    const models = await CarModel.find(filter)
       .sort({ expectedLaunch: 1 })
       .limit(limit);
     res.json(models);

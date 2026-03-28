@@ -42,6 +42,8 @@ import { getBrandLogo, getBrandInitial } from "@/lib/brandLogos";
 import AdSlot from "@/components/ads/AdSlot";
 import { cn } from "@/lib/utils";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 // Helper function to render HTML content from ReactQuill
 const renderHtmlContent = (html?: string) => {
   if (!html) return null;
@@ -410,7 +412,7 @@ const ModelOverview = () => {
             try {
                 // Calculate min price (base variant) on-road price
                 if (minPrice > 0) {
-                    const resp = await fetch(`/api/pricing/calc`, {
+                    const resp = await fetch(`${API_BASE_URL}/pricing/calc`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ exShowroomPrice: minPrice, state: selectedState }),
@@ -425,7 +427,7 @@ const ModelOverview = () => {
 
                 // Calculate max price (top variant) on-road price if different from min
                 if (maxPrice > 0 && maxPrice !== minPrice) {
-                    const resp2 = await fetch(`/api/pricing/calc`, {
+                    const resp2 = await fetch(`${API_BASE_URL}/pricing/calc`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ exShowroomPrice: maxPrice, state: selectedState }),

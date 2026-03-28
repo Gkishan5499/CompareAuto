@@ -21,11 +21,19 @@ import {
   popularApi,
 } from "./api";
 
+const normalizeVehicleSlug = (value: string) => String(value || "").trim().toLowerCase().replace(/^bike-/, "");
+
+const isSameVehicleSlug = (a?: string, b?: string) => {
+  if (!a || !b) return false;
+  return normalizeVehicleSlug(a) === normalizeVehicleSlug(b);
+};
+
 // Brands
-export const useBrands = () => {
+export const useBrands = (vehicleCategory: "all" | "car" | "bike" = "all") => {
+  const category = vehicleCategory === "all" ? undefined : vehicleCategory;
   return useQuery({
-    queryKey: ["brands"],
-    queryFn: () => brandsApi.getAll(),
+    queryKey: ["brands", category || "all"],
+    queryFn: () => brandsApi.getAll(category),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
@@ -40,10 +48,11 @@ export const useBrandBySlug = (slug: string) => {
 };
 
 // Models
-export const useModels = () => {
+export const useModels = (vehicleCategory: "all" | "car" | "bike" = "all") => {
+  const category = vehicleCategory === "all" ? undefined : vehicleCategory;
   return useQuery({
-    queryKey: ["models"],
-    queryFn: () => modelsApi.getAll(),
+    queryKey: ["models", category || "all"],
+    queryFn: () => modelsApi.getAll(category),
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -61,10 +70,8 @@ export const useModel = (brandSlug: string, modelSlug: string) => {
   return useQuery({
     queryKey: ["models", brandSlug, modelSlug],
     queryFn: async () => {
-      const brand = await brandsApi.getBySlug(brandSlug);
-      if (!brand) return undefined;
-      const models = await modelsApi.getByBrand(brand.id);
-      return models.find((m: any) => m.slug === modelSlug);
+      const models = await modelsApi.getByBrandSlug(brandSlug);
+      return models.find((m: any) => isSameVehicleSlug(m.slug, modelSlug)) ?? null;
     },
     enabled: !!brandSlug && !!modelSlug,
     staleTime: 5 * 60 * 1000,
@@ -72,13 +79,14 @@ export const useModel = (brandSlug: string, modelSlug: string) => {
 };
 
 // Variants
-export const useVariants = (modelId: string) => {
+export const useVariants = (modelId: string, vehicleCategory: "all" | "car" | "bike" = "all") => {
+  const category = vehicleCategory === "all" ? undefined : vehicleCategory;
   return useQuery({
-    queryKey: ["variants", modelId],
+    queryKey: ["variants", modelId || "all-models", category || "all"],
     queryFn: () => {
       if (!modelId) {
         // Return all variants if no modelId provided
-        return variantsApi.getAll();
+        return variantsApi.getAll(category);
       }
       return variantsApi.getByModel(modelId);
     },
@@ -90,13 +98,11 @@ export const useVariant = (brandSlug: string, modelSlug: string, variantSlug: st
   return useQuery({
     queryKey: ["variants", brandSlug, modelSlug, variantSlug],
     queryFn: async () => {
-      const brand = await brandsApi.getBySlug(brandSlug);
-      if (!brand) return undefined;
-      const models = await modelsApi.getByBrand(brand.id);
-      const model = models.find((m: any) => m.slug === modelSlug);
-      if (!model) return undefined;
+      const models = await modelsApi.getByBrandSlug(brandSlug);
+      const model = models.find((m: any) => isSameVehicleSlug(m.slug, modelSlug));
+      if (!model) return null;
       const variants = await variantsApi.getByModel(model.id);
-      return variants.find((v: any) => v.slug === variantSlug);
+      return variants.find((v: any) => isSameVehicleSlug(v.slug, variantSlug)) ?? null;
     },
     enabled: !!brandSlug && !!modelSlug && !!variantSlug,
     staleTime: 5 * 60 * 1000,

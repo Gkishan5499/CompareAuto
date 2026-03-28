@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useModels, useVariants } from "@/lib/api-hooks";
 import { Car, CarFront, Truck, Bus, Zap, Sparkles, Boxes, LayoutGrid } from "lucide-react";
+import VehicleCategoryToggle from "@/components/home/VehicleCategoryToggle";
 
 type BodyTypeItem = {
   slug: string;
@@ -20,11 +21,13 @@ const toLabel = (raw: string) => {
 
 interface ExploreBodyTypesProps {
   showHeader?: boolean;
+  vehicleCategory?: "all" | "car" | "bike";
+  onVehicleCategoryChange?: (value: "all" | "car" | "bike") => void;
 }
 
-const ExploreBodyTypes = ({ showHeader = true }: ExploreBodyTypesProps) => {
-  const { data: models = [], isLoading: modelsLoading } = useModels();
-  const { data: variants = [], isLoading: variantsLoading } = useVariants("");
+const ExploreBodyTypes = ({ showHeader = true, vehicleCategory = "all", onVehicleCategoryChange }: ExploreBodyTypesProps) => {
+  const { data: models = [], isLoading: modelsLoading } = useModels(vehicleCategory);
+  const { data: variants = [], isLoading: variantsLoading } = useVariants("", vehicleCategory);
 
   const allBodyTypes = [
     { name: "Hatchback", slug: "hatchback" },
@@ -130,12 +133,22 @@ const ExploreBodyTypes = ({ showHeader = true }: ExploreBodyTypesProps) => {
                   Browse cars by their body style and design
                 </p>
               </div>
-              {hasMoreBodyTypes && (
-                <Link to="/body" className="hidden md:block">
-                  <Button variant="outline">View more body types</Button>
-                </Link>
-              )}
+              <div className="hidden md:flex items-center gap-3">
+                {onVehicleCategoryChange && (
+                  <VehicleCategoryToggle value={vehicleCategory} onChange={onVehicleCategoryChange} />
+                )}
+                {hasMoreBodyTypes && (
+                  <Link to="/body" className="hidden md:block">
+                    <Button variant="outline">View more body types</Button>
+                  </Link>
+                )}
+              </div>
             </div>
+            {onVehicleCategoryChange && (
+              <div className="md:hidden mt-4">
+                <VehicleCategoryToggle value={vehicleCategory} onChange={onVehicleCategoryChange} />
+              </div>
+            )}
           </div>
         )}
 

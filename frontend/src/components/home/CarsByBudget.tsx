@@ -13,6 +13,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import VehicleCategoryToggle from "@/components/home/VehicleCategoryToggle";
 
 const BUDGET_TABS = [
   { key: "under-5", label: "Under 5L", min: 0, max: 500000 },
@@ -54,9 +55,14 @@ const getVariantModelKeys = (variant: any) => {
     .map((value) => String(value));
 };
 
-const CarsByBudget = () => {
-  const { data: models = [], isLoading } = useModels();
-  const { data: allVariants = [], isLoading: isVariantsLoading } = useVariants("");
+interface CarsByBudgetProps {
+  vehicleCategory?: "all" | "car" | "bike";
+  onVehicleCategoryChange?: (value: "all" | "car" | "bike") => void;
+}
+
+const CarsByBudget = ({ vehicleCategory = "all", onVehicleCategoryChange }: CarsByBudgetProps) => {
+  const { data: models = [], isLoading } = useModels(vehicleCategory);
+  const { data: allVariants = [], isLoading: isVariantsLoading } = useVariants("", vehicleCategory);
   const [activeBudget, setActiveBudget] = useState<(typeof BUDGET_TABS)[number]>(BUDGET_TABS[1]);
 
   const variantMinPriceByModelKey = useMemo(() => {
@@ -109,17 +115,24 @@ const CarsByBudget = () => {
             <div className="inline-flex items-center gap-2 text-primary font-medium text-sm mb-2 uppercase tracking-wider">
               <Coins className="w-4 h-4" /> Budget Discovery
             </div>
-            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">Cars by Budget</h2>
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground">
+              {vehicleCategory === "bike" ? "Bikes" : "Cars"} by Budget
+            </h2>
           </div>
-          <Link
-            to={`/new-cars?priceMin=${activeBudget.min}&priceMax=${activeBudget.max}&sort=price_asc`}
-            className="hidden md:block"
-          >
-            <Button variant="ghost" className="group">
-              View All Cars
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            {onVehicleCategoryChange && (
+              <VehicleCategoryToggle value={vehicleCategory} onChange={onVehicleCategoryChange} />
+            )}
+            <Link
+              to={`/new-cars?priceMin=${activeBudget.min}&priceMax=${activeBudget.max}&sort=price_asc`}
+              className="hidden md:block"
+            >
+              <Button variant="ghost" className="group">
+                View All Cars
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="flex gap-2 flex-wrap">

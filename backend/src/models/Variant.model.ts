@@ -2,6 +2,8 @@ import { Schema, model, Document } from "mongoose";
 
 export interface IVariant extends Document {
   id: string;
+  vehicleCategory?: "car" | "bike";
+  wheels?: 2 | 4;
   modelId: string;
   name: string;
   slug: string;
@@ -30,6 +32,8 @@ export interface IVariant extends Document {
 const VariantSchema = new Schema<IVariant>(
   {
     id: { type: String, required: true, unique: true },
+    vehicleCategory: { type: String, enum: ["car", "bike"], default: "car" },
+    wheels: { type: Number, enum: [2, 4], default: 4 },
     modelId: { type: String, required: true },  // links to CarModel
     name: { type: String, required: true },
     slug: { type: String, required: true },

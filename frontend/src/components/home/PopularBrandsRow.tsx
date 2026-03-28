@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import VehicleCategoryToggle from "@/components/home/VehicleCategoryToggle";
 
 const PREFERRED_BRANDS = ["Maruti Suzuki", "Hyundai", "Tata", "Honda", "Mahindra", "Toyota", "Kia", "MG"] as const;
 
@@ -22,10 +23,15 @@ const BRAND_ALIASES: Record<(typeof PREFERRED_BRANDS)[number], string[]> = {
 
 const normalizeBrand = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
 
-const PopularBrandsRow = () => {
-  const { data: allBrands = [] } = useBrands();
+interface PopularBrandsRowProps {
+  vehicleCategory?: "all" | "car" | "bike";
+  onVehicleCategoryChange?: (value: "all" | "car" | "bike") => void;
+}
+
+const PopularBrandsRow = ({ vehicleCategory = "all", onVehicleCategoryChange }: PopularBrandsRowProps) => {
+  const { data: allBrands = [] } = useBrands(vehicleCategory);
   const { data: popularBrands = [], isLoading } = useQuery({
-    queryKey: ["popular", "brands", "row"],
+    queryKey: ["popular", "brands", "row", vehicleCategory],
     queryFn: () => popularApi.getPopularBrands(8),
     staleTime: 10 * 60 * 1000,
   });
@@ -42,24 +48,33 @@ const PopularBrandsRow = () => {
     if (preferred.length === 8) return preferred;
 
     const seen = new Set(preferred.map((brand: any) => brand.id || brand.slug || brand.name));
+    const validIds = new Set(allBrands.map((brand: any) => brand.id || brand.slug));
     const fallback = [...popularBrands, ...allBrands].filter((brand: any) => {
       const key = brand.id || brand.slug || brand.name;
+      if (vehicleCategory !== "all" && validIds.size > 0 && !validIds.has(brand.id || brand.slug)) {
+        return false;
+      }
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
 
     return [...preferred, ...fallback].slice(0, 8);
-  }, [popularBrands, allBrands]);
+  }, [popularBrands, allBrands, vehicleCategory]);
 
   return (
     <section className="py-6 md:py-8 bg-background">
       <div className="container mx-auto px-4 max-w-7xl 2xl:max-w-[90rem]">
-        <div className="flex items-center gap-4 mb-8">
-          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground whitespace-nowrap">
-            Popular brands
-          </h2>
-          <div className="h-px flex-1 bg-sky-300/70" />
+        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
+          <div className="flex items-center gap-4 flex-1">
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground whitespace-nowrap">
+              Popular brands
+            </h2>
+            <div className="h-px flex-1 bg-sky-300/70" />
+          </div>
+          {onVehicleCategoryChange && (
+            <VehicleCategoryToggle value={vehicleCategory} onChange={onVehicleCategoryChange} />
+          )}
         </div>
 
         {isLoading ? (

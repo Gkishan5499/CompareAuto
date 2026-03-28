@@ -191,6 +191,18 @@ const DEFAULT_MAPPING: Mapping = {
   honeywell_unknown_dummy_for_backward_compatibility: "extras.honeywell_dummy"
 };
 
+type VehicleCategory = "car" | "bike";
+
+const normalizeVehicleCategory = (raw: any): VehicleCategory => {
+  const value = String(raw || "").trim().toLowerCase();
+  return value === "bike" ? "bike" : "car";
+};
+
+const addBikePrefix = (slug: string, category: VehicleCategory) => {
+  if (category !== "bike") return slug;
+  return slug.startsWith("bike-") ? slug : `bike-${slug}`;
+};
+
 // =============================
 // MAIN CSV UPLOAD HANDLER
 // =============================
@@ -211,6 +223,9 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
     failed: 0,
     errors: [] as any[],
   };
+
+  const vehicleCategory = normalizeVehicleCategory(req.body?.vehicleCategory || req.body?.category);
+  const defaultWheels = vehicleCategory === "bike" ? 2 : 4;
 
   // =============================
   // HANDLE optional custom mapping
@@ -297,17 +312,25 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
       const slugify = (v: string) =>
         String(v).toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
+      const brandSlug = slugify(brandName);
+      const modelSlug = slugify(modelName);
+
+      const wheelValueFromRow = Number(normalizedRow.wheels || specsObj?.wheels || defaultWheels);
+      const wheels = wheelValueFromRow === 2 ? 2 : defaultWheels;
+
       // =============================
       // UPSERT BRAND
       // =============================
 
-      let brand = await Brand.findOne({ name: brandName });
+      let brand = await Brand.findOne({ name: brandName, vehicleCategory });
 
       if (!brand) {
         brand = await Brand.create({
-          id: slugify(brandName),
+          id: addBikePrefix(brandSlug, vehicleCategory),
           name: brandName,
-          slug: slugify(brandName),
+          slug: addBikePrefix(brandSlug, vehicleCategory),
+          vehicleCategory,
+          wheels,
           logo: "/brands/default.png",
           country: "Unknown",
         });
@@ -318,15 +341,17 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
       // UPSERT MODEL
       // =============================
 
-      let carModel = await Model.findOne({ name: modelName, brandId: brand.id });
+      let carModel = await Model.findOne({ name: modelName, brandId: brand.id, vehicleCategory });
 
       if (!carModel) {
         carModel = await Model.create({
-          id: slugify(modelName),
+          id: addBikePrefix(modelSlug, vehicleCategory),
+          vehicleCategory,
+          wheels,
           brandId: brand.id,
           brandName: brand.name,
           name: modelName,
-          slug: slugify(modelName),
+          slug: addBikePrefix(modelSlug, vehicleCategory),
           image: specsObj.media?.hero || "/cars/default.png",
           bodyType: specsObj.overview?.body_type || "",
           variantCount: 0,
@@ -341,10 +366,15 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
       // UPSERT VARIANT
       // =============================
 
-      const variantId =
+      const rawVariantId =
         normalizedRow.variant_id ||
         normalizedRow.variantId ||
         `${carModel.id}-${slugify(variantName)}`;
+
+      const variantId =
+        vehicleCategory === "bike" && (!normalizedRow.variant_id && !normalizedRow.variantId)
+          ? addBikePrefix(rawVariantId, vehicleCategory)
+          : rawVariantId;
 
       let variant = await Variant.findOne({ id: variantId });
 
@@ -405,6 +435,8 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
       if (!variant) {
         variant = await Variant.create({
           id: variantId,
+          vehicleCategory,
+          wheels,
           modelId: carModel.id,
           name: variantName,
           slug: slugify(variantName),
@@ -426,6 +458,8 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
           { id: variantId },
           {
             $set: {
+              vehicleCategory,
+              wheels,
               name: variantName,
               slug: slugify(variantName),
               price: priceNum,
@@ -483,10 +517,14 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
       normalizeArrays(specsObj);
 
       specsObj.variantId = variantId;
+      specsObj.vehicleCategory = vehicleCategory;
+      specsObj.wheels = wheels;
       specsObj.overview = {
         brand: brand.name,
         model: carModel.name,
         variant: variant.name,
+        vehicleCategory,
+        wheels,
         ...specsObj.overview,
       };
 

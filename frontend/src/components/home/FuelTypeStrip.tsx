@@ -5,10 +5,16 @@ import { Battery, Leaf, Wind, Fuel, Zap, ArrowRight, Flame } from "lucide-react"
 import { useModels, useVariants } from "@/lib/api-hooks";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import VehicleCategoryToggle from "@/components/home/VehicleCategoryToggle";
 
-const FuelTypeStrip = () => {
-  const { data: allModels = [] } = useModels();
-  const { data: allVariants = [] } = useVariants("");
+interface FuelTypeStripProps {
+  vehicleCategory?: "all" | "car" | "bike";
+  onVehicleCategoryChange?: (value: "all" | "car" | "bike") => void;
+}
+
+const FuelTypeStrip = ({ vehicleCategory = "all", onVehicleCategoryChange }: FuelTypeStripProps) => {
+  const { data: allModels = [] } = useModels(vehicleCategory);
+  const { data: allVariants = [] } = useVariants("", vehicleCategory);
 
   const counts = useMemo(() => {
     const countsMap: Record<string, number> = {};
@@ -65,12 +71,17 @@ const FuelTypeStrip = () => {
             </p>
           </div>
           
-          <Link to="/new-cars?filter=fuel">
-            <Button variant="ghost" className="group hidden md:flex">
-              View All Options
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            {onVehicleCategoryChange && (
+              <VehicleCategoryToggle value={vehicleCategory} onChange={onVehicleCategoryChange} />
+            )}
+            <Link to="/new-cars?filter=fuel">
+              <Button variant="ghost" className="group hidden md:flex">
+                View All Options
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Desktop Grid */}

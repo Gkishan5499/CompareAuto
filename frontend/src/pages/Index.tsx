@@ -1,4 +1,4 @@
-import { useEffect, Suspense, lazy } from "react";
+import { useEffect, Suspense, lazy, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { updateMetaTags, injectStructuredData, generateOrganizationSchema, DEFAULT_OG_IMAGE } from "@/lib/seo";
 import HeroSearch from "@/components/home/HeroSearch";
@@ -17,7 +17,17 @@ const CarsByBudget = lazy(() => import("@/components/home/CarsByBudget"));
 const LatestNews = lazy(() => import("@/components/home/LatestNews"));
 const WhyCompareAuto = lazy(() => import("@/components/home/WhyCompareAuto"));
 
+type VehicleCategory = "all" | "car" | "bike";
+
 const Index = () => {
+  const [trendingCategory, setTrendingCategory] = useState<VehicleCategory>("all");
+  const [budgetCategory, setBudgetCategory] = useState<VehicleCategory>("all");
+  const [bodyTypeCategory, setBodyTypeCategory] = useState<VehicleCategory>("all");
+  const [fuelTypeCategory, setFuelTypeCategory] = useState<VehicleCategory>("all");
+  const [brandsCategory, setBrandsCategory] = useState<VehicleCategory>("all");
+  const [topPicksCategory, setTopPicksCategory] = useState<VehicleCategory>("all");
+  const [recentCategory, setRecentCategory] = useState<VehicleCategory>("all");
+
   useEffect(() => {
     // 1. Update Meta Tags
     updateMetaTags({
@@ -55,10 +65,10 @@ const Index = () => {
         {/* Recent and Upcoming sections stacked with tighter mobile spacing */}
         <div className="flex flex-col gap-8 sm:gap-10">
           <Suspense fallback={<SectionLoader label="Loading recent models..." />}>
-            <TrendingComparisons />
+            <TrendingComparisons vehicleCategory={trendingCategory} onVehicleCategoryChange={setTrendingCategory} />
           </Suspense>
           <Suspense fallback={<SectionLoader label="Loading budget cars..." />}>
-            <CarsByBudget />
+            <CarsByBudget vehicleCategory={budgetCategory} onVehicleCategoryChange={setBudgetCategory} />
           </Suspense>
           {/* <Suspense fallback={<SectionLoader label="Loading upcoming cars..." />}><UpcomingTimeline /></Suspense> */}
           {/* <Suspense fallback={<SectionLoader label="Loading trending picks..." />}><TrendingCollections /></Suspense> */}
@@ -66,24 +76,24 @@ const Index = () => {
 
         {/* 2. DISCOVERY STRIPS */}
         <div className="flex flex-col gap-4 sm:gap-6">
-          <ExploreBodyTypes />
+          <ExploreBodyTypes vehicleCategory={bodyTypeCategory} onVehicleCategoryChange={setBodyTypeCategory} />
           <Suspense fallback={<SectionLoader label="Loading fuel types..." />}>
-            <FuelTypeStrip />
+            <FuelTypeStrip vehicleCategory={fuelTypeCategory} onVehicleCategoryChange={setFuelTypeCategory} />
           </Suspense>
         </div>
 
         <section className="border-t border-slate-100 dark:border-slate-800">
           <Suspense fallback={<SectionLoader label="Loading popular brands..." />}>
-            <PopularBrandsRow />
+            <PopularBrandsRow vehicleCategory={brandsCategory} onVehicleCategoryChange={setBrandsCategory} />
           </Suspense>
         </section>
 
         {/* 3. EDITORIAL & RANKINGS */}
         <Suspense fallback={<SectionLoader label="Loading top picks..." />}>
-          <TopPicks />
+          <TopPicks vehicleCategory={topPicksCategory} onVehicleCategoryChange={setTopPicksCategory} />
         </Suspense>
         <Suspense fallback={<SectionLoader label="Loading comparisons..." />}>
-          <RecentModelsSlider />
+          <RecentModelsSlider vehicleCategory={recentCategory} onVehicleCategoryChange={setRecentCategory} />
         </Suspense>
 
         {/* Ad Slot: Mid Billboard (High Visibility) */}

@@ -33,6 +33,8 @@ const BUDGET_RANGES: Record<string, { min: number; max: number; maxLakh: number 
   "Above 50L": { min: 5000000, max: 5000000, maxLakh: 50 },
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 const HeroSearch = () => {
   const navigate = useNavigate();
   const { data: brands = [] } = useBrands();
@@ -69,7 +71,7 @@ const HeroSearch = () => {
     const fetchHeroImages = async () => {
       setHeroImagesLoading(true);
       try {
-        const response = await fetch("/api/hero-carousel/active");
+        const response = await fetch(`${API_BASE_URL}/hero-carousel/active`);
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
@@ -81,7 +83,7 @@ const HeroSearch = () => {
           setHeroImages([]);
         }
       } catch (error) {
-        console.error("❌ Error fetching hero images:", error);
+        // Keep silent in dev when backend is temporarily unavailable.
         setHeroImages([]);
       } finally {
         setHeroImagesLoading(false);

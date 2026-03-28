@@ -41,41 +41,80 @@ async function fetchApi<T>(
 
 // Brands API
 export const brandsApi = {
-  getAll: () => fetchApi<any[]>("/brands"),
+  getAll: (vehicleCategory?: "car" | "bike") => {
+    const params = vehicleCategory ? `?vehicleCategory=${vehicleCategory}` : "";
+    return fetchApi<any[]>(`/brands${params}`);
+  },
   getById: (id: string) => fetchApi<any>(`/brands/${id}`),
   getBySlug: (slug: string) => fetchApi<any>(`/brands/slug/${slug}`),
 };
 
 // Models API
 export const modelsApi = {
-  getAll: () => fetchApi<any[]>("/models"),
+  getAll: (vehicleCategory?: "car" | "bike") => {
+    const params = vehicleCategory ? `?vehicleCategory=${vehicleCategory}` : "";
+    return fetchApi<any[]>(`/models${params}`);
+  },
   getById: (id: string) => fetchApi<any>(`/models/${id}`),
   getBySlug: (slug: string) => fetchApi<any>(`/models/slug/${slug}`),
   getByBrand: (brandId: string) => fetchApi<any[]>(`/models/brand/${brandId}`),
   getByBrandSlug: async (brandSlug: string) => {
     const brand = await brandsApi.getBySlug(brandSlug);
     if (!brand) return [];
-    return modelsApi.getByBrand(brand.id);
+
+    const directModels = await modelsApi.getByBrand(brand.id);
+    if (Array.isArray(directModels) && directModels.length > 0) return directModels;
+
+    // Fallback for legacy/inconsistent brand links in old data.
+    const allModels = await modelsApi.getAll();
+    const normalizedBrandSlug = String(brandSlug || "").trim().toLowerCase().replace(/^bike-/, "");
+    const normalizedBrandName = String(brand.name || "").trim().toLowerCase();
+    const normalizedBrandId = String(brand.id || "").trim().toLowerCase().replace(/^bike-/, "");
+
+    return allModels.filter((model: any) => {
+      const modelBrandId = String(model?.brandId || "").trim().toLowerCase().replace(/^bike-/, "");
+      const modelBrandName = String(model?.brandName || "").trim().toLowerCase();
+      const modelBrandSlug = String(model?.brandSlug || "").trim().toLowerCase().replace(/^bike-/, "");
+
+      return (
+        (modelBrandId && modelBrandId === normalizedBrandId) ||
+        (modelBrandId && modelBrandId === normalizedBrandSlug) ||
+        (modelBrandSlug && modelBrandSlug === normalizedBrandSlug) ||
+        (modelBrandName && modelBrandName === normalizedBrandName)
+      );
+    });
   },
   getByBodyType: (bodyType: string) => fetchApi<any[]>(`/models/body-type/${bodyType}`),
   getByFuelType: (fuelType: string) => fetchApi<any[]>(`/models/fuel-type/${fuelType}`),
-  getPopular: (limit?: number) => {
-    const params = limit ? `?limit=${limit}` : "";
+  getPopular: (limit?: number, vehicleCategory?: "car" | "bike") => {
+    const query = new URLSearchParams();
+    if (limit) query.set("limit", String(limit));
+    if (vehicleCategory) query.set("vehicleCategory", vehicleCategory);
+    const params = query.toString() ? `?${query.toString()}` : "";
     return fetchApi<any[]>(`/models/popular${params}`);
   },
-  getNew: (limit?: number) => {
-    const params = limit ? `?limit=${limit}` : "";
+  getNew: (limit?: number, vehicleCategory?: "car" | "bike") => {
+    const query = new URLSearchParams();
+    if (limit) query.set("limit", String(limit));
+    if (vehicleCategory) query.set("vehicleCategory", vehicleCategory);
+    const params = query.toString() ? `?${query.toString()}` : "";
     return fetchApi<any[]>(`/models/new${params}`);
   },
-  getUpcoming: (limit?: number) => {
-    const params = limit ? `?limit=${limit}` : "";
+  getUpcoming: (limit?: number, vehicleCategory?: "car" | "bike") => {
+    const query = new URLSearchParams();
+    if (limit) query.set("limit", String(limit));
+    if (vehicleCategory) query.set("vehicleCategory", vehicleCategory);
+    const params = query.toString() ? `?${query.toString()}` : "";
     return fetchApi<any[]>(`/models/upcoming${params}`);
   },
 };
 
 // Variants API
 export const variantsApi = {
-  getAll: () => fetchApi<any[]>("/variants"),
+  getAll: (vehicleCategory?: "car" | "bike") => {
+    const params = vehicleCategory ? `?vehicleCategory=${vehicleCategory}` : "";
+    return fetchApi<any[]>(`/variants${params}`);
+  },
   getById: (id: string) => fetchApi<any>(`/variants/${id}`),
   getByModel: (modelId: string) => fetchApi<any[]>(`/variants/model/${modelId}`),
 };

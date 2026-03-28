@@ -3,6 +3,8 @@ import { Schema, model, Document } from "mongoose";
 export interface ICarModel extends Document {
   id: string;
   name: string;
+  vehicleCategory?: "car" | "bike";
+  wheels?: 2 | 4;
   brandId: string;
   brandName: string;
   slug: string;
@@ -44,6 +46,8 @@ const CarModelSchema = new Schema<ICarModel>(
   {
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
+    vehicleCategory: { type: String, enum: ["car", "bike"], default: "car" },
+    wheels: { type: Number, enum: [2, 4], default: 4 },
     brandId: { type: String, required: true },
     brandName: { type: String, required: true },
     slug: { type: String, required: true, unique: true },

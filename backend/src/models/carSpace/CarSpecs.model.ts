@@ -3,6 +3,8 @@ import { Schema, model, Document } from 'mongoose';
 // 1. Updated Interface – your grouped fields + dynamic fallback
 export interface ICarSpecs extends Document {
   variantId: string;
+  vehicleCategory?: "car" | "bike";
+  wheels?: 2 | 4;
 
   // Existing clean groups
   overview?: {
@@ -121,6 +123,8 @@ export interface ICarSpecs extends Document {
 const CarSpecsSchema = new Schema<ICarSpecs>(
   {
     variantId: { type: String, required: true, unique: true },
+    vehicleCategory: { type: String, enum: ["car", "bike"], default: "car" },
+    wheels: { type: Number, enum: [2, 4], default: 4 },
 
     overview: {
       description: String,

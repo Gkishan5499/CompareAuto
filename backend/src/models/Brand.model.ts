@@ -3,6 +3,8 @@ import { Schema, model, Document } from "mongoose";
 export interface IBrand extends Document {
   id: string;
   name: string;
+  vehicleCategory?: "car" | "bike";
+  wheels?: 2 | 4;
   logo: string;
   country: string;
   modelCount: number;
@@ -24,6 +26,8 @@ const BrandSchema = new Schema<IBrand>(
   {
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
+    vehicleCategory: { type: String, enum: ["car", "bike"], default: "car" },
+    wheels: { type: Number, enum: [2, 4], default: 4 },
     logo: { type: String, required: true },
     country: { type: String, required: true },
     modelCount: { type: Number, default: 0 },
