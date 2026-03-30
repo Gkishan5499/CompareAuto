@@ -14,8 +14,14 @@ import { mapRowToSpecs, Mapping } from "../../utils/csvMapping";
 const DEFAULT_MAPPING: Mapping = {
   // linking
   brand: "overview.brand",
+  brand_name: "overview.brand",
+  brandname: "overview.brand",
   model: "overview.model",
+  model_name: "overview.model",
+  modelname: "overview.model",
   variant: "overview.variant",
+  variant_name: "overview.variant",
+  variantname: "overview.variant",
   variant_id: "variantId",
   variantId: "variantId",
 
@@ -212,6 +218,17 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
     errors: [] as any[],
   };
 
+  const upsertSpecsByVariantId = async (variantId: string, specsObj: Record<string, any>) => {
+    specsObj.variantId = variantId;
+    const upsertResult: any = await CarSpecs.updateOne(
+      { variantId },
+      { $set: specsObj },
+      { upsert: true }
+    );
+    if (upsertResult?.upsertedCount > 0) report.createdSpecs++;
+    else report.updatedSpecs++;
+  };
+
   // =============================
   // HANDLE optional custom mapping
   // =============================
@@ -270,7 +287,12 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
     try {
       const normalizedRow: Record<string, any> = {};
       for (const k of Object.keys(row)) {
-        normalizedRow[String(k).trim().toLowerCase()] = row[k];
+        // Strip UTF-8 BOM from the first header if present (common in Excel CSV exports).
+        const normalizedKey = String(k)
+          .replace(/^\uFEFF/, "")
+          .trim()
+          .toLowerCase();
+        normalizedRow[normalizedKey] = row[k];
       }
 
       // convert raw row + mapping → nested CarSpecs object
@@ -280,15 +302,51 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
       // Extract brand / model / variant
       // =============================
 
-      const brandName = normalizedRow.brand || specsObj?.overview?.brand;
-      const modelName = normalizedRow.model || specsObj?.overview?.model;
-      const variantName = normalizedRow.variant || specsObj?.overview?.variant;
+      const pickFirstNonEmpty = (...values: any[]) => {
+        for (const v of values) {
+          if (v !== undefined && v !== null && String(v).trim() !== "") {
+            return String(v).trim();
+          }
+        }
+        return undefined;
+      };
+
+      let brandName = pickFirstNonEmpty(
+        normalizedRow.brand,
+        normalizedRow.brand_name,
+        normalizedRow.brandname,
+        specsObj?.overview?.brand
+      );
+      let modelName = pickFirstNonEmpty(
+        normalizedRow.model,
+        normalizedRow.model_name,
+        normalizedRow.modelname,
+        specsObj?.overview?.model
+      );
+      let variantName = pickFirstNonEmpty(
+        normalizedRow.variant,
+        normalizedRow.variant_name,
+        normalizedRow.variantname,
+        specsObj?.overview?.variant
+      );
+
+      const csvVariantId = pickFirstNonEmpty(
+        normalizedRow.variant_id,
+        normalizedRow.variantid,
+        specsObj?.variantId
+      );
 
       if (!brandName || !modelName || !variantName) {
+        // Fast path: allow specs-only import keyed by variantId when linkage columns are absent.
+        if (csvVariantId) {
+          await upsertSpecsByVariantId(csvVariantId, specsObj);
+          continue;
+        }
+
         report.failed++;
         report.errors.push({
           row: report.totalRows,
-          reason: "Missing brand / model / variant",
+          reason: `Missing brand / model / variant (variantId: ${csvVariantId || "N/A"})`,
         });
         continue;
       }
@@ -341,10 +399,7 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
       // UPSERT VARIANT
       // =============================
 
-      const variantId =
-        normalizedRow.variant_id ||
-        normalizedRow.variantId ||
-        `${carModel.id}-${slugify(variantName)}`;
+      const variantId = csvVariantId || `${carModel.id}-${slugify(variantName)}`;
 
       let variant = await Variant.findOne({ id: variantId });
 
@@ -363,28 +418,17 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
       };
 
       const priceRaw = normalizedRow.exshowroomprice || normalizedRow.ex_showroom_price || pick(['overview.price', 'ex_showroom_price', 'price', 'variant.price']) || normalizedRow.price || 0;
-      console.log('Price extraction:', { 
-        priceRaw, 
-        exshowroomprice: normalizedRow.exshowroomprice,
-        ex_showroom_price: normalizedRow.ex_showroom_price, 
-        price: normalizedRow.price,
-        normalizedRowKeys: Object.keys(normalizedRow).filter(k => k.includes('price'))
-      });
       let priceNum = typeof priceRaw === 'string' && priceRaw !== '' ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) : Number(priceRaw) || 0;
-      console.log('Parsed price before fallback:', priceNum);      
       // Normalize price: if < 1000, assume it's in lakhs and convert to rupees
       // Examples: 10.49 (lakhs) → 1,049,000 rupees; 0.1049901 detected as malformed
       if (priceNum > 0 && priceNum < 1000) {
         // This is in lakhs, convert to rupees
         priceNum = Math.round(priceNum * 100000);
-        console.log('Price was in lakhs format, converted to rupees:', priceNum);
       }      
       // If price is 0 or missing, use a reasonable fallback
       if (!priceNum || priceNum <= 0) {
         priceNum = 800000; // Safe fallback price in rupees
-        console.log('Price was zero, using fallback 800000');
       }
-      console.log('Final price:', priceNum);
 
       let transmissionVal: any = pick(['performance.transmission', 'transmission', 'variant.transmission']) || normalizedRow.transmission;
       if (Array.isArray(transmissionVal)) transmissionVal = transmissionVal.join(', ');
@@ -490,26 +534,10 @@ export const uploadSpecsCsv = async (req: any, res: Response) => {
         ...specsObj.overview,
       };
 
-      // Debug logging for color fields
-      console.log(`📋 CSV Upload - Variant ${variantId}:`, {
-        monotone_colors: specsObj?.exterior?.monotone_color_names,
-        dual_tone_colors: specsObj?.exterior?.dual_tone_color_names,
-        exterior_data: specsObj?.exterior,
-      });
-
       // =============================
       // UPSERT CAR SPECS
       // =============================
-
-      const existingSpecs = await CarSpecs.findOne({ variantId });
-
-      if (!existingSpecs) {
-        await CarSpecs.create(specsObj);
-        report.createdSpecs++;
-      } else {
-        await CarSpecs.updateOne({ variantId }, { $set: specsObj });
-        report.updatedSpecs++;
-      }
+      await upsertSpecsByVariantId(variantId, specsObj);
     } catch (error: any) {
       report.failed++;
       report.errors.push({
